@@ -988,7 +988,15 @@ class Component extends DCLogic {
   }
   // يحاول يسترجع مكان اللاعب بفريقه بعد إعادة اتصال (تحديث صفحة، إغلاق/فتح المتصفح...) لو عنده بيانات محفوظة.
   _tryResume() {
-    if (this.state.myTeamIndex != null) return;
+    // إعادة اتصال Socket.IO أثناء نفس الجلسة (انقطاع شبكة مؤقت، قفل شاشة الجوال، تبديل تطبيقات)
+    // ما يصفّر state.myTeamIndex — الصفحة ما انعاد تحميلها، بس السوكيت القديم صار ميت والسيرفر
+    // لسا محتفظ بـsocketId القديم لهذا اللاعب. بدون إعادة نداء chooseTeam هنا، السيرفر ما يعرف
+    // أبدًا إن معرّف السوكيت تغيّر، فتضيع عليه كل تحديثات الصور اللاحقة نهائيًا (حتى الجولات الجاية)
+    // إلى أن يعيد تحميل الصفحة يدويًا. نعيد الانضمام بنفس الغرفة/الفريق فورًا بأي إعادة اتصال.
+    if (this.state.myTeamIndex != null && this.state.roomCode) {
+      this._socket.emit('chooseTeam', { roomCode: this.state.roomCode, teamIndex: this.state.myTeamIndex, name: this.myName() }, () => {});
+      return;
+    }
     const r = this._loadResume();
     if (!r || !r.roomCode) return;
     this._socket.emit('chooseTeam', { roomCode: r.roomCode, teamIndex: r.teamIndex, teamName: r.teamName, name: r.name }, (res) => {
