@@ -656,6 +656,10 @@
 <!-- RESULTS -->
 <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
 <div style="position:relative; z-index:1; max-width:640px; margin:0 auto; padding:56px 24px 72px; animation:tqIn .4s ease; text-align:center;" data-screen-label="Results">
+  <!-- شعار "وصّلـها" هنا تحديدًا (داخل بطاقة النتيجة نفسها) عشان يظهر بصورة "مشاركة النتيجة" —
+       الشعار الأصلي بأعلى الصفحة برّا هذا العنصر فما يدخل بالالتقاط. نستخدم لون عادي بدل
+       التدرّج المقصوص (.wslha-wordmark) لأن html2canvas ما يلتقط background-clip:text صح. -->
+  <div class="wslha-kashida" style="font-size:28px; font-weight:900; color:#c4b5fd; margin-bottom:14px;">وصّلـها</div>
   <h1 style="font-size:clamp(30px,5vw,46px); font-weight:900; margin:0 0 8px;">خلص السباق!</h1>
   <p style="font-size:17px; color:#a9a7cc; margin:0 0 30px;">كان سباق ممتع, والآن شوفوا النتيجه</p>
   <div style="background:linear-gradient(135deg,rgba(129,140,248,.2),rgba(236,72,153,.2)); border:1px solid rgba(255,255,255,.14); border-radius:28px; padding:38px; backdrop-filter:blur(14px); box-shadow:0 26px 70px rgba(0,0,0,.4); margin-bottom:24px;">
