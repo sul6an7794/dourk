@@ -86,6 +86,15 @@ router.delete('/rounds/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// نقل جولة لأعلى/لأسفل في ترتيب اللعب — يبدّل موقعها مع الجولة المجاورة فقط.
+router.patch('/rounds/:id/move', async (req, res) => {
+  const { direction } = req.body || {};
+  if (direction !== 'up' && direction !== 'down') return res.status(400).json({ error: 'اتجاه غير صالح' });
+  const rounds = await db.moveRound(req.params.id, direction);
+  if (!rounds) return res.status(400).json({ error: 'تعذّر نقل الجولة (ربما بالطرف بالفعل)' });
+  res.json(rounds.map(toApiRound));
+});
+
 // نخزّن الصورة في الذاكرة ثم نكتبها عبر طبقة التخزين (MongoDB أو ملف محلي).
 // الحد 12MB لكل صورة حتى تبقى ضمن حد مستند MongoDB (16MB).
 // أمان: نقبل صورًا فقط (نمنع رفع ملفات قد تُخدَّم كـ HTML/سكربت).

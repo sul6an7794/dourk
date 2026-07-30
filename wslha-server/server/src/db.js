@@ -244,8 +244,13 @@ async function setImagePosition(roundId, imageId, newPosition) {
 }
 
 // ---- الجولات ----
+// ترتيب العرض/اللعب: حسب position (يحدده المشرف بأزرار النقل)، وللجولات القديمة قبل
+// وجود الحقل نرجع لترتيب الإنشاء (id) — نفس فكرة position||id المستخدمة بصور الجولة.
 function getRounds() {
-  return state.rounds.slice().sort((a, b) => a.id - b.id).map((r) => ({ ...r, images: getRoundImages(r.id) }));
+  return state.rounds
+    .slice()
+    .sort((a, b) => (a.position || a.id) - (b.position || b.id))
+    .map((r) => ({ ...r, images: getRoundImages(r.id) }));
 }
 function getRound(id) {
   const r = state.rounds.find((x) => x.id === Number(id));
@@ -256,6 +261,7 @@ function getRoundsCount() { return state.rounds.length; }
 async function insertRound({ hint, answers, hintPlayerIndex, category, question }) {
   const idx = Number(hintPlayerIndex);
   const id = await backend.nextId('rounds');
+  const maxPos = state.rounds.reduce((m, r) => Math.max(m, r.position || r.id || 0), 0);
   const round = {
     id,
     hint,
@@ -263,11 +269,31 @@ async function insertRound({ hint, answers, hintPlayerIndex, category, question 
     hintPlayerIndex: Number.isFinite(idx) && idx > 0 ? Math.floor(idx) : 1,
     category: String(category || '').trim(),
     question: String(question || '').trim(),
+    position: maxPos + 1,
     created_at: new Date().toISOString(),
   };
   state.rounds.push(round);
   await backend.putRound(round);
   return { ...round, images: [] };
+}
+// نقل جولة لأعلى/لأسفل بترتيب العرض — تبديل موقعها مع الجولة المجاورة فقط (بدل حقل ترتيب كامل)،
+// نفس فكرة setImagePosition لكن بمقايضة بسيطة (لا حاجة لنقل لموقع عشوائي هنا).
+async function moveRound(id, direction) {
+  const rid = Number(id);
+  const list = state.rounds.slice().sort((a, b) => (a.position || a.id) - (b.position || b.id));
+  const idx = list.findIndex((r) => r.id === rid);
+  if (idx === -1) return null;
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= list.length) return null;
+  const a = list[idx];
+  const b = list[swapIdx];
+  const posA = a.position || a.id;
+  const posB = b.position || b.id;
+  a.position = posB;
+  b.position = posA;
+  await backend.putRound(a);
+  await backend.putRound(b);
+  return getRounds();
 }
 // تحديث جزئي: كل حقل يُمرَّر فقط لو المشرف عدّله فعليًا (undefined = خلّه كما هو).
 async function updateRound(id, fields) {
@@ -313,6 +339,7 @@ module.exports = {
   getRoundsCount,
   insertRound,
   updateRound,
+  moveRound,
   deleteRound,
   insertRoundImage,
   setImagePosition,

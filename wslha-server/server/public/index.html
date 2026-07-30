@@ -551,6 +551,8 @@
           <div style="flex:1;"><div style="font-size:16px; font-weight:800;">{{ r.hint }}</div><div style="font-size:13px; color:#a9a7cc; margin-top:3px;">الإجابات: {{ r.answersText }}</div></div>
           <div style="font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); padding:5px 12px; border-radius:20px; white-space:nowrap;">{{ r.category }}</div>
           <div style="font-size:13px; font-weight:700; color:#818cf8; background:rgba(129,140,248,.12); padding:5px 12px; border-radius:20px;">{{ r.imageCount }} صور</div>
+          <button onClick="{{ r.moveUp }}" disabled="{{ r.isFirst }}" title="نقل الجولة لأعلى" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer; opacity:{{ r.moveUpOpacity }};" style-hover="background:rgba(129,140,248,.2);">{{ iconChevronUp }}</button>
+          <button onClick="{{ r.moveDown }}" disabled="{{ r.isLast }}" title="نقل الجولة لأسفل" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer; opacity:{{ r.moveDownOpacity }};" style-hover="background:rgba(129,140,248,.2);">{{ iconChevronDown }}</button>
           <button onClick="{{ r.startEdit }}" title="تعديل الجولة" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer;" style-hover="background:rgba(129,140,248,.2);">✎</button>
           <button onClick="{{ r.del }}" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(244,63,94,.12); border:1px solid rgba(244,63,94,.3); color:#f43f5e; cursor:pointer;" style-hover="background:rgba(244,63,94,.2);">{{ iconTrash }}</button>
         </div>
@@ -1310,6 +1312,17 @@ class Component extends DCLogic {
       this.setState({ adminRounds: local, adminMsg: '' });
     }
   }
+  async moveRound(id, direction) {
+    try {
+      const rounds = await this.api('/api/wslha-admin/rounds/' + id + '/move', {
+        method: 'PATCH',
+        body: JSON.stringify({ direction }),
+      });
+      this.setState({ adminRounds: rounds });
+    } catch (e) {
+      this.setState({ adminMsg: this._netNote(e) });
+    }
+  }
   startEditRound(round) {
     this.setState({
       editingRoundId: round.id,
@@ -1405,6 +1418,7 @@ class Component extends DCLogic {
       trash: [['polyline', { points: '3 6 5 6 21 6' }], ['path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' }]],
       ticket: [['path', { d: 'M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z' }], ['path', { d: 'M13 5v2' }], ['path', { d: 'M13 11v2' }], ['path', { d: 'M13 17v2' }]],
       chevron: [['polyline', { points: '6 9 12 15 18 9' }]],
+      chevronUp: [['polyline', { points: '18 15 12 9 6 15' }]],
       edit: [['path', { d: 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' }], ['path', { d: 'M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z' }]],
       logout: [['path', { d: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4' }], ['polyline', { points: '16 17 21 12 16 7' }], ['line', { x1: '21', y1: '12', x2: '9', y2: '12' }]],
     };
@@ -1531,11 +1545,15 @@ class Component extends DCLogic {
       goLobby: () => this.go('lobby'),
       // لوحة التحكم
       goAdmin: () => this.go('admin'),
-      adminRounds: (this.state.adminRounds || []).map(r => ({
+      adminRounds: (this.state.adminRounds || []).map((r, i, arr) => ({
         id: r.id, hint: r.hint || '—',
         answersText: (r.answers || []).join('، '),
         question: r.question || '', hasQuestion: !!r.question,
         category: r.category || '—',
+        isFirst: i === 0, isLast: i === arr.length - 1,
+        moveUpOpacity: i === 0 ? .35 : 1, moveDownOpacity: i === arr.length - 1 ? .35 : 1,
+        moveUp: () => this.moveRound(r.id, 'up'),
+        moveDown: () => this.moveRound(r.id, 'down'),
         editing: this.state.editingRoundId === r.id,
         startEdit: () => this.startEditRound(r),
         cancelEdit: () => this.cancelEditRound(),
@@ -1577,6 +1595,7 @@ class Component extends DCLogic {
       createRound: () => this.createRound(),
       adminMsg: this.state.adminMsg, hasAdminMsg: !!this.state.adminMsg,
       iconCog: I(ic.cog, 18), iconUpload: I(ic.upload, 16), iconTrash: I(ic.trash, 16),
+      iconChevronUp: I(ic.chevronUp, 15), iconChevronDown: I(ic.chevron, 15),
       user: this.state.user || { username: '' },
       isLoggedIn: !!this.state.user, isLoggedOut: !this.state.user,
       logout: () => this.logout(),
