@@ -49,11 +49,13 @@ const PLATFORM_CSP = [
   "base-uri 'self'",
   "object-src 'none'",
   // الواجهة الحالية تستخدم معالجات onclick مضمّنة؛ إبقاؤها هنا يمنع كسر المنصة أثناء الانتقال التدريجي للمعالجات الخارجية.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.socket.io https://cdnjs.cloudflare.com https://unpkg.com",
+  // eauthenticate.saudibusiness.gov.sa: سكربت ختم "متجر موثّق" الرسمي من المركز السعودي للأعمال.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.socket.io https://cdnjs.cloudflare.com https://unpkg.com https://eauthenticate.saudibusiness.gov.sa",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' https: wss: ws:",
+  "frame-src 'self' https://eauthenticate.saudibusiness.gov.sa",
   "frame-ancestors 'self'",
 ].join('; ');
 
