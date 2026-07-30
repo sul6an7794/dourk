@@ -221,7 +221,10 @@ const App = {
     this.state.otpPhone = phone;
     this.state.otpSending = true;
     this.setAuthError('');
-    this.render();
+    // تحديث مباشر لزر الإرسال بدل render() كامل — render() يستبدل <main> بعنصر جديد
+    // فيعيد تشغيل حركة الدخول (dwrkUp) وتصير ومضة واضحة قبل ما تظهر شاشة الكود فعليًا.
+    const sendBtn = document.getElementById('otpSendBtn');
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'جارِ الإرسال...'; }
     try {
       await this.api('/api/auth/otp/request', { method: 'POST', body: JSON.stringify({ phone }) });
       this.state.otpStage = 'code';
@@ -242,7 +245,11 @@ const App = {
     if (!otp || otp.length < 4) return this.setAuthError('أدخل رمز التحقق كامل');
     this.state.otpVerifying = true;
     this.setAuthError('');
-    this.render();
+    // نفس فكرة requestOtp — تحديث مباشر بدل render() كامل حتى ما تنعاد حركة الدخول
+    // وتصير ومضة، وحتى ما تنمسح خانات الرمز المكتوبة بإعادة الرسم وهي لسا قيد التحقق.
+    document.querySelectorAll('.otp-box').forEach((b) => { b.disabled = true; });
+    const verifyBtn = document.getElementById('otpVerifyBtn');
+    if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'جارِ التحقق...'; }
     try {
       const { user, isNew } = await this.api('/api/auth/otp/verify', {
         method: 'POST',
@@ -531,7 +538,7 @@ const App = {
         customCodeField +
         '<div class="hint-banner">' + ICONS.ticket + ' أول تذكرة علينا — تجي مع حسابك الجديد</div>' +
         errorSlot +
-        '<button class="btn-primary" ' + (s.otpSending ? 'disabled' : '') + ' onclick="App.requestOtp()">' + (s.otpSending ? 'جارِ الإرسال...' : 'إرسال رمز التحقق') + '</button>' +
+        '<button id="otpSendBtn" class="btn-primary" ' + (s.otpSending ? 'disabled' : '') + ' onclick="App.requestOtp()">' + (s.otpSending ? 'جارِ الإرسال...' : 'إرسال رمز التحقق') + '</button>' +
       '</div>';
     const otpBoxes = Array.from({ length: 4 }, (_, i) =>
       '<input class="otp-box" inputmode="numeric" maxlength="1" autocomplete="one-time-code" ' + (s.otpVerifying ? 'disabled' : '') + ' oninput="App.onOtpBoxInput(this,' + i + ')" onkeydown="App.onOtpBoxKeydown(event,' + i + ')">'
@@ -540,7 +547,7 @@ const App = {
       '<div class="form-col">' +
         '<div class="otp-boxes" dir="ltr">' + otpBoxes + '</div>' +
         errorSlot +
-        '<button class="btn-primary" ' + (s.otpVerifying ? 'disabled' : '') + ' onclick="App.verifyOtpCode()">' + (s.otpVerifying ? 'جارِ التحقق...' : 'تأكيد الدخول') + '</button>' +
+        '<button id="otpVerifyBtn" class="btn-primary" ' + (s.otpVerifying ? 'disabled' : '') + ' onclick="App.verifyOtpCode()">' + (s.otpVerifying ? 'جارِ التحقق...' : 'تأكيد الدخول') + '</button>' +
         '<button class="btn-link" onclick="App.backToPhoneStep()">تغيير الرقم</button>' +
       '</div>';
     const nameStep = '' +
