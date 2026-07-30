@@ -99,6 +99,10 @@ async function start(port = PORT) {
   const wslhaIndex = path.join(WSLHA_DIR, 'public', 'index.html');
   app.get(['/wslha', '/wslha/'], (req, res) => res.sendFile(wslhaIndex));
 
+  // رابط أقصر وأوضح للوحة تحكم وصّلها بدل /wslha?admin=1 — نفس صفحة وصّلها بالضبط، تُخدَّم
+  // مباشرة (لا إعادة توجيه) حتى يبقى شريط العنوان /admin نفسه بعد فتح اللوحة.
+  app.get(['/admin', '/admin/'], (req, res) => res.sendFile(wslhaIndex));
+
   // حسابات/دخول/إدارة مستخدمين — ملك المنصة نفسها، مشتركة لكل الألعاب، تعمل حتى لو انحذفت
   // أي لعبة لاحقًا (لا تعتمد على مجلد وصّلها أو مافيا إطلاقًا).
   app.use('/api/auth', authRoutes);

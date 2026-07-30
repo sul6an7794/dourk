@@ -443,7 +443,7 @@ const App = {
 
   screenHome() {
     const adminLink = this.state.user && this.state.user.isAdmin
-      ? '<span>·</span><a href="/wslha/?admin=1">لوحة التحكم</a>'
+      ? '<span>·</span><a href="/admin">لوحة التحكم</a>'
       : '';
     return '' +
       '<main data-screen="home">' +

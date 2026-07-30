@@ -34,7 +34,8 @@
   (function () {
     try {
       const params = new URLSearchParams(window.location.search);
-      const hasRoomFlow = params.has('room') || params.get('autoCreate') === '1' || params.get('admin') === '1';
+      const isAdminPath = window.location.pathname.replace(/\/$/, '') === '/admin';
+      const hasRoomFlow = params.has('room') || params.get('autoCreate') === '1' || params.get('admin') === '1' || isAdminPath;
       const hasResume = !!localStorage.getItem('wsl_resume');
       if (!hasRoomFlow && !hasResume) window.location.replace('/');
     } catch (e) {}
@@ -733,7 +734,7 @@ class Component extends DCLogic {
     autoCreating: (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('autoCreate') === '1'),
     // نفس الفكرة بالضبط لرابط لوحة التحكم (?admin=1 من زر "لوحة التحكم" بمنصة دورك) — نمنع
     // ومضة شاشة "عدد اللاعبين" لحين ما يتأكد إن المستخدم مشرف فعلًا وننقله لصفحة الإدارة.
-    pendingAdmin: (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1'),
+    pendingAdmin: (typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('admin') === '1' || window.location.pathname.replace(/\/$/, '') === '/admin')),
     user: null,
     loading: false, offline: false, joinCode: '', joinName: '',
     elapsed: 0, roundIndex: 0, answer: '', locked: 0, showHint: false, gameScore: 0, hintText: '', hintShown: false, wrongCount: 0, resultsTickerScore: 0,
@@ -844,7 +845,8 @@ class Component extends DCLogic {
       this.setState({ user, credits: (user.credits != null ? user.credits : this.state.credits) }, () => {
         if (!this._socket) this.connectSocket();
         try {
-          if (new URLSearchParams(window.location.search).get('admin') === '1' && user.isAdmin) {
+          const isAdminLink = new URLSearchParams(window.location.search).get('admin') === '1' || window.location.pathname.replace(/\/$/, '') === '/admin';
+          if (isAdminLink && user.isAdmin) {
             window.history.replaceState(null, '', window.location.pathname);
             this.go('admin');
             return;
