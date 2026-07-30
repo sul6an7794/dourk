@@ -763,13 +763,28 @@ const App = {
     if (fn === 'screenHome') this.mountSbcSeal();
   },
 
-  // ختم "متجر موثّق" (المركز السعودي للأعمال): سكربتهم الرسمي يبحث عن العنصر مرة وحدة
-  // فقط عند تحميله (بدون مراقبة DOM)، وواجهتنا SPA تعيد رسم الفوتر بكل تنقل — فبدون
-  // إعادة حقن السكربت هنا يختفي الختم لو رجع المستخدم للرئيسية بعد زيارة شاشة ثانية.
+  // ختم "متجر موثّق" (المركز السعودي للأعمال): نبني إطار iframe الختم بأنفسنا بنفس عقد
+  // سكربتهم الرسمي (seal.js) بدل تحميله وتشغيله — سكربتهم يربط اتجاه انبثاق تفاصيل الختم
+  // (pos=top/bottom) بوضع التعويم (position:fixed) عبر نفس خاصية data-position، فما فيه
+  // طريقة نطلب منه "مضمّن بتخطيط الصفحة العادي + ينبثق تفاصيله لفوق" وإحنا محتاجينها بالضبط
+  // بما إن الختم عندنا بأسفل الصفحة (الفوتر). ونبقيه position:absolute داخل حاوية ثابتة
+  // الحجم حتى ما يزحزح علامة تيك توك المجاورة له بالفوتر لما ينبثق (flex بيعيد التوسيط
+  // لو كبر الإطار وهو جزء من التخطيط العادي).
   mountSbcSeal() {
-    const s = document.createElement('script');
-    s.src = 'https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js';
-    document.body.appendChild(s);
+    const el = document.querySelector('.sbc-verify-seal');
+    if (!el || el.getAttribute('data-sbc-mounted')) return;
+    const token = el.getAttribute('data-token');
+    if (!token) return;
+    el.setAttribute('data-sbc-mounted', '1');
+    const lang = (document.documentElement.getAttribute('lang') || 'ar').slice(0, 2);
+    const f = document.createElement('iframe');
+    f.className = 'sbc-seal-frame';
+    f.src = 'https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal?token=' + encodeURIComponent(token) + '&lang=' + encodeURIComponent(lang) + '&pos=bottom';
+    f.title = 'SBC Verification';
+    f.setAttribute('loading', 'lazy');
+    f.setAttribute('scrolling', 'no');
+    f.style.cssText = 'border:0;width:120px;height:44px;max-width:100%;transition:width .18s ease,height .18s ease;';
+    el.appendChild(f);
   },
 
   async init() {
@@ -791,3 +806,14 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// يبلغنا محتوى ختم "متجر موثّق" (iframe من نطاقهم) بحجمه الفعلي عبر postMessage عند
+// انبثاق تفاصيله بالتحويم — نفس آلية سكربتهم الرسمي بالضبط، لازمة حتى يكبر إطارنا معه.
+window.addEventListener('message', (e) => {
+  if (!e || !e.data || e.data.sbcSeal !== true) return;
+  document.querySelectorAll('.sbc-seal-frame').forEach((f) => {
+    if (f.contentWindow !== e.source) return;
+    if (e.data.width) f.style.width = e.data.width + 'px';
+    if (e.data.height) f.style.height = e.data.height + 'px';
+  });
+});
