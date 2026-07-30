@@ -103,7 +103,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 12 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (/^image\//.test(file.mimetype) && file.mimetype !== 'image/svg+xml') cb(null, true);
+    // بعض المتصفحات (خصوصًا بويندوز) ما تتعرّف على نوع HEIC/HEIF فتبلّغ عنه بصيغة عامة
+    // (application/octet-stream) بدل image/heic — نقبله بامتداد الملف بدل الاعتماد على
+    // الترويسة وحدها، بما إن compressImage صار يدعم تحويله فعليًا.
+    const isHeicExt = /\.(heic|heif)$/i.test(file.originalname || '');
+    if ((/^image\//.test(file.mimetype) && file.mimetype !== 'image/svg+xml') || isHeicExt) cb(null, true);
     else cb(new Error('يُسمح بالصور فقط (SVG غير مسموح لأسباب أمنية)'));
   },
 });
