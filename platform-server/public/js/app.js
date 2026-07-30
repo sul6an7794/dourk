@@ -764,12 +764,15 @@ const App = {
   },
 
   // ختم "متجر موثّق" (المركز السعودي للأعمال): نبني إطار iframe الختم بأنفسنا بنفس عقد
-  // سكربتهم الرسمي (seal.js) بدل تحميله وتشغيله — سكربتهم يربط اتجاه انبثاق تفاصيل الختم
-  // (pos=top/bottom) بوضع التعويم (position:fixed) عبر نفس خاصية data-position، فما فيه
-  // طريقة نطلب منه "مضمّن بتخطيط الصفحة العادي + ينبثق تفاصيله لفوق" وإحنا محتاجينها بالضبط
-  // بما إن الختم عندنا بأسفل الصفحة (الفوتر). ونبقيه position:absolute داخل حاوية ثابتة
-  // الحجم حتى ما يزحزح علامة تيك توك المجاورة له بالفوتر لما ينبثق (flex بيعيد التوسيط
-  // لو كبر الإطار وهو جزء من التخطيط العادي).
+  // سكربتهم الرسمي (seal.js) بدل تحميله وتشغيله. جرّبنا pos=bottom لضبط اتجاه الانبثاق
+  // لفوق، لكن تبيّن فعليًا (بمحاكاة حية) إنه يكسر صفحتهم الداخلية فينكمش الختم لحجم شبه
+  // معدوم (2×2px) — على الأغلب لأن pos عندهم مصمّم فقط لحالة position:fixed (تعويم)،
+  // وما جُرِّب أبدًا بوضع مضمّن بالتخطيط العادي زي حالتنا. بدون أي قيمة pos الختم يشتغل
+  // صح تمامًا ويظل ينبثق لفوق افتراضيًا (أكّدناها بمحاكاة حية أيضًا). ونبقيه
+  // position:absolute داخل حاوية ثابتة الحجم حتى ما يزحزح علامة تيك توك المجاورة له
+  // بالفوتر لما ينبثق (flex بيعيد التوسيط لو كبر الإطار وهو جزء من التخطيط العادي) —
+  // وبدون max-width:100% (كانت تقصّ عرض الانبثاق على عرض الحاوية الصغيرة 120px بدل
+  // العرض الحقيقي اللي يطلبه ~288px، وهذا السبب الفعلي وراء ظهوره "مقصوص لنص").
   mountSbcSeal() {
     const el = document.querySelector('.sbc-verify-seal');
     if (!el || el.getAttribute('data-sbc-mounted')) return;
@@ -779,11 +782,11 @@ const App = {
     const lang = (document.documentElement.getAttribute('lang') || 'ar').slice(0, 2);
     const f = document.createElement('iframe');
     f.className = 'sbc-seal-frame';
-    f.src = 'https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal?token=' + encodeURIComponent(token) + '&lang=' + encodeURIComponent(lang) + '&pos=bottom';
+    f.src = 'https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal?token=' + encodeURIComponent(token) + '&lang=' + encodeURIComponent(lang);
     f.title = 'SBC Verification';
     f.setAttribute('loading', 'lazy');
     f.setAttribute('scrolling', 'no');
-    f.style.cssText = 'border:0;width:120px;height:44px;max-width:100%;transition:width .18s ease,height .18s ease;';
+    f.style.cssText = 'border:0;width:120px;height:44px;transition:width .18s ease,height .18s ease;';
     el.appendChild(f);
   },
 
