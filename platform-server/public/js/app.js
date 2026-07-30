@@ -488,7 +488,7 @@ const App = {
       '<footer>' +
         '<div class="tag">لمّ ربعك… والعبها صح</div>' +
         '<div class="links"><a class="footer-link" href="#privacy">سياسة الخصوصية</a><span>·</span><a class="footer-link" href="#terms">الشروط والأحكام</a>' + adminLink + '</div>' +
-        '<div class="socials"><a href="https://www.tiktok.com/@dourk" target="_blank" rel="noopener noreferrer" aria-label="تيك توك" title="تيك توك">' + ICONS.tiktok + '</a><a href="https://wa.me/?text=' + encodeURIComponent('جرّب منصة دورك: ' + location.origin) + '" target="_blank" rel="noopener noreferrer" aria-label="مشاركة عبر واتساب" title="مشاركة عبر واتساب">' + ICONS.whatsapp + '</a></div>' +
+        '<div class="socials"><a href="https://www.tiktok.com/@dourk" target="_blank" rel="noopener noreferrer" aria-label="تيك توك" title="تيك توك">' + ICONS.tiktok + '</a><div class="sbc-verify-seal" data-token="N0dGTVFMVGlxVnIyMHNzTlY4R00yUT09"></div></div>' +
         '<div class="copy">© دورك ٢٠٢٦ — جميع الحقوق محفوظة</div>' +
       '</footer>';
   },
@@ -753,6 +753,16 @@ const App = {
     const map = { home: 'screenHome', auth: 'screenAuth', joinName: 'screenJoinName', game: 'screenGame', create: 'screenCreate', tickets: 'screenTickets', profile: 'screenProfile', privacy: 'screenLegal', terms: 'screenLegal' };
     const fn = map[this.state.screen] || 'screenHome';
     document.getElementById('screenRoot').innerHTML = fn === 'screenLegal' ? this[fn](this.state.screen) : this[fn]();
+    if (fn === 'screenHome') this.mountSbcSeal();
+  },
+
+  // ختم "متجر موثّق" (المركز السعودي للأعمال): سكربتهم الرسمي يبحث عن العنصر مرة وحدة
+  // فقط عند تحميله (بدون مراقبة DOM)، وواجهتنا SPA تعيد رسم الفوتر بكل تنقل — فبدون
+  // إعادة حقن السكربت هنا يختفي الختم لو رجع المستخدم للرئيسية بعد زيارة شاشة ثانية.
+  mountSbcSeal() {
+    const s = document.createElement('script');
+    s.src = 'https://eauthenticate.saudibusiness.gov.sa/EAuthSealApi/seal.js';
+    document.body.appendChild(s);
   },
 
   async init() {
