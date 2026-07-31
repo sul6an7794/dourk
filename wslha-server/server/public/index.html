@@ -682,7 +682,9 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:820},&quot;apiUrl&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;الخادم&quot;}}">
-function arNum(v) { return String(v).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]); }
+// أرقام إنجليزية بكل مكان — نفس أسلوب دورك (رقم الغرفة تحديدًا لازم يبقى بأرقام إنجليزية
+// حتى يتطابق مع خانة الانضمام بمنصة دورك، وباقي الأرقام صارت إنجليزية معه لنفس الاتساق).
+function arNum(v) { return String(v); }
 
 // تحميل مؤجّل لأداة التقاط الصورة (html2canvas) — تُستخدم فقط بزر "مشاركة النتيجة"،
 // فلا داعي تُحمَّل مع كل زيارة للصفحة.
@@ -1603,7 +1605,7 @@ class Component extends DCLogic {
       // اللوبي — فريقي فقط
       lobbyTeamName: myTeam ? (myTeam.name || ('فريق ' + arNum(myTeamIdx + 1))) : 'فريقي',
       lobbyPlayers: myPlayers.map((p, i) => ({
-        name: p.name, slotLabel: ['١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'][i] || arNum(i + 1),
+        name: p.name, slotLabel: arNum(i + 1),
         roleText: p.isCaptain ? 'قائد' : 'عضو',
         roleColor: p.isCaptain ? '#fbbf24' : '#a9a7cc',
         avatarBg: p.isCaptain ? 'linear-gradient(135deg,#fbbf24,#f59e0b)' : 'rgba(255,255,255,.1)',
@@ -1613,7 +1615,7 @@ class Component extends DCLogic {
         canKick: this.state.role === 'captain' && !p.isCaptain && !(myTeam && myTeam.started),
         kick: () => this.kickPlayer(p.id),
       })),
-      lobbyCount: arNum(myCount), lobbyMax: '٣',
+      lobbyCount: arNum(myCount), lobbyMax: '3',
       iAmCaptain: this.state.role === 'captain',
       teamFull: myFull, teamNotFull: !myFull,
       waitMsg: arNum('بانتظار اكتمال الفريق (' + myCount + '/3)'),
