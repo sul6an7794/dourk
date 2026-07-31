@@ -992,19 +992,29 @@ class Component extends DCLogic {
   }
   // يحاول يسترجع مكان اللاعب بفريقه بعد إعادة اتصال (تحديث صفحة، إغلاق/فتح المتصفح...) لو عنده بيانات محفوظة.
   _tryResume() {
+    // لو انطرد اللاعب من فريقه وهو منقطع (بدون ما يستلم حدث 'kicked' مباشرة)، أي محاولة رجوع
+    // تلقائي هنا لازم تفشل بهدوء بدل ما ترجّعه للفريق تلقائيًا — لهذا نُرسل علم resume:true
+    // ونتحقق من رد السيرفر بالتحديد لهذا الخطأ (مسموح له يرجع لو ضغط على الفريق يدويًا بنفسه).
+    const onKickedDuringResume = () => {
+      this._clearResume();
+      this.setState({ myTeamIndex: null, role: null, statusMsg: 'تم إخراجك من الفريق من قبل القائد' }, () => this.go('teams'));
+    };
     // إعادة اتصال Socket.IO أثناء نفس الجلسة (انقطاع شبكة مؤقت، قفل شاشة الجوال، تبديل تطبيقات)
     // ما يصفّر state.myTeamIndex — الصفحة ما انعاد تحميلها، بس السوكيت القديم صار ميت والسيرفر
     // لسا محتفظ بـsocketId القديم لهذا اللاعب. بدون إعادة نداء chooseTeam هنا، السيرفر ما يعرف
     // أبدًا إن معرّف السوكيت تغيّر، فتضيع عليه كل تحديثات الصور اللاحقة نهائيًا (حتى الجولات الجاية)
     // إلى أن يعيد تحميل الصفحة يدويًا. نعيد الانضمام بنفس الغرفة/الفريق فورًا بأي إعادة اتصال.
     if (this.state.myTeamIndex != null && this.state.roomCode) {
-      this._socket.emit('chooseTeam', { roomCode: this.state.roomCode, teamIndex: this.state.myTeamIndex, name: this.myName() }, () => {});
+      this._socket.emit('chooseTeam', { roomCode: this.state.roomCode, teamIndex: this.state.myTeamIndex, name: this.myName(), resume: true }, (res) => {
+        if (res && res.error === 'kicked') onKickedDuringResume();
+      });
       return;
     }
     const r = this._loadResume();
     if (!r || !r.roomCode) return;
-    this._socket.emit('chooseTeam', { roomCode: r.roomCode, teamIndex: r.teamIndex, teamName: r.teamName, name: r.name }, (res) => {
+    this._socket.emit('chooseTeam', { roomCode: r.roomCode, teamIndex: r.teamIndex, teamName: r.teamName, name: r.name, resume: true }, (res) => {
       if (res && res.ok) this.setState({ roomCode: r.roomCode }, () => this._onTeamJoined(res, r.teamName, r.name));
+      else if (res && res.error === 'kicked') onKickedDuringResume();
       else this._clearResume();
     });
   }

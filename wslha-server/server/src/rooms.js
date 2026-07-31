@@ -50,6 +50,9 @@ function makeTeam(index) {
     started: false,
     timer: null,
     lockTimer: null,
+    // أجهزة (deviceId) اتطردت من هذا الفريق — نمنع رجوعها التلقائي فقط (عند تحديث الصفحة أو
+    // إعادة الاتصال)، بدون ما نمنع رجوعها لو ضغطت على الفريق يدويًا من جديد (مسموح).
+    kickedDeviceIds: new Set(),
   };
 }
 
@@ -118,11 +121,18 @@ function broadcastRoomResults(io, room) {
 // لاعب يختار فريقًا (أو ينضم لفريق فيه أعضاء وفاضي مكان فيه).
 // أول من يدخل فريقًا فاضيًا يصبح قائده ويسمّيه.
 // إذا كان جهازه (deviceId) نفس جهاز عضو منقطع الاتصال بهذا الفريق، يسترجع مكانه بدل الانضمام كلاعب جديد.
-function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name }) {
+function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name, resume }) {
   const room = getRoom(roomCode);
   if (!room) return { error: 'لم يتم العثور على الغرفة' };
   const team = room.teams[Number(teamIndex)];
   if (!team) return { error: 'فريق غير موجود' };
+
+  // محاولة رجوع تلقائي (بعد تحديث الصفحة أو إعادة اتصال) لجهاز مطرود من هذا الفريق — نرفضها
+  // بصمت بدل ما نرجّعه للفريق تلقائيًا. لو رجع بنفسه وضغط على الفريق يدويًا (بدون علم resume)
+  // فهذا مسار مختلف كليًا (بالأسفل) ويُسمح له ينضم عادي.
+  if (resume && socket.data.deviceId && team.kickedDeviceIds.has(socket.data.deviceId)) {
+    return { error: 'kicked' };
+  }
 
   const currentRoomCode = socket.data.roomCode;
   const currentTeamIndex = socket.data.teamIndex;
@@ -424,6 +434,7 @@ function kickPlayer(io, socket, { playerId }) {
   const target = team.players.find((p) => p.id === Number(playerId));
   if (!target) return { error: 'اللاعب غير موجود' };
   if (target.isCaptain) return { error: 'ما تقدر تطرد نفسك — استخدم مغادرة الغرفة' };
+  if (target.deviceId) team.kickedDeviceIds.add(target.deviceId);
   if (target.connected !== false) io.to(target.socketId).emit('kicked', {});
   removePlayerFromTeam(io, room, team, target.socketId);
   return { ok: true };

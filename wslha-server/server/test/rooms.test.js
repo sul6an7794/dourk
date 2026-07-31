@@ -137,6 +137,23 @@ test('kickPlayer: يُرفض بعد بدء اللعبة', () => {
   assert.match(res.error, /بعد بدء اللعبة/);
 });
 
+test('kickPlayer: جهاز مطرود يُرفض تلقائيًا لو حاول رجوع resume، بس يقدر ينضم يدويًا من جديد', () => {
+  const { io, room, cap, m2Res } = setupFullTeam('t9');
+  const targetId = m2Res.teams[0].players.find((p) => p.name === 'عضو2').id;
+  rooms.kickPlayer(io, cap, { playerId: targetId });
+
+  // محاولة رجوع تلقائي (نفس deviceId، بسوكيت جديد بعد تحديث الصفحة) — لازم تُرفض بصمت.
+  const resumeSocket = makeMockSocket('t9-m2-new-socket', 't9-dev-m2');
+  const resumeRes = rooms.chooseTeam(io, resumeSocket, { roomCode: room.code, teamIndex: 0, name: 'عضو2', resume: true });
+  assert.equal(resumeRes.error, 'kicked');
+  assert.equal(room.teams[0].players.length, 2);
+
+  // نفس الجهاز يضغط يدويًا على الفريق من جديد (بدون علم resume) — لازم يُسمح له ينضم عادي.
+  const manualRes = rooms.chooseTeam(io, resumeSocket, { roomCode: room.code, teamIndex: 0, name: 'عضو2' });
+  assert.equal(manualRes.ok, true);
+  assert.equal(room.teams[0].players.length, 3);
+});
+
 test('submitAnswer: يقبل الإجابة الصحيحة الكاملة (مطابقة تامة)', () => {
   const { io, room, cap } = setupFullTeam('t9');
   rooms.startGame(io, cap);
