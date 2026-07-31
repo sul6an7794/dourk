@@ -100,19 +100,6 @@ function makeMongoBackend(uri) {
     async putUser(u) { await User.updateOne({ _id: u.id }, { $set: u }, { upsert: true }); },
     async delUser(id) { await User.deleteOne({ _id: id }); },
     async putCreditLog(entry) { await CreditLog.updateOne({ _id: entry.id }, { $set: entry }, { upsert: true }); },
-    // استرجاع يدوي من النسخة القديمة (appstate) — upsert آمن (لا يكرّر)، ويرجّع تقريرًا.
-    async recoverFromLegacy() {
-      const legacy = await Legacy.findById('state').lean();
-      if (!legacy || !legacy.json) return { legacyFound: false, users: 0 };
-      const s = JSON.parse(legacy.json);
-      const report = { legacyFound: true, users: (s.users || []).length };
-      for (const u of s.users || []) await User.updateOne({ _id: u.id }, { $set: u }, { upsert: true });
-      const maxId = (arr) => arr.reduce((m, x) => Math.max(m, x.id || 0), 0);
-      const cur = await Counter.findById('users').lean();
-      const want = Math.max(maxId(s.users || []), (s.nextIds || {}).users ? (s.nextIds.users - 1) : 0, cur ? cur.seq : 0);
-      await Counter.updateOne({ _id: 'users' }, { $set: { seq: want } }, { upsert: true });
-      return report;
-    },
   };
 }
 
@@ -148,22 +135,6 @@ async function init() {
   if (!Array.isArray(state.credit_log)) state.credit_log = [];
   if (!state.nextIds) state.nextIds = {};
   if (!state.nextIds.credit_log) state.nextIds.credit_log = 1;
-}
-
-// ---- استرجاع البيانات القديمة من النسخة الاحتياطية (appstate) ----
-async function recoverFromLegacy() {
-  const hasMongoUri = !!process.env.MONGODB_URI;
-  const uriLen = (process.env.MONGODB_URI || '').length;
-  if (!backend || !backend.recoverFromLegacy) {
-    return { storage: 'file (مؤقت!)', hasMongoUri, uriLen, note: 'السيرفر لا يستخدم MongoDB — تحقق من متغيّر MONGODB_URI في Render' };
-  }
-  const report = await backend.recoverFromLegacy();
-  const loaded = await backend.loadAll();
-  if (loaded) state = loaded; // تحديث الذاكرة بالبيانات المستعادة
-  report.storage = 'mongodb';
-  report.hasMongoUri = hasMongoUri;
-  report.nowUsers = state.users.length;
-  return report;
 }
 
 // ---- المستخدمون ---- (قراءة متزامنة من الذاكرة، كتابة ذرية للمستند)
@@ -245,7 +216,6 @@ async function deleteUser(id) {
 
 module.exports = {
   init,
-  recoverFromLegacy,
   getUserByUsername,
   getUserByPhone,
   getUserById,

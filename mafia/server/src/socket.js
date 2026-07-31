@@ -7,6 +7,15 @@ const allow = createSocketLimiter({ windowMs: 10000, max: 40 });
 const JOIN_ATTEMPT_WINDOW_MS = 60 * 1000;
 const MAX_BAD_JOIN_CODES = 5;
 const badJoinAttempts = new Map();
+// مفاتيحها (IP+deviceId) ما تُحذف إلا عند نجاح انضمام (clearBadJoin) — محاولات فاشلة متكررة
+// بلا نجاح أبدًا تبقى بالذاكرة للأبد بدون هذا التنظيف الدوري.
+const badJoinSweepTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of badJoinAttempts) {
+    if (now - entry.windowStart > JOIN_ATTEMPT_WINDOW_MS) badJoinAttempts.delete(key);
+  }
+}, 10 * 60 * 1000);
+if (badJoinSweepTimer.unref) badJoinSweepTimer.unref();
 
 function joinAttemptKey(socket, deviceId) {
   const address = socket.handshake.address || (socket.conn && socket.conn.remoteAddress) || 'unknown';
@@ -824,6 +833,10 @@ function attachSocketHandlers(io) {
     });
 
     socket.on('disconnect', () => {
+      // مباشرة هنا لا داخل handleDisconnectOrLeave — تلك تخرج فورًا لو السوكيت ما انضم لغرفة
+      // أصلًا، فيفضل قيد الحد الأقصى (hits) لهذا socket.id بالذاكرة للأبد (كل اتصال جديد له
+      // معرّف فريد ما يتكرر، فتكبر الخريطة بلا حدود مع الوقت لأي عملية تشتغل طويلًا).
+      allow.cleanup(socket.id);
       handleDisconnectOrLeave(io, socket, { explicit: false });
     });
   });

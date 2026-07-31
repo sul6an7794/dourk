@@ -15,12 +15,13 @@ function Timer(deadlineTs) {
   }
 
   update();
+  // الفاصل يوقف نفسه لوحده بمجرد ما ينتهي العدّاد — ما يحتاج تفكيك خارجي (renderNow يمسح
+  // root.innerHTML بالكامل بكل إعادة رسم على أي حال، فما فيه "unmount" حقيقي نربط فيه دالة تفكيك).
   const interval = setInterval(() => {
     update();
     if (deadlineTs && deadlineTs - Date.now() <= 0) clearInterval(interval);
   }, 250);
 
-  span.destroy = () => clearInterval(interval);
   return span;
 }
 
