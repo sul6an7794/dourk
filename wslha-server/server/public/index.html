@@ -443,8 +443,13 @@
         <input value="{{ newHint }}" onInput="{{ setNewHint }}" placeholder="مثال: حيوان أليف" style="width:100%; font-family:'Thmanyah Sans',sans-serif; font-size:15px; color:#f1f0ff; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px 14px; outline:none;" style-focus="border-color:rgba(129,140,248,.7);">
       </div>
       <div style="flex:1; min-width:160px;">
-        <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">الإجابات المقبولة <span style="color:#6b6894; font-weight:500;">(بفاصلة)</span></label>
-        <input value="{{ newAnswers }}" onInput="{{ setNewAnswers }}" placeholder="كلب، جرو، بوكسر" style="width:100%; font-family:'Thmanyah Sans',sans-serif; font-size:15px; color:#f1f0ff; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px 14px; outline:none;" style-focus="border-color:rgba(129,140,248,.7);">
+        <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">الإجابات المقبولة <span style="color:#6b6894; font-weight:500;">(Enter بعد كل وحدة)</span></label>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; width:100%; min-height:47px; font-family:'Thmanyah Sans',sans-serif; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:6px 8px;">
+          <sc-for list="{{ newAnswerChips }}" as="a" hint-placeholder-count="0">
+            <span style="display:flex; align-items:center; gap:6px; background:rgba(129,140,248,.18); color:#c4b5fd; border-radius:20px; padding:5px 5px 5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">{{ a.text }}<button onClick="{{ a.remove }}" title="حذف" style="width:17px; height:17px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:11px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">×</button></span>
+          </sc-for>
+          <input value="{{ newAnswerDraft }}" onInput="{{ setNewAnswerDraft }}" onKeyDown="{{ handleNewAnswerKeyDown }}" onBlur="{{ commitNewAnswerDraft }}" placeholder="كلب، جرو، بوكسر…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
+        </div>
       </div>
     </div>
     <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
@@ -496,8 +501,13 @@
             <input value="{{ editHint }}" onInput="{{ setEditHint }}" style="width:100%; font-family:'Thmanyah Sans',sans-serif; font-size:15px; color:#f1f0ff; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px 14px; outline:none;" style-focus="border-color:rgba(129,140,248,.7);">
           </div>
           <div style="flex:1; min-width:160px;">
-            <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">الإجابات المقبولة <span style="color:#6b6894; font-weight:500;">(بفاصلة)</span></label>
-            <input value="{{ editAnswers }}" onInput="{{ setEditAnswers }}" style="width:100%; font-family:'Thmanyah Sans',sans-serif; font-size:15px; color:#f1f0ff; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:12px 14px; outline:none;" style-focus="border-color:rgba(129,140,248,.7);">
+            <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">الإجابات المقبولة <span style="color:#6b6894; font-weight:500;">(Enter بعد كل وحدة)</span></label>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; width:100%; min-height:47px; font-family:'Thmanyah Sans',sans-serif; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:6px 8px;">
+              <sc-for list="{{ editAnswerChips }}" as="a" hint-placeholder-count="0">
+                <span style="display:flex; align-items:center; gap:6px; background:rgba(129,140,248,.18); color:#c4b5fd; border-radius:20px; padding:5px 5px 5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">{{ a.text }}<button onClick="{{ a.remove }}" title="حذف" style="width:17px; height:17px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:11px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">×</button></span>
+              </sc-for>
+              <input value="{{ editAnswerDraft }}" onInput="{{ setEditAnswerDraft }}" onKeyDown="{{ handleEditAnswerKeyDown }}" onBlur="{{ commitEditAnswerDraft }}" placeholder="إجابة أخرى…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
+            </div>
           </div>
         </div>
         <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;">
@@ -742,8 +752,8 @@ class Component extends DCLogic {
     // الاتصال بالخادم
     connected: false, serverImage: null, serverImageLetter: null, lobbyPlayers: [], statusMsg: '', deviceId: null,
     // لوحة التحكم
-    adminRounds: [], adminStats: null, newHint: '', newAnswers: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], adminMsg: '',
-    editingRoundId: null, editHint: '', editAnswers: '', editQuestion: '', editCategory: CATEGORY_LIST[0], editShowLetters: false,
+    adminRounds: [], adminStats: null, newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], adminMsg: '',
+    editingRoundId: null, editHint: '', editAnswersList: [], editAnswerDraft: '', editQuestion: '', editCategory: CATEGORY_LIST[0], editShowLetters: false,
     serverTeams: [], myTeamIndex: null, namingTeam: null, teamNameInput: '', startRequested: false, shareCopied: false, resultsShareBusy: false, resultsShareDone: false, zoomOpen: false, countdown: 0,
     // الحساب: القوائم والتذاكر وتعديل الملف
     menuOpen: false, creditOpen: false, editMode: false, editSection: null,
@@ -1316,7 +1326,22 @@ class Component extends DCLogic {
   _loadLocalRounds() { try { return JSON.parse(localStorage.getItem('wsl_admin_rounds') || '[]') || []; } catch (e) { return []; } }
   _saveLocalRounds(list) { try { localStorage.setItem('wsl_admin_rounds', JSON.stringify(list || [])); } catch (e) {} }
   setNewHint(e) { this.setState({ newHint: e.target.value }); }
-  setNewAnswers(e) { this.setState({ newAnswers: e.target.value }); }
+  // إجابات كـ"وسوم" (chips) بدل نص مفصول بفواصل يدويًا — يمنع خطأ الفاصلة العربية/الإنجليزية
+  // أو نسيانها. كل ضغطة Enter (أو فاصلة) تحوّل ما كُتب لوسم منفصل قابل للحذف بمفرده.
+  setNewAnswerDraft(e) { this.setState({ newAnswerDraft: e.target.value }); }
+  commitNewAnswerDraft() {
+    const v = (this.state.newAnswerDraft || '').trim();
+    if (!v) { this.setState({ newAnswerDraft: '' }); return; }
+    const list = this.state.newAnswersList || [];
+    this.setState({ newAnswersList: list.includes(v) ? list : [...list, v], newAnswerDraft: '' });
+  }
+  handleNewAnswerKeyDown(e) {
+    if (e.key === 'Enter' || e.key === ',' || e.key === '،') { e.preventDefault(); this.commitNewAnswerDraft(); }
+    else if (e.key === 'Backspace' && !this.state.newAnswerDraft && (this.state.newAnswersList || []).length) {
+      this.removeNewAnswerChip((this.state.newAnswersList || []).length - 1);
+    }
+  }
+  removeNewAnswerChip(i) { this.setState({ newAnswersList: (this.state.newAnswersList || []).filter((_, k) => k !== i) }); }
   setNewCategory(e) { this.setState({ newCategory: e.target.value }); }
   setNewShowLetters(e) { this.setState({ newShowLetters: e.target.checked }); }
   // يضيف الصور المختارة إلى معاينة محلية (قبل إنشاء الجولة) — تُرفع فعليًا فقط بعد نجاح
@@ -1340,9 +1365,11 @@ class Component extends DCLogic {
   }
   async createRound() {
     const hint = (this.state.newHint || '').trim();
-    const answersRaw = (this.state.newAnswers || '').trim();
-    if (!answersRaw) { this.setState({ adminMsg: 'أدخل الإجابات المقبولة أولاً' }); return; }
-    const answers = answersRaw.split(/[،,]/).map(a => a.trim()).filter(Boolean);
+    const draft = (this.state.newAnswerDraft || '').trim();
+    const answers = (this.state.newAnswersList || []).slice();
+    if (draft && !answers.includes(draft)) answers.push(draft);
+    if (!answers.length) { this.setState({ adminMsg: 'أدخل إجابة واحدة على الأقل' }); return; }
+    const answersRaw = answers.join(',');
     const question = (this.state.newQuestion || '').trim();
     const category = this.state.newCategory || CATEGORY_LIST[0];
     const showLetters = !!this.state.newShowLetters;
@@ -1350,7 +1377,7 @@ class Component extends DCLogic {
     try {
       const round = await this.api('/api/wslha-admin/rounds', { method: 'POST', body: JSON.stringify({ hint, answers: answersRaw, question, category, showLetters }) });
       this._clearNewImages();
-      this.setState({ newHint: '', newAnswers: '', newQuestion: '', newShowLetters: false });
+      this.setState({ newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', newShowLetters: false });
       // نرفع الصور المعاينة (لو فيه) دفعة وحدة بعد ما تتأكد بيانات الجولة نفسها — نفس مسار
       // الرفع الحالي per-round، بس نستدعيه مباشرة بدل ما ننتظر ضغطة "رفع صور" لاحقة.
       if (stagedImages.length) await this.uploadImages(round.id, stagedImages.map((im) => im.file));
@@ -1360,7 +1387,7 @@ class Component extends DCLogic {
       local.unshift({ id: 'L' + Date.now(), hint: hint || (question || answers[0] || 'جولة'), answers, question, category, images: [] });
       this._saveLocalRounds(local);
       this._clearNewImages();
-      this.setState({ newHint: '', newAnswers: '', newQuestion: '', adminRounds: local, adminMsg: '' });
+      this.setState({ newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', adminRounds: local, adminMsg: '' });
     }
   }
   async deleteRound(id) {
@@ -1386,7 +1413,8 @@ class Component extends DCLogic {
     this.setState({
       editingRoundId: round.id,
       editHint: round.hint || '',
-      editAnswers: (round.answers || []).join('، '),
+      editAnswersList: (round.answers || []).slice(),
+      editAnswerDraft: '',
       editQuestion: round.question || '',
       editCategory: round.category || CATEGORY_LIST[0],
       editShowLetters: !!round.showLetters,
@@ -1394,19 +1422,34 @@ class Component extends DCLogic {
   }
   cancelEditRound() { this.setState({ editingRoundId: null }); }
   setEditHint(e) { this.setState({ editHint: e.target.value }); }
-  setEditAnswers(e) { this.setState({ editAnswers: e.target.value }); }
+  setEditAnswerDraft(e) { this.setState({ editAnswerDraft: e.target.value }); }
+  commitEditAnswerDraft() {
+    const v = (this.state.editAnswerDraft || '').trim();
+    if (!v) { this.setState({ editAnswerDraft: '' }); return; }
+    const list = this.state.editAnswersList || [];
+    this.setState({ editAnswersList: list.includes(v) ? list : [...list, v], editAnswerDraft: '' });
+  }
+  handleEditAnswerKeyDown(e) {
+    if (e.key === 'Enter' || e.key === ',' || e.key === '،') { e.preventDefault(); this.commitEditAnswerDraft(); }
+    else if (e.key === 'Backspace' && !this.state.editAnswerDraft && (this.state.editAnswersList || []).length) {
+      this.removeEditAnswerChip((this.state.editAnswersList || []).length - 1);
+    }
+  }
+  removeEditAnswerChip(i) { this.setState({ editAnswersList: (this.state.editAnswersList || []).filter((_, k) => k !== i) }); }
   setEditQuestion(e) { this.setState({ editQuestion: e.target.value }); }
   setEditCategory(e) { this.setState({ editCategory: e.target.value }); }
   setEditShowLetters(e) { this.setState({ editShowLetters: e.target.checked }); }
   async saveEditRound(id) {
-    const answersRaw = (this.state.editAnswers || '').trim();
-    if (!answersRaw) { this.setState({ adminMsg: 'أدخل الإجابات المقبولة أولاً' }); return; }
+    const draft = (this.state.editAnswerDraft || '').trim();
+    const answers = (this.state.editAnswersList || []).slice();
+    if (draft && !answers.includes(draft)) answers.push(draft);
+    if (!answers.length) { this.setState({ adminMsg: 'أدخل إجابة واحدة على الأقل' }); return; }
     try {
       await this.api('/api/wslha-admin/rounds/' + id, {
         method: 'PATCH',
         body: JSON.stringify({
           hint: (this.state.editHint || '').trim(),
-          answers: answersRaw,
+          answers: answers.join(','),
           question: (this.state.editQuestion || '').trim(),
           category: this.state.editCategory || CATEGORY_LIST[0],
           showLetters: !!this.state.editShowLetters,
@@ -1670,7 +1713,9 @@ class Component extends DCLogic {
         onUpload: (e) => { this.uploadImages(r.id, e.target.files); e.target.value = ''; },
       })),
       editHint: this.state.editHint, setEditHint: (e) => this.setEditHint(e),
-      editAnswers: this.state.editAnswers, setEditAnswers: (e) => this.setEditAnswers(e),
+      editAnswerChips: (this.state.editAnswersList || []).map((a, i) => ({ text: a, remove: () => this.removeEditAnswerChip(i) })),
+      editAnswerDraft: this.state.editAnswerDraft, setEditAnswerDraft: (e) => this.setEditAnswerDraft(e),
+      handleEditAnswerKeyDown: (e) => this.handleEditAnswerKeyDown(e), commitEditAnswerDraft: () => this.commitEditAnswerDraft(),
       editQuestion: this.state.editQuestion, setEditQuestion: (e) => this.setEditQuestion(e),
       editCategory: this.state.editCategory, setEditCategory: (e) => this.setEditCategory(e),
       editShowLetters: this.state.editShowLetters, setEditShowLetters: (e) => this.setEditShowLetters(e),
@@ -1688,7 +1733,9 @@ class Component extends DCLogic {
       } : { activeRooms: arNum(0), totalPlayers: arNum(0), rounds: arNum(0) },
       adminConnected: !!this.state.adminStats,
       newHint: this.state.newHint, setNewHint: (e) => this.setNewHint(e),
-      newAnswers: this.state.newAnswers, setNewAnswers: (e) => this.setNewAnswers(e),
+      newAnswerChips: (this.state.newAnswersList || []).map((a, i) => ({ text: a, remove: () => this.removeNewAnswerChip(i) })),
+      newAnswerDraft: this.state.newAnswerDraft, setNewAnswerDraft: (e) => this.setNewAnswerDraft(e),
+      handleNewAnswerKeyDown: (e) => this.handleNewAnswerKeyDown(e), commitNewAnswerDraft: () => this.commitNewAnswerDraft(),
       newCategory: this.state.newCategory || CATEGORY_LIST[0], setNewCategory: (e) => this.setNewCategory(e),
       newShowLetters: this.state.newShowLetters, setNewShowLetters: (e) => this.setNewShowLetters(e),
       categoryList: CATEGORY_LIST,
