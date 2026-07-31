@@ -129,8 +129,6 @@ router.post('/rounds/:id/images', uploadLimit, (req, res) => {
       if ((round.images || []).length + (req.files || []).length > MAX_IMAGES_PER_ROUND) {
         return res.status(400).json({ error: 'الحد الأقصى ' + MAX_IMAGES_PER_ROUND + ' صور لكل جولة (صورة لكل لاعب)' });
       }
-      // رابط كامل (مع عنوان السيرفر) ليعمل حتى لو فُتحت الواجهة المستقلة من ملف محلي.
-      const origin = req.protocol + '://' + req.get('host');
       for (const f of req.files || []) {
         // نضغط الصورة (تصغير + JPEG)؛ لو تعذّر نخزّن الأصل كما هو.
         let buf = f.buffer;
@@ -145,7 +143,9 @@ router.post('/rounds/:id/images', uploadLimit, (req, res) => {
         const filename = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + ext;
         const key = 'rounds/' + roundId + '/' + filename;
         await db.saveImage(key, buf, contentType);
-        const url = origin + '/img/' + key;
+        // مسار نسبي (بدون اسم النطاق) — يشتغل بأي نطاق يخدم الموقع، حتى لو تغيّر لاحقًا
+        // (خزّناه سابقًا مطلقًا وسبّب انكسار كل صور الجولات القديمة عند تغيير النطاق).
+        const url = '/img/' + key;
         await db.insertRoundImage(roundId, { filename, url });
       }
       res.json(toApiRound(db.getRound(roundId)));

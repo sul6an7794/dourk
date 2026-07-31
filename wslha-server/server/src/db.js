@@ -176,6 +176,20 @@ function makeMongoBackend(uri) {
   };
 }
 
+// روابط الصور كانت تُخزَّن كاملة (مع اسم النطاق وقت الرفع) — أي تغيير نطاق لاحقًا (زي
+// التحويل من دومين لآخر) يكسر كل صور الجولات القديمة فورًا لأنها تفضل تشاور على
+// النطاق القديم الميت (بالإدارة وأثناء اللعب الفعلي، لأن نفس الرابط يُرسَل للاعبين).
+// نحوّلها لمسار نسبي مرة وحدة عند التشغيل حتى تشتغل بأي نطاق مستقبلًا.
+async function migrateAbsoluteImageUrls() {
+  const abs = state.round_images.filter((i) => /^https?:\/\//.test(i.url || ''));
+  if (!abs.length) return;
+  for (const img of abs) {
+    img.url = img.url.replace(/^https?:\/\/[^/]+/, '');
+  }
+  await backend.putImagesMeta(abs);
+  console.log('تم تحويل ' + abs.length + ' رابط صورة من مطلق إلى نسبي (توافق مع تغيير النطاق).');
+}
+
 // ---------- التهيئة ----------
 async function init() {
   const uri = process.env.MONGODB_URI;
@@ -191,6 +205,7 @@ async function init() {
     state = loaded || defaultState();
     console.log('تخزين محتوى وصّلها: ملف data.json محلي (مؤقت) — اضبط MONGODB_URI للتخزين الدائم.');
   }
+  await migrateAbsoluteImageUrls();
 }
 
 // ---- استرجاع البيانات القديمة من النسخة الاحتياطية (appstate) ----
