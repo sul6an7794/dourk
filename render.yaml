@@ -18,7 +18,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: ALLOWED_ORIGIN
-        value: https://wslha.app
+        value: https://dourk.sa,https://www.dourk.sa
       - key: NODE_VERSION
         value: "20"
       - key: AUTHENTICA_API_KEY

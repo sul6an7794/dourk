@@ -13,7 +13,15 @@ const { rateLimit } = require('./rateLimit');
 const { sweepAbandonedRooms } = require('./rooms');
 
 // أمان: نحصر CORS على أصل الموقع الفعلي بدل السماح لأي موقع (*) بمناداة الـAPI.
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'https://wslha.app';
+function parseAllowedOrigin(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  if (raw === '*') return '*';
+  const list = raw.split(',').map((origin) => origin.trim()).filter(Boolean);
+  return list.length <= 1 ? (list[0] || false) : list;
+}
+
+const ALLOWED_ORIGIN = parseAllowedOrigin(process.env.ALLOWED_ORIGIN || 'https://dourk.sa,https://www.dourk.sa');
 const PORT = process.env.PORT || 3001;
 
 function createApp() {

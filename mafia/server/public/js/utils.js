@@ -9,6 +9,21 @@ function el(tag, className, text) {
   return node;
 }
 
+function qrDataUrl(text, dark, light) {
+  try {
+    if (typeof qrcode !== 'function') throw new Error('QR library is not ready');
+    const qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    const svg = qr.createSvgTag({ cellSize: 5, margin: 4, scalable: true, alt: 'QR' })
+      .replace('fill="white"', 'fill="' + (light || '#0d1420') + '"')
+      .replace('fill="black"', 'fill="' + (dark || '#f2f4f7') + '"');
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  } catch (e) {
+    return '';
+  }
+}
+
 function numberTicker(fromVal, toVal, className) {
   const span = document.createElement('span');
   if (className) span.className = className;

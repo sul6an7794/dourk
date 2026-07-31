@@ -9,7 +9,15 @@ const { sweepAbandonedRooms } = require('./rooms');
 const PORT = process.env.PORT || 3500;
 // أمان: لا نفتح CORS/سوكيت لأي أصل افتراضيًا (يمنع مواقع خارجية من فتح اتصال سوكيت حي
 // بالنيابة عن زائر الموقع). لو ALLOWED_ORIGIN غير مضبوط، نقتصر على نفس الأصل فقط.
-let ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
+function parseAllowedOrigin(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  if (raw === '*') return '*';
+  const list = raw.split(',').map((origin) => origin.trim()).filter(Boolean);
+  return list.length <= 1 ? (list[0] || false) : list;
+}
+
+let ALLOWED_ORIGIN = parseAllowedOrigin(process.env.ALLOWED_ORIGIN);
 if (!ALLOWED_ORIGIN) {
   ALLOWED_ORIGIN = false;
   console.warn('⚠️  ALLOWED_ORIGIN غير مضبوط — السوكيت مقصور على نفس الأصل فقط. اضبطه في بيئة الإنتاج لو الواجهة على أصل مختلف.');

@@ -113,7 +113,7 @@
 <!-- شريط هوية بسيط: التنقّل وإدارة اللعبة صاروا من منصة دورك. -->
 <div style="position:relative; z-index:110; height:72px; display:flex; align-items:center; justify-content:space-between; direction:ltr; padding:0 24px; background:rgba(10,8,30,.75); backdrop-filter:blur(18px); border-bottom:1px solid rgba(255,255,255,.07);">
   <span class="wslha-wordmark wslha-wordmark--header">وصّلـها</span>
-  <a href="/" style="display:flex; align-items:center; gap:5px; direction:ltr; font-family:'Thmanyah Serif Display','Thmanyah Sans',serif; font-size:24px; font-weight:900; color:#fff; text-decoration:none;"><span style="display:flex; gap:2px;"><span style="width:5px; height:5px; border-radius:50%; background:#ff2d2d;"></span><span style="width:5px; height:5px; border-radius:50%; background:#818cf8;"></span></span><span>دورك</span></a>
+  <button onClick="{{ goHome }}" style="display:flex; align-items:center; gap:5px; direction:ltr; font-family:'Thmanyah Serif Display','Thmanyah Sans',serif; font-size:24px; font-weight:900; color:#fff; text-decoration:none; background:none; border:none; padding:0; cursor:pointer;"><span style="display:flex; gap:2px;"><span style="width:5px; height:5px; border-radius:50%; background:#ff2d2d;"></span><span style="width:5px; height:5px; border-radius:50%; background:#818cf8;"></span></span><span>دورك</span></button>
 </div>
 
 <!-- التنقّل السابق مخفي: إنشاء الغرف والانضمام يأتون من منصة دورك. -->
@@ -230,34 +230,6 @@
       <span style="width:14px; height:14px; border-radius:50%; background:#818cf8; box-shadow:0 0 12px rgba(129,140,248,.7); animation:pageLoaderPulse 1s ease-in-out infinite .15s;"></span>
     </div>
     <p style="font-size:14px; color:#a9a7cc; margin:0;">{{ transitionLabel }}</p>
-  </div>
-  </sc-if>
-  <sc-if value="{{ notCreated }}" hint-placeholder-val="{{ true }}">
-  <div style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:28px; padding:40px; backdrop-filter:blur(16px); box-shadow:0 30px 80px rgba(0,0,0,.4);">
-    <div style="text-align:center;"><span class="wslha-wordmark wslha-wordmark--create">وصّلـها</span></div>
-    <h1 style="font-size:24px; font-weight:900; margin:0 0 8px; text-align:center;">إنشاء غرفة جديدة</h1>
-    <p style="font-size:13px; color:#a9a7cc; margin:0 0 24px; text-align:center;">اختر عددكم، سوِّ الغرفة، وجمّع الفريق للتحدي.</p>
-    <sc-if value="{{ hasStatus }}" hint-placeholder-val="{{ false }}">
-      <div style="text-align:center; font-size:14px; font-weight:700; color:#fbbf24; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.28); border-radius:12px; padding:11px; margin-bottom:22px;">{{ statusMsg }}</div>
-    </sc-if>
-    <sc-if value="{{ isLoggedIn }}" hint-placeholder-val="{{ false }}">
-      <div style="display:flex; flex-direction:column; align-items:center; gap:11px; margin-bottom:22px;">
-        <div style="display:flex; align-items:center; justify-content:center; gap:7px; font-size:12px; font-weight:700; color:#fde68a;">{{ iconTicketSm }} رصيدك الحالي: {{ credits }} تذكرة · كل لعبة = تذكرة</div>
-        <sc-if value="{{ noCredits }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ buyTickets }}" style="display:inline-flex; align-items:center; gap:7px; font-family:'Thmanyah Sans',sans-serif; font-weight:800; font-size:14px; color:#3b2a06; background:linear-gradient(135deg,#fbbf24,#f59e0b); border:none; padding:10px 22px; border-radius:12px; cursor:pointer;" style-hover="filter:brightness(1.06);">{{ iconTicketDark }} شراء تذكرة لعب</button>
-        <sc-if value="{{ buyNote }}" hint-placeholder-val="{{ false }}">
-          <div style="font-size:12.5px; color:#fbbf24;">قريبًا — رابط الدفع تحت الإعداد</div>
-        </sc-if>
-        </sc-if>
-      </div>
-    </sc-if>
-    <label style="display:block; font-size:13px; font-weight:700; margin-bottom:14px; color:#d8d6ee;">عدد اللاعبين</label>
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); gap:10px; margin-bottom:30px;">
-      <sc-for list="{{ playerOptions }}" as="p" hint-placeholder-count="5">
-        <button onClick="{{ p.select }}" style="text-align:center; padding:13px 10px; border-radius:14px; cursor:pointer; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:14px; background:{{ p.bg }}; border:{{ p.border }}; color:{{ p.color }}; transition:all .15s;">{{ p.label }}</button>
-      </sc-for>
-    </div>
-    <button onClick="{{ createRoom }}" disabled="{{ creating }}" style="width:100%; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:16px; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); border:none; padding:17px; border-radius:18px; cursor:pointer; box-shadow:0 16px 40px rgba(236,72,153,.5);" style-hover="filter:brightness(1.08);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:-3px; margin-left:8px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>{{ createLabel }}</button>
   </div>
   </sc-if>
   <sc-if value="{{ created }}" hint-placeholder-val="{{ false }}">
@@ -774,6 +746,12 @@ class Component extends DCLogic {
     };
     if (typeof window !== 'undefined') { window.addEventListener('resize', this._onResize); this._onResize(); }
     this.setState({ deviceId: this._deviceId() });
+    // نلتقط رقم الغرفة من الرابط قبل أي اتصال بالسوكيت — لازم يكون معروفًا مسبقًا حتى
+    // لا يتسابق استرجاع الغرفة القديمة المحفوظة محليًا (wsl_resume) مع نية المستخدم
+    // الصريحة بالانضمام لغرفة جديدة مختلفة (راجع _tryResume بالأسفل).
+    let room = null;
+    try { room = new URLSearchParams(window.location.search).get('room'); } catch (e) {}
+    this._urlRoomCode = room || null;
     // التوكن نفسه ما يُخزَّن هنا إطلاقًا (كوكي HttpOnly من السيرفر يتكفّل فيه) —
     // بس نستخدم آخر بيانات مستخدم مخزّنة محليًا لعرض فوري متفائل بانتظار تأكيد /me من السيرفر.
     let user = null;
@@ -789,14 +767,11 @@ class Component extends DCLogic {
       // ضيف كان بمنتصف لوبي فريق قبل ما يقفل المتصفح — نتصل بالسيرفر مباشرة عشان نحاول نرجّعه مكانه.
       this.connectSocket();
     }
-    try {
-      const room = new URLSearchParams(window.location.search).get('room');
-      if (room) {
-        this.setState({ joinCode: room }, () => this.go('join'));
-        // ننظّف رابط الغرفة من شريط العنوان حتى لا يرجعنا أي تحديث لاحق للصفحة لشاشة الانضمام من جديد.
-        window.history.replaceState(null, '', window.location.pathname);
-      }
-    } catch (e) {}
+    if (room) {
+      this.setState({ joinCode: room }, () => this.go('join'));
+      // ننظّف رابط الغرفة من شريط العنوان حتى لا يرجعنا أي تحديث لاحق للصفحة لشاشة الانضمام من جديد.
+      try { window.history.replaceState(null, '', window.location.pathname); } catch (e) {}
+    }
   }
 
   // يشغّل عدّاد النقاط المتصاعد لحظة الوصول لشاشة النتائج (يُستدعى مرة وحدة بس عبر علم داخلي، مو من الحالة).
@@ -1045,6 +1020,10 @@ class Component extends DCLogic {
     }
     const r = this._loadResume();
     if (!r || !r.roomCode) return;
+    // المستخدم جاي برابط/كود غرفة صريح مختلف عن الغرفة المحفوظة محليًا — نيّته الانضمام
+    // للغرفة الجديدة هذه، مو الرجوع تلقائيًا لغرفته القديمة. نمسح الاسترجاع القديم
+    // ونتجاهله بدل ما نخطفه لصفحة اللوبي/اللعبة القديمة فوق شاشة الانضمام الجديدة.
+    if (this._urlRoomCode && String(r.roomCode) !== String(this._urlRoomCode)) { this._clearResume(); return; }
     this._socket.emit('chooseTeam', { roomCode: r.roomCode, teamIndex: r.teamIndex, teamName: r.teamName, name: r.name, resume: true }, (res) => {
       if (res && res.ok) this.setState({ roomCode: r.roomCode }, () => this._onTeamJoined(res, r.teamName, r.name));
       else if (res && res.error === 'kicked') onKickedDuringResume();
@@ -1125,6 +1104,13 @@ class Component extends DCLogic {
     // القيادة انتقلت لك (غادر القائد السابق أو انقطع اتصاله) — لازم نحدّث الدور محليًا
     // عشان يظهر لك زر «ابدأ اللعبة»، فبثّ اللوبي العام يحدّث القائمة بس مو state.role.
     s.on('captainPromoted', () => this.setState({ role: 'captain' }));
+    // القائد غادر الغرفة عمدًا (زر شعار دورك أو «مغادرة الغرفة») — تنتهي الجلسة لبقية الفريق
+    // بدل ما يعلقون بلوبي ميت بانتظار قائد ما راجع.
+    s.on('captainLeft', () => {
+      this._clearResume();
+      alert('القائد غادر الغرفة — انتهت الجلسة');
+      window.location.href = '/';
+    });
     return s;
   }
   get serverConnected() { return !!(this._socket && this._socket.connected); }
@@ -1274,9 +1260,9 @@ class Component extends DCLogic {
           }
           this._applyWithViewTransition(upd, () => { if (autoAdvance) this.goTeams(); });
         } else if (res && res.error) {
-          // رصيد غير كافٍ أو خطأ من الخادم — اعرضه بلطف بدل الوضع المحلي. نلغي autoCreating
-          // هنا عشان يشوف المستخدم نموذج الاختيار + رسالة الخطأ بدل ما يعلق على شاشة تحميل.
-          this.setState({ loading: false, statusMsg: res.error, autoCreating: false });
+          // رصيد غير كافٍ أو خطأ من الخادم — ما فيه شاشة اختيار يدوية نرجّعه لها بعد الآن،
+          // فنرجعه لمنصة دورك (نفس صفحة التذاكر اللي تحقق من رصيده أصلًا قبل التحويل).
+          window.location.href = '/';
         } else {
           this._createLocal();
         }
@@ -1524,16 +1510,6 @@ class Component extends DCLogic {
       col: n.page === page ? '#c4b5fd' : '#a9a7cc',
     }));
 
-    const playerOptions = [3, 6, 9, 12, 15].map(p => {
-      const on = this.state.maxPlayers === p;
-      return {
-        label: arNum(p) + ' لاعبين', select: () => this.setState({ maxPlayers: p }),
-        bg: on ? 'linear-gradient(135deg,#818cf8,#ec4899)' : 'rgba(255,255,255,.04)',
-        border: on ? '1px solid transparent' : '1px solid rgba(255,255,255,.1)',
-        color: on ? '#ffffff' : '#c0bee0',
-      };
-    });
-
     const R = this.rounds();
     const ri = Math.min(roundIndex, R.length - 1);
     const cur = R[ri][0];
@@ -1569,7 +1545,21 @@ class Component extends DCLogic {
     return {
       // "الرئيسية" هنا تعني الرجوع الفعلي لمنصة دورك (مثل زر مغادرة الغرفة بمافيا بالضبط) —
       // مو صفحة وصّلها الداخلية القديمة، اللي صارت زائدة بعد ما صار لدورك صفحة رئيسية حقيقية.
-      goHome: () => { window.location.href = '/'; }, goCreate: () => this.go('create'), goHow: () => this.go('how'), goAbout: () => this.go('about'),
+      // لو داخل فريق فعليًا، لازم نبلّغ السيرفر بمغادرة صريحة قبل الخروج (leaveTeam) — لو ما سوّينا
+      // هذا، القطع يوصل كانقطاع اتصال عرَضي بس، فيبقى مكانه محجوزًا ويُنصَّب قائد بديل بصمت بدل
+      // ما تنتهي الجلسة فعليًا لبقية الفريق (راجع removePlayerFromTeam بالسيرفر).
+      goHome: () => {
+        if (this.serverConnected && this.state.myTeamIndex != null) {
+          this._clearResume();
+          this._socket.emit('leaveTeam', {}, () => { window.location.href = '/'; });
+        } else {
+          window.location.href = '/';
+        }
+      },
+      // "غرفة أخرى" / "يلا نعيدها": نلغي شاشة اختيار عدد اللاعبين نهائيًا — ننشئ الغرفة
+      // الجديدة تلقائيًا بنفس حجم الفريق السابق (state.maxPlayers) بدل انتظار اختيار يدوي.
+      goCreate: () => { this.setState({ created: false, autoCreating: true }, () => { this.go('create'); this.createRoom(true); }); },
+      goHow: () => this.go('how'), goAbout: () => this.go('about'),
       leaveLobby: () => this.leaveLobby(),
       goLogin: () => { window.location.href = '/'; }, goJoin: () => this.go('join'), goGame: () => this.go('game'),
       isCreate: page === 'create', isHow: page === 'how', isAbout: page === 'about',
@@ -1603,7 +1593,7 @@ class Component extends DCLogic {
         };
       }),
       teamNameInput: this.state.teamNameInput, setTeamNameInput: (e) => this.setTeamNameInput(e),
-      teamsCode: arNum(this.state.roomCode || '482193'),
+      teamsCode: String(this.state.roomCode || '482193'),
       statusMsg: this.state.statusMsg, hasStatus: !!this.state.statusMsg,
       connectionText: this.state.connected ? 'متصل — مكانك محفوظ' : 'جارِ إعادة الاتصال… مكانك محفوظ',
       gameConnectionLabel: this.state.connected ? 'متصل' : 'نعيد الاتصال…',
@@ -1724,14 +1714,13 @@ class Component extends DCLogic {
       iconChevron: I(ic.chevron, 10), iconEdit: I(ic.edit, 12), iconLogout: I(ic.logout, 12),
       joinCode: this.state.joinCode, setJoinCode: (e) => this.setJoinCode(e), doJoin: () => this.doJoin(),
       joinName: this.state.joinName, setJoinName: (e) => this.setJoinName(e),
-      playerOptions,
       createRoom: () => this.createRoom(),
       creating: this.state.loading, createLabel: this.state.loading ? 'جاري الإنشاء…' : 'إنشاء الغرفة',
       offline: this.state.offline,
-      created: this.state.created, notCreated: !this.state.created && !this.state.autoCreating && !this.state.pendingAdmin,
+      created: this.state.created,
       autoCreating: (this.state.autoCreating || this.state.pendingAdmin) && !this.state.created,
       transitionLabel: this.state.pendingAdmin ? 'جارِ فتح لوحة التحكم…' : 'جارِ إنشاء غرفتك…',
-      roomCode: arNum(this.state.roomCode), qrCells: this.qrCells(), qrSrc: this.qrDataUrl(this.shareUrl()),
+      roomCode: String(this.state.roomCode), qrCells: this.qrCells(), qrSrc: this.qrDataUrl(this.shareUrl()),
       shareUrl: this.shareUrl(), copyShare: () => this.copyShare(),
       shareBtnLabel: this.state.shareCopied ? 'تم النسخ' : 'نسخ الرابط',
       shareResults: () => this.shareResults(),

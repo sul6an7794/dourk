@@ -134,7 +134,11 @@ async function start(port = PORT) {
   // نفس متغيّر ALLOWED_ORIGIN المستخدم لسوكيت.io — أصل واحد محدد صراحة، لا "*" مع كوكيز.
   if (ALLOWED_ORIGIN) {
     app.use('/api', (req, res, next) => {
-      res.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+      const requestOrigin = req.headers.origin;
+      const allowedOrigin = Array.isArray(ALLOWED_ORIGIN)
+        ? (ALLOWED_ORIGIN.includes(requestOrigin) ? requestOrigin : ALLOWED_ORIGIN[0])
+        : ALLOWED_ORIGIN;
+      res.set('Access-Control-Allow-Origin', allowedOrigin);
       res.set('Access-Control-Allow-Credentials', 'true');
       res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');

@@ -106,14 +106,10 @@ const App = {
     if (screen === 'home' && (page === 'privacy' || page === 'terms')) {
       window.history.replaceState({}, '', window.location.pathname);
     }
-    this.setLoading(true);
     clearTimeout(this._goTimer);
-    this._goTimer = setTimeout(() => {
-      Object.assign(this.state, { screen }, extra || {});
-      this.setLoading(false);
-      this.render();
-      window.scrollTo(0, 0);
-    }, 220);
+    Object.assign(this.state, { screen }, extra || {});
+    this.render();
+    window.scrollTo(0, 0);
   },
 
   requireLogin(next) {

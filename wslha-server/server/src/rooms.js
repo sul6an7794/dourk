@@ -379,8 +379,17 @@ function submitAnswer(io, socket, answer) {
 
 // يشيل اللاعب فعليًا من الفريق (يُستدعى لمغادرة صريحة، أو لانقطاع أثناء لعبة بدأت فعلًا).
 function removePlayerFromTeam(io, room, team, socketId) {
-  team.players = team.players.filter((p) => p.socketId !== socketId);
-  if (!team.players.length) {
+  const leaving = team.players.find((p) => p.socketId === socketId);
+  const wasCaptain = !!(leaving && leaving.isCaptain);
+  // مغادرة القائد صراحةً (مو انقطاع اتصال عرَضي — ذاك تتكفّل فيه leave() بتعيين قائد بديل
+  // بصمت حتى ما ينكسر الفريق بانقطاع شبكة مؤقت) تنهي الفريق لبقية أعضائه بدل تمرير القيادة
+  // بصمت — القائد اللي غادر عمدًا غالبًا رايح ينشئ غرفة ثانية، وبقية الفريق يستاهلون يعرفون
+  // إن غرفتهم انتهت بدل ما يعلقون بلوبي ميت.
+  if (wasCaptain && team.players.length > 1) {
+    team.players.filter((p) => p.socketId !== socketId).forEach((p) => {
+      if (p.connected !== false) io.to(p.socketId).emit('captainLeft', {});
+    });
+    team.players = [];
     clearInterval(team.timer);
     clearInterval(team.lockTimer);
     team.timer = null;
@@ -391,12 +400,26 @@ function removePlayerFromTeam(io, room, team, socketId) {
     team.score = 0;
     team.elapsed = 0;
     team.locked = 0;
-  } else if (!team.players.some((p) => p.isCaptain)) {
-    team.players[0].isCaptain = true;
-    // العميل يخزّن دوره (قائد/عضو) محليًا وقت الانضمام ولا يحدّثه تلقائيًا من بث اللوبي
-    // العام (الأسماء/الأدوار بالقائمة تتحدث، لكن زر «ابدأ اللعبة» يعتمد على state.role
-    // المحلي) — نبلّغ القائد الجديد مباشرة عشان يظهر له الزر فورًا.
-    io.to(team.players[0].socketId).emit('captainPromoted', {});
+  } else {
+    team.players = team.players.filter((p) => p.socketId !== socketId);
+    if (!team.players.length) {
+      clearInterval(team.timer);
+      clearInterval(team.lockTimer);
+      team.timer = null;
+      team.lockTimer = null;
+      team.name = '';
+      team.started = false;
+      team.roundIndex = 0;
+      team.score = 0;
+      team.elapsed = 0;
+      team.locked = 0;
+    } else if (!team.players.some((p) => p.isCaptain)) {
+      team.players[0].isCaptain = true;
+      // العميل يخزّن دوره (قائد/عضو) محليًا وقت الانضمام ولا يحدّثه تلقائيًا من بث اللوبي
+      // العام (الأسماء/الأدوار بالقائمة تتحدث، لكن زر «ابدأ اللعبة» يعتمد على state.role
+      // المحلي) — نبلّغ القائد الجديد مباشرة عشان يظهر له الزر فورًا.
+      io.to(team.players[0].socketId).emit('captainPromoted', {});
+    }
   }
 
   const anyPlayers = room.teams.some((t) => t.players.length > 0);
