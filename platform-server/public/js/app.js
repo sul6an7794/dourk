@@ -1,4 +1,12 @@
 const AR = (v) => String(v).replace(/[0-9]/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+// ختم "متجر موثّق" يفرض ارتفاعه الأصلي (٤٤px افتراضيًا، وأكبر لما ينبثق بالتحويم) — يخليه
+// يبان أكبر من أيقونة تيك توك المجاورة له بالفوتر (٣٦px). نصغّره بصريًا (scale) لنفس ارتفاع
+// أيقونة تيك توك دائمًا، بدل ما نغيّر أبعاده الحقيقية ونكسر تخطيطه الداخلي.
+const SBC_SEAL_TARGET_HEIGHT = 36;
+function sbcApplyScale(frame, naturalHeight) {
+  const scale = Math.min(1, SBC_SEAL_TARGET_HEIGHT / (naturalHeight || SBC_SEAL_TARGET_HEIGHT));
+  frame.style.transform = 'translateX(-50%) scale(' + scale + ')';
+}
 const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 // السعودية أول اختيار افتراضي (الجمهور الأساسي)، وباقي دول الخليج بعدها.
 const COUNTRY_CODES = [
@@ -782,7 +790,8 @@ const App = {
     f.title = 'SBC Verification';
     f.setAttribute('loading', 'lazy');
     f.setAttribute('scrolling', 'no');
-    f.style.cssText = 'border:0;width:120px;height:44px;transition:width .18s ease,height .18s ease;';
+    f.style.cssText = 'border:0;width:120px;height:44px;transition:width .18s ease,height .18s ease,transform .18s ease;transform-origin:center bottom;';
+    sbcApplyScale(f, 44);
     el.appendChild(f);
   },
 
@@ -814,5 +823,6 @@ window.addEventListener('message', (e) => {
     if (f.contentWindow !== e.source) return;
     if (e.data.width) f.style.width = e.data.width + 'px';
     if (e.data.height) f.style.height = e.data.height + 'px';
+    sbcApplyScale(f, e.data.height || 44);
   });
 });
