@@ -1,10 +1,13 @@
 const AR = (v) => String(v).replace(/[0-9]/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
-// ختم "متجر موثّق" يفرض ارتفاعه الأصلي (٤٤px افتراضيًا، وأكبر لما ينبثق بالتحويم) — يخليه
-// يبان أكبر من أيقونة تيك توك المجاورة له بالفوتر (٣٦px). نصغّره بصريًا (scale) لنفس ارتفاع
-// أيقونة تيك توك دائمًا، بدل ما نغيّر أبعاده الحقيقية ونكسر تخطيطه الداخلي.
+// ختم "متجر موثّق" يفرض ارتفاعه الأصلي (٤٤px) أكبر من أيقونة تيك توك المجاورة له بالفوتر
+// (٣٦px) — نصغّره بصريًا (scale) لنفس ارتفاعها بالحالة الافتراضية بس. لما ينبثق تفاصيله
+// بالتحويم يكبر فعليًا بشكل واضح (ليصير قابل للقراءة) — نتجاهل التصغير بهذي الحالة (نعتبر
+// أي ارتفاع أكبر من الحد الأدنى انبثاقًا) حتى ما يصير المنبثق نفسه صغير جدًا وغير مقروء.
 const SBC_SEAL_TARGET_HEIGHT = 36;
+const SBC_SEAL_EXPANDED_THRESHOLD = 60; // أي ارتفاع فوقه نعتبره منبثقًا (تفاصيل الختم)، لا نصغّره
 function sbcApplyScale(frame, naturalHeight) {
-  const scale = Math.min(1, SBC_SEAL_TARGET_HEIGHT / (naturalHeight || SBC_SEAL_TARGET_HEIGHT));
+  const h = naturalHeight || SBC_SEAL_TARGET_HEIGHT;
+  const scale = h > SBC_SEAL_EXPANDED_THRESHOLD ? 1 : Math.min(1, SBC_SEAL_TARGET_HEIGHT / h);
   frame.style.transform = 'translateX(-50%) scale(' + scale + ')';
 }
 const PHONE_RE = /^\+[1-9]\d{7,14}$/;
