@@ -61,6 +61,18 @@ test('chooseTeam: الفريق يرفض عضوًا رابعًا لو مكتمل'
   assert.equal(res.error, 'الفريق مكتمل');
 });
 
+test('createRoom: جولة بأقل من 3 صور تُستبعد من الجولات القابلة للعب', async () => {
+  const incomplete = await db.insertRound({ hint: 'ناقصة', answers: ['شي'], category: '' });
+  await db.insertRoundImage(incomplete.id, { filename: 'x.jpg', url: 'https://example.com/x.jpg' });
+  await db.insertRoundImage(incomplete.id, { filename: 'y.jpg', url: 'https://example.com/y.jpg' });
+
+  const io = makeMockIo();
+  const player = makeMockSocket('incomplete-round-check', 'incomplete-round-device');
+  const room = rooms.createRoom(io, player, { maxPlayers: 3 });
+
+  assert.equal(room.rounds.some((r) => r.id === incomplete.id), false, 'الجولة الناقصة (صورتين بس) ما لازم تظهر بالجولات القابلة للعب');
+});
+
 test('chooseTeam: اللاعب لا يشغل مقعدين في فريقين مختلفين', () => {
   const io = makeMockIo();
   const player = makeMockSocket('multi-seat', 'multi-seat-device');

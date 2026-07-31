@@ -551,7 +551,7 @@
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
           <div style="flex:1;"><div style="font-size:16px; font-weight:800;">{{ r.hint }}</div><div style="font-size:13px; color:#a9a7cc; margin-top:3px;">الإجابات: {{ r.answersText }}</div></div>
           <div style="font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); padding:5px 12px; border-radius:20px; white-space:nowrap;">{{ r.category }}</div>
-          <div style="font-size:13px; font-weight:700; color:#818cf8; background:rgba(129,140,248,.12); padding:5px 12px; border-radius:20px;">{{ r.imageCount }} صور</div>
+          <div style="font-size:13px; font-weight:700; color:{{ r.imageCountColor }}; background:{{ r.imageCountBg }}; padding:5px 12px; border-radius:20px; white-space:nowrap;">{{ r.imageCountLabel }}</div>
           <button onClick="{{ r.moveUp }}" disabled="{{ r.isFirst }}" title="نقل الجولة لأعلى" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer; opacity:{{ r.moveUpOpacity }};" style-hover="background:rgba(129,140,248,.2);">{{ iconChevronUp }}</button>
           <button onClick="{{ r.moveDown }}" disabled="{{ r.isLast }}" title="نقل الجولة لأسفل" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer; opacity:{{ r.moveDownOpacity }};" style-hover="background:rgba(129,140,248,.2);">{{ iconChevronDown }}</button>
           <button onClick="{{ r.startEdit }}" title="تعديل الجولة" style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.3); color:#c4b5fd; cursor:pointer;" style-hover="background:rgba(129,140,248,.2);">✎</button>
@@ -1596,6 +1596,12 @@ class Component extends DCLogic {
         cancelEdit: () => this.cancelEditRound(),
         save: () => this.saveEditRound(r.id),
         imageCount: arNum((r.images || []).length),
+        // جولة بأقل من 3 صور تبقى محفوظة بس السيرفر يستبعدها من اللعب الفعلي (تمنع تكرار
+        // نفس الصورة لأكثر من لاعب بصمت) — لازم تظهر واضحة هنا حتى المشرف يكمّلها.
+        imagesIncomplete: (r.images || []).length !== MAX_IMAGES_PER_ROUND,
+        imageCountBg: (r.images || []).length !== MAX_IMAGES_PER_ROUND ? 'rgba(244,63,94,.15)' : 'rgba(129,140,248,.12)',
+        imageCountColor: (r.images || []).length !== MAX_IMAGES_PER_ROUND ? '#f43f5e' : '#818cf8',
+        imageCountLabel: arNum((r.images || []).length) + ' صور' + ((r.images || []).length !== MAX_IMAGES_PER_ROUND ? ' ⚠ غير مكتملة' : ''),
         canAddMoreImages: (r.images || []).length < MAX_IMAGES_PER_ROUND,
         thumbs: (r.images || []).slice(0, 6).map((im, k) => ({
           label: 'لاعب ' + arNum(k + 1),

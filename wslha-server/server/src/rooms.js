@@ -33,7 +33,9 @@ function loadPlayableRounds() {
       hintPlayerIndex: r.hintPlayerIndex || 1,
       images: r.images.map((i) => i.url),
     }))
-    .filter((r) => r.images.length > 0);
+    // بالضبط 3 صور (صورة لكل لاعب بالفريق) — جولة بأقل من 3 تعني نفس الصورة تتكرر
+    // لأكثر من لاعب (idx % images.length) فتنكسر فكرة اللعبة الأساسية بصمت.
+    .filter((r) => r.images.length === TEAM_SIZE);
 }
 
 function makeTeam(index) {
