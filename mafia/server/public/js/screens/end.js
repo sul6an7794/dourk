@@ -67,6 +67,7 @@ function renderGameOverScreen(state, actions) {
 
   const shareLabel = state.shareResultBusy ? 'جارِ التجهيز…' : (state.shareResultDone ? 'تمت المشاركة ✓' : 'مشاركة النتيجة');
   const shareBtn = el('button', 'big-btn ghost', shareLabel);
+  shareBtn.id = 'shareResultBtn';
   shareBtn.disabled = state.shareResultBusy;
   shareBtn.addEventListener('click', () => actions.shareResult());
   wrap.appendChild(shareBtn);
@@ -81,6 +82,7 @@ function renderGameOverScreen(state, actions) {
     ? (state.newGamePending ? 'جارِ التحضير…' : 'لعبة جديدة')
     : 'بانتظار القائد للعبة جديدة…';
   const btn = el('button', `big-btn ${isHost ? 'blue' : 'idle'}`, btnLabel);
+  btn.id = 'newGameBtn';
   btn.style.marginTop = '8px';
   if (!actionsReady) btn.style.display = 'none';
   btn.disabled = !isHost || state.newGamePending;

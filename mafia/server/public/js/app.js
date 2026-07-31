@@ -510,7 +510,12 @@ function loadHtml2Canvas() {
       const target = document.querySelector('.gameover-screen');
       if (!target) return;
       state.shareResultBusy = true;
-      render();
+      // تحديث مباشر لزر المشاركة بدل render() كامل — render() يستبدل root.innerHTML بالكامل
+      // (بما فيها .gameover-screen نفسها، اللي target يشاور عليها) فيصير target عنصرًا منفصلًا
+      // عن الصفحة بحلول ما يخلص html2canvas تحميله (تحميل شبكي حقيقي، أبطأ من إطار واحد)،
+      // فيلتقط عنصرًا غير موجود بالصفحة فعليًا وتطلع الصورة فاضية أو مكسورة.
+      const shareBtn = document.getElementById('shareResultBtn');
+      if (shareBtn) { shareBtn.disabled = true; shareBtn.textContent = 'جارِ التجهيز…'; }
       try {
         // نستنى تحميل الخطوط المخصّصة فعليًا قبل التقاط الصورة — بدونه html2canvas قد يلتقط
         // بالخط الاحتياطي للمتصفح (لو ما خلص تحميل الخط بعد)، فتطلع الصورة بخط مختلف عن الموقع.
@@ -532,12 +537,17 @@ function loadHtml2Canvas() {
           setTimeout(() => URL.revokeObjectURL(url), 4000);
         }
         state.shareResultDone = true;
+        if (shareBtn) shareBtn.textContent = 'تمت المشاركة ✓';
+        // آمن هنا نستخدم render() كامل — المشاركة خلصت فعليًا، ما فيه أي التقاط شاشة معلّق.
         setTimeout(() => { state.shareResultDone = false; render(); }, 1800);
       } catch (e) {
         alert((e && e.message) || 'تعذّرت المشاركة');
       } finally {
         state.shareResultBusy = false;
-        render();
+        if (shareBtn) {
+          shareBtn.disabled = false;
+          if (!state.shareResultDone) shareBtn.textContent = 'مشاركة النتيجة';
+        }
       }
     },
     zoomCard(file, rect) {
@@ -683,7 +693,10 @@ function loadHtml2Canvas() {
       if (state.newGamePending) return; // منع ضغطة مزدوجة قبل رجوع الرد الأول
       state.newGamePending = true;
       state.error = null;
-      render();
+      // تحديث مباشر لزر "لعبة جديدة" بدل render() كامل — يمنع ومضة إعادة تشغيل حركة
+      // الدخول على شاشة النتيجة فورًا لحظة الضغط (نفس النمط المستخدم بـshareResult أعلاه).
+      const btn = document.getElementById('newGameBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'جارِ التحضير…'; }
       const res = await emitAck('newGame', {});
       state.newGamePending = false;
       if (res.error) { state.error = res.error; }
