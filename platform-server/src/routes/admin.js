@@ -32,7 +32,7 @@ router.patch('/users/:id', asyncHandler(async (req, res) => {
     await db.setUserAdmin(id, !!isAdmin);
   }
   const u = db.getUserById(id);
-  res.json({ id: u.id, username: u.username, isAdmin: !!u.is_admin, credits: u.credits || 0, created_at: u.created_at });
+  res.json({ id: u.id, username: u.username, phone: u.phone || '', isAdmin: !!u.is_admin, credits: u.credits || 0, created_at: u.created_at });
 }));
 
 // سجل حركة رصيد التذاكر لمستخدم معيّن — يفيد المشرف لو حد اشتكى "ليش انخصمت مني تذكرة".

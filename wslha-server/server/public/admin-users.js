@@ -1,7 +1,7 @@
 /*
  * إدارة المستخدمين — زر «قائمة المستخدمين» أعلى لوحة التحكم يفتح نافذة منفصلة
- * (مو تحت الجولات). لكل مستخدم: تعديل الرصيد بأزرار +/−، ترقية/تنزيل مشرف، حذف.
- * النافذة تعيش في <body> (تصمد مع إعادة الرسم، وأزرارها تشتغل بثبات). للمشرف فقط.
+ * (مو تحت الجولات). لكل مستخدم: بحث بالاسم/الجوال، تعديل الرصيد، ترقية/تنزيل مشرف
+ * (بتأكيد)، حذف (بتأكيد). النافذة تعيش في <body> (تصمد مع إعادة الرسم). للمشرف فقط.
  */
 (function () {
   'use strict';
@@ -35,17 +35,16 @@
     '.wau-refresh,.wau-close{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#f1f0ff;' +
     'border-radius:10px;padding:7px 13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}' +
     '.wau-refresh:hover,.wau-close:hover{background:rgba(255,255,255,.14)}' +
-    '.wau-count{font-size:13px;color:#9b98c4;margin:2px 0 14px}' +
+    '.wau-count{font-size:13px;color:#9b98c4;margin:2px 0 10px}' +
+    '.wau-search{width:100%;font-family:inherit;font-size:14px;color:#f1f0ff;background:rgba(255,255,255,.04);' +
+    'border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:9px 12px;outline:none;margin-bottom:14px}' +
     '.wau-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;' +
     'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);margin-bottom:9px}' +
     '.wau-name{flex:1;min-width:110px;font-weight:800;font-size:15px}' +
+    '.wau-phone{font-size:11px;color:#7a7799;font-weight:500;margin-inline-start:6px}' +
     '.wau-badge{font-size:11px;background:rgba(251,191,36,.18);color:#fbbf24;border-radius:20px;padding:2px 9px;margin-inline-start:6px}' +
-    '.wau-step{display:flex;align-items:center;gap:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;overflow:hidden}' +
-    '.wau-step button{width:34px;height:36px;border:none;background:transparent;color:#c4b5fd;font-size:20px;font-weight:800;cursor:pointer;line-height:1}' +
-    '.wau-step button:hover{background:rgba(255,255,255,.1)}' +
-    '.wau-step input{width:52px;height:36px;border:none;background:transparent;color:#fff;font-family:inherit;font-weight:800;' +
-    'font-size:15px;text-align:center;outline:none;-moz-appearance:textfield}' +
-    '.wau-step input::-webkit-outer-spin-button,.wau-step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}' +
+    '.wau-cred{width:64px;height:36px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:10px;' +
+    'color:#fff;font-family:inherit;font-weight:800;font-size:15px;text-align:center;outline:none}' +
     '.wau-save{background:linear-gradient(135deg,#818cf8,#ec4899);color:#fff;border:none;border-radius:9px;padding:9px 13px;' +
     'font-family:inherit;font-weight:700;font-size:12px;cursor:pointer}' +
     '.wau-adm{background:rgba(251,191,36,.16);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:9px;padding:9px 12px;' +
@@ -65,30 +64,36 @@
         '<div class="wau-tools"><button class="wau-refresh">↻ تحديث</button><button class="wau-close">إغلاق</button></div>' +
       '</div>' +
       '<div class="wau-count" id="wau-count"></div>' +
+      '<input class="wau-search" id="wau-search" type="text" placeholder="بحث بالاسم أو الجوال…">' +
       '<div id="wau-body">جارِ التحميل…</div>' +
     '</div>';
   document.body.appendChild(ov);
 
   function rowsHtml(users) {
-    if (!users.length) return '<div style="color:#9b98c4;padding:8px">لا يوجد مستخدمون بعد</div>';
+    if (!users.length) return '<div style="color:#9b98c4;padding:8px">لا يوجد مستخدمون مطابقون</div>';
     return users.map(function (u) {
       return '<div class="wau-row">' +
-        '<div class="wau-name">' + esc(u.username) + (u.isAdmin ? ' <span class="wau-badge">مشرف</span>' : '') + '</div>' +
-        '<span style="font-size:12px;color:#9b98c4">التذاكر</span>' +
-        '<div class="wau-step">' +
-          '<button data-act="dec" data-id="' + u.id + '">−</button>' +
-          '<input class="wau-cred" type="number" min="0" value="' + (u.credits || 0) + '" data-id="' + u.id + '">' +
-          '<button data-act="inc" data-id="' + u.id + '">+</button>' +
+        '<div class="wau-name">' + esc(u.username) + (u.isAdmin ? ' <span class="wau-badge">مشرف</span>' : '') +
+          (u.phone ? ' <span class="wau-phone">#' + u.id + ' — ' + esc(u.phone) + '</span>' : ' <span class="wau-phone">#' + u.id + '</span>') +
         '</div>' +
+        '<span style="font-size:12px;color:#9b98c4">التذاكر</span>' +
+        '<input class="wau-cred" type="number" min="0" value="' + (u.credits || 0) + '" data-id="' + u.id + '">' +
         '<button class="wau-save" data-act="save" data-id="' + u.id + '">حفظ</button>' +
-        '<button class="wau-adm" data-act="admin" data-id="' + u.id + '" data-val="' + (u.isAdmin ? 0 : 1) + '">' + (u.isAdmin ? 'إلغاء الإشراف' : 'ترقية') + '</button>' +
+        '<button class="wau-adm" data-act="admin" data-id="' + u.id + '" data-val="' + (u.isAdmin ? 0 : 1) + '" data-name="' + esc(u.username) + '">' + (u.isAdmin ? 'إلغاء الإشراف' : 'ترقية') + '</button>' +
         '<button class="wau-del" data-act="del" data-id="' + u.id + '" data-name="' + esc(u.username) + '">حذف</button>' +
         '</div>';
     }).join('');
   }
+  function filtered() {
+    var q = ($('wau-search') && $('wau-search').value || '').trim().toLowerCase();
+    if (!q) return cache;
+    return cache.filter(function (u) {
+      return (u.username || '').toLowerCase().indexOf(q) !== -1 || (u.phone || '').toLowerCase().indexOf(q) !== -1;
+    });
+  }
   function render() {
     if ($('wau-count')) $('wau-count').textContent = cache.length ? ('العدد: ' + cache.length) : '';
-    if ($('wau-body')) $('wau-body').innerHTML = rowsHtml(cache);
+    if ($('wau-body')) $('wau-body').innerHTML = rowsHtml(filtered());
   }
   function load() {
     if ($('wau-body')) $('wau-body').innerHTML = 'جارِ التحميل…';
@@ -115,20 +120,25 @@
     var act = t.getAttribute('data-act'); if (!act) return;
     var id = t.getAttribute('data-id');
     var inp = ov.querySelector('.wau-cred[data-id="' + id + '"]');
-    if (act === 'inc' || act === 'dec') {
-      if (inp) { var v = Math.max(0, (parseInt(inp.value, 10) || 0) + (act === 'inc' ? 1 : -1)); inp.value = v; }
-    } else if (act === 'save') {
+    if (act === 'save') {
       var val = inp ? Number(inp.value) : 0;
       api('/api/admin/users/' + id, { method: 'PATCH', body: JSON.stringify({ credits: val }) }).then(load).catch(function (e) { alert(e.message); });
     } else if (act === 'admin') {
       var mk = t.getAttribute('data-val') === '1';
-      api('/api/admin/users/' + id, { method: 'PATCH', body: JSON.stringify({ isAdmin: mk }) }).then(load).catch(function (e) { alert(e.message); });
+      var nm2 = t.getAttribute('data-name');
+      var q = mk ? ('ترقية «' + nm2 + '» ليصير مشرفًا؟ راح يقدر يدير كل شيء بهذي اللوحة.') : ('إلغاء إشراف «' + nm2 + '»؟');
+      if (confirm(q)) {
+        api('/api/admin/users/' + id, { method: 'PATCH', body: JSON.stringify({ isAdmin: mk }) }).then(load).catch(function (e) { alert(e.message); });
+      }
     } else if (act === 'del') {
       var nm = t.getAttribute('data-name');
       if (confirm('حذف المستخدم «' + nm + '»؟ لا يمكن التراجع.')) {
         api('/api/admin/users/' + id, { method: 'DELETE' }).then(load).catch(function (e) { alert(e.message); });
       }
     }
+  });
+  ov.addEventListener('input', function (e) {
+    if (e.target && e.target.id === 'wau-search') render();
   });
 
   setInterval(ensureTrigger, 800);

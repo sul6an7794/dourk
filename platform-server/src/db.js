@@ -158,7 +158,7 @@ function getAllUsers() {
   return state.users
     .slice()
     .sort((a, b) => a.id - b.id)
-    .map((u) => ({ id: u.id, username: u.username, isAdmin: !!u.is_admin, credits: u.credits || 0, created_at: u.created_at }));
+    .map((u) => ({ id: u.id, username: u.username, phone: u.phone || '', isAdmin: !!u.is_admin, credits: u.credits || 0, created_at: u.created_at }));
 }
 // سجل تدقيق التذاكر: كل تغيير برصيد أي مستخدم (ليش، كم، والرصيد بعده) — عشان لو مستخدم
 // سأل "ليش انخصمت مني تذكرة" يكون فيه جواب فعلي بدل رقم رصيد خام بدون تاريخ.
