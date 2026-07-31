@@ -27,6 +27,13 @@ function registerSocket(io) {
 
     socket.on('createRoom', async (data, cb) => {
       if (!withinLimit(socket, 'createRoom', 10, 60 * 1000)) { cb && cb(TOO_MANY); return; }
+      // قفل بسيط بالذاكرة لكل سوكيت — يمنع ضغطتين سريعتين متتاليتين (قبل رجوع الرد الأول) من
+      // خصم رصيد مرتين وإنشاء غرفتين حقيقيتين بينما الواجهة تحتفظ بالأخيرة فقط (تعليق الأولى للأبد).
+      if (socket.data._creatingRoom) {
+        cb && cb({ ok: false, error: 'جارِ إنشاء الغرفة بالفعل، لحظة واحدة' });
+        return;
+      }
+      socket.data._creatingRoom = true;
       try {
         const u = socket.data.user;
         // إنشاء اللعبة يتطلب تسجيل دخول (لا يُسمح للضيوف).
@@ -47,6 +54,8 @@ function registerSocket(io) {
         cb && cb({ ok: true, roomCode: room.code, teams: roomsMgr.teamSummary(room), credits });
       } catch (e) {
         cb && cb({ ok: false, error: 'تعذّر إنشاء الغرفة' });
+      } finally {
+        socket.data._creatingRoom = false;
       }
     });
 

@@ -23,6 +23,19 @@ test('مغادرة القائد تنقل القيادة للاعب التالي 
   assert.strictEqual(room.hostId, 'p2');
 });
 
+test('مغادرة القائد صراحةً تتجاوز لاعبًا منقطعًا وتختار أول لاعب متصل فعليًا', () => {
+  const room = rooms.createRoom('host1', 'القائد');
+  rooms.joinRoom(room.code, 'p2-disconnected', 'لاعب منقطع');
+  rooms.joinRoom(room.code, 'p3-connected', 'لاعب متصل');
+  // p2 انضم أولًا (أسبق بالـMap) لكنه منقطع فعليًا — القيادة يجب تروح لـp3 لا p2،
+  // وإلا تفضل الغرفة عالقة (ما أحد يقدر يبدأ لعبة) لحد ما ينتهي وقت الهجر.
+  room.players.get('p2-disconnected').connected = false;
+
+  rooms.leaveRoom(room, 'host1');
+
+  assert.strictEqual(room.hostId, 'p3-connected');
+});
+
 test('migrateHostToConnectedPlayer: ما يسوي شي لو القائد لسا متصل', () => {
   const room = rooms.createRoom('host1', 'القائد');
   rooms.joinRoom(room.code, 'p2', 'لاعب٢');

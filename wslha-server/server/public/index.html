@@ -9,14 +9,14 @@
 <title>وصّلها — اشرحها صح... ولا تضيعهم</title>
 <meta name="description" content="كل فريق من ٣ لاعبين يشوف ٣ صور مختلفة. نقاش واحد يوصلكم للإجابة، وغلطة وحدة توقفكم ١٥ ثانية.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://wslha.app/">
+<meta property="og:url" content="https://dourk.sa/">
 <meta property="og:title" content="وصّلها — اشرحها صح... ولا تضيعهم">
 <meta property="og:description" content="كل فريق من ٣ لاعبين يشوف ٣ صور مختلفة. نقاش واحد يوصلكم للإجابة، وغلطة وحدة توقفكم ١٥ ثانية.">
-<meta property="og:image" content="https://wslha.app/logo-icon.png">
+<meta property="og:image" content="https://dourk.sa/logo-icon.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="وصّلها — اشرحها صح... ولا تضيعهم">
 <meta name="twitter:description" content="كل فريق من ٣ لاعبين يشوف ٣ صور مختلفة. نقاش واحد يوصلكم للإجابة.">
-<meta name="twitter:image" content="https://wslha.app/logo-icon.png">
+<meta name="twitter:image" content="https://dourk.sa/logo-icon.png">
 <style>
   .page-loader { position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:#0a081e; transition:opacity .22s ease, visibility .22s ease; }
   .page-loader.is-hidden { opacity:0; visibility:hidden; pointer-events:none; }
@@ -27,6 +27,7 @@
   @keyframes pageLoaderPulse { 0%,100% { opacity:.4; transform:scale(1); } 50% { opacity:1; transform:scale(1.35); } }
 </style>
 <script src="./support.js"></script>
+<script src="./qrcode.js"></script>
 </head>
 <body>
 <div id="pageLoader" class="page-loader" role="status" aria-label="جارِ التحميل"><span class="page-loader__dots"><span></span><span></span></span></div>
@@ -832,11 +833,15 @@ class Component extends DCLogic {
   _clearSession() {
     try { localStorage.removeItem('wsl_user'); } catch (e) {}
   }
-  // معرّف جهاز/متصفح ثابت (يبقى بعد إغلاق المتصفح) — يُستخدم لاسترجاع نفس مكان اللاعب بالفريق بعد انقطاع الاتصال.
+  // معرّف ثابت لهذا التبويب تحديدًا (sessionStorage، مو localStorage) — يبقى نفسه عبر تحديث
+  // الصفحة (فيتيح استرجاع مكان اللاعب بالفريق بعد انقطاع الاتصال)، لكن يختلف بين تبويبين
+  // مفتوحين على نفس المتصفح. لو استخدمنا localStorage (المشترك بين كل تبويبات نفس الأصل)
+  // فتبويبين على نفس الجهاز (صديقين يتشاركون لابتوب، أو اختبار بتبويبين) ياخذون نفس المعرّف،
+  // فانقطاع أحدهما يخلي الآخر يسترجع مكانه بالغلط عند إعادة الاتصال.
   _deviceId() {
     try {
-      let id = localStorage.getItem('wsl_device_id');
-      if (!id) { id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); localStorage.setItem('wsl_device_id', id); }
+      let id = sessionStorage.getItem('wsl_device_id');
+      if (!id) { id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('wsl_device_id', id); }
       return id;
     } catch (e) { return this.state.deviceId || null; }
   }
@@ -921,6 +926,20 @@ class Component extends DCLogic {
     const code = this.state.roomCode || '';
     const base = (typeof window !== 'undefined' && window.location) ? (window.location.origin + window.location.pathname) : 'https://wasselha.game';
     return base + '?room=' + code;
+  }
+  qrDataUrl(text) {
+    try {
+      if (typeof qrcode !== 'function') throw new Error('QR library is not ready');
+      const qr = qrcode(0, 'M');
+      qr.addData(text);
+      qr.make();
+      const svg = qr.createSvgTag({ cellSize: 5, margin: 4, scalable: true, alt: 'QR' })
+        .replace('fill="white"', 'fill="#15122e"')
+        .replace('fill="black"', 'fill="#f1f0ff"');
+      return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    } catch (e) {
+      return '';
+    }
   }
   copyShare() {
     const url = this.shareUrl();
@@ -1233,7 +1252,20 @@ class Component extends DCLogic {
       let done = false;
       const fallback = setTimeout(() => { if (!done) { done = true; this._createLocal(); } }, 3500);
       s.emit('createRoom', { maxPlayers: this.state.maxPlayers }, (res) => {
-        if (done) return; done = true; clearTimeout(fallback);
+        if (done) {
+          // الرد الحقيقي وصل بعد ما رجعنا للوضع المحلي — الغرفة الحقيقية فعلًا اتنشأت
+          // وخُصم رصيدها فعليًا، فنبدّل الحالة الحالية لها بدل تركها معلّقة بلا لاعبين للأبد.
+          if (res && res.ok) {
+            const upd = { roomCode: String(res.roomCode), serverTeams: res.teams || [], offline: false };
+            if (res.credits != null) {
+              upd.credits = res.credits;
+              if (this.state.user) { upd.user = { ...this.state.user, credits: res.credits }; this._saveSession(upd.user); }
+            }
+            this.setState(upd);
+          }
+          return;
+        }
+        done = true; clearTimeout(fallback);
         if (res && res.ok) {
           const upd = { created: true, roomCode: String(res.roomCode), loading: false, role: null, myTeamIndex: null, serverTeams: res.teams || [], offline: false };
           if (res.credits != null) {
@@ -1699,7 +1731,7 @@ class Component extends DCLogic {
       created: this.state.created, notCreated: !this.state.created && !this.state.autoCreating && !this.state.pendingAdmin,
       autoCreating: (this.state.autoCreating || this.state.pendingAdmin) && !this.state.created,
       transitionLabel: this.state.pendingAdmin ? 'جارِ فتح لوحة التحكم…' : 'جارِ إنشاء غرفتك…',
-      roomCode: arNum(this.state.roomCode), qrCells: this.qrCells(), qrSrc: 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&margin=6&bgcolor=15122e&color=f1f0ff&data=' + encodeURIComponent(this.shareUrl()),
+      roomCode: arNum(this.state.roomCode), qrCells: this.qrCells(), qrSrc: this.qrDataUrl(this.shareUrl()),
       shareUrl: this.shareUrl(), copyShare: () => this.copyShare(),
       shareBtnLabel: this.state.shareCopied ? 'تم النسخ' : 'نسخ الرابط',
       shareResults: () => this.shareResults(),

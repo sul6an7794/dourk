@@ -69,12 +69,13 @@ router.post('/rounds', async (req, res) => {
 router.patch('/rounds/:id', async (req, res) => {
   const round = db.getRound(req.params.id);
   if (!round) return res.status(404).json({ error: 'الجولة غير موجودة' });
-  const { category, hint, question, answers, showLetters } = req.body || {};
+  const { category, hint, question, answers, showLetters, hintPlayerIndex } = req.body || {};
   const fields = {};
   if (category !== undefined) fields.category = category;
   if (hint !== undefined) fields.hint = hint;
   if (question !== undefined) fields.question = question;
   if (showLetters !== undefined) fields.showLetters = !!showLetters;
+  if (hintPlayerIndex !== undefined) fields.hintPlayerIndex = hintPlayerIndex;
   if (answers !== undefined) {
     const list = String(answers || '').split('،').join(',').split(',').map((s) => s.trim()).filter(Boolean);
     if (!list.length) return res.status(400).json({ error: 'الإجابة مطلوبة (إجابة واحدة على الأقل)' });

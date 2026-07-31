@@ -591,6 +591,13 @@ function attachSocketHandlers(io) {
 
         const existing = room.players.get(deviceId);
         if (existing) {
+          // فصل السوكيت القديم فعليًا لو كان لا يزال متصلًا — بدون هذا، تبويب/اتصال سابق
+          // لنفس الجهاز يبقى قادرًا يرسل أفعال (تصويت، قتل ليلي...) بالتوازي مع الاتصال
+          // الجديد كنفس اللاعب، لأن socket.data.playerId يبقى صالحًا عليه رغم ما عاد "الحقيقي".
+          if (existing.socketId && existing.socketId !== socket.id) {
+            const staleSocket = io.sockets.sockets.get(existing.socketId);
+            if (staleSocket) staleSocket.disconnect(true);
+          }
           existing.connected = true;
           existing.socketId = socket.id;
           if (name) existing.name = name;
@@ -617,6 +624,7 @@ function attachSocketHandlers(io) {
     });
 
     socket.on('startGame', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يبدأ اللعبة');
       game.startGame(room);
       for (const p of room.players.values()) sendRole(io, room, p);
@@ -627,6 +635,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('addBots', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يضيف بوتات');
       if (room.phase !== 'lobby') throw new Error('لا يمكن إضافة بوتات بعد بدء اللعبة');
       const count = Math.max(0, Math.min(Number(payload.count) || 0, rooms.MAX_PLAYERS));
@@ -636,9 +645,36 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('removeBots', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يحذف البوتات');
       if (room.phase !== 'lobby') throw new Error('لا يمكن حذف البوتات بعد بدء اللعبة');
       rooms.removeBotPlayers(room);
+      broadcastRoomUpdate(io, room);
+      cb && cb({ ok: true });
+    }));
+
+    // القائد يطرد لاعبًا من اللوبي فقط (قبل بدء اللعبة) — قبل هذا، لاعب مزعج/غير نشط باللوبي
+    // ما فيه طريقة لإزالته سوى مغادرته هو بنفسه أو انتظار مهلة هجر الغرفة (20 دقيقة).
+    socket.on('kickPlayer', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
+      if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يقدر يطرد لاعبين');
+      if (room.phase !== 'lobby') throw new Error('ما تقدر تطرد لاعب بعد بدء اللعبة');
+      const targetId = payload && payload.playerId;
+      if (!targetId || targetId === room.hostId) throw new Error('لاعب غير صالح للطرد');
+      const target = room.players.get(targetId);
+      if (!target) throw new Error('اللاعب غير موجود');
+      const targetSocketId = target.socketId;
+      room.players.delete(targetId);
+      room.lastActivityAt = Date.now();
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('kicked', {});
+        const targetSocket = io.sockets.sockets.get(targetSocketId);
+        if (targetSocket) {
+          targetSocket.leave(room.code);
+          targetSocket.data.roomCode = null;
+          targetSocket.data.playerId = null;
+        }
+      }
       broadcastRoomUpdate(io, room);
       cb && cb({ ok: true });
     }));
@@ -672,6 +708,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('confirmKill', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'night') throw new Error('ليست مرحلة الليل');
       game.confirmKill(room, socket.data.playerId);
       cb && cb({ ok: true });
@@ -679,6 +716,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('doctorProtect', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'night') throw new Error('ليست مرحلة الليل');
       game.submitProtect(room, socket.data.playerId, payload.targetId);
       cb && cb({ ok: true });
@@ -686,6 +724,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('sheikhCheck', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'night') throw new Error('ليست مرحلة الليل');
       const result = game.submitCheck(room, socket.data.playerId, payload.targetId);
       const target = room.players.get(result.targetId);
@@ -693,6 +732,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('thiefSteal', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'night') throw new Error('ليست مرحلة الليل');
       game.submitSteal(room, socket.data.playerId, payload.targetId);
       cb && cb({ ok: true });
@@ -700,6 +740,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('fighterGuard', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'night') throw new Error('ليست مرحلة الليل');
       game.activateFighterGuard(room, socket.data.playerId);
       cb && cb({ ok: true });
@@ -707,6 +748,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('nightReady', inRoom((room) => {
+      if (!allow(socket.id)) return;
       if (room.phase !== 'night') return;
       game.markNightReady(room, socket.data.playerId);
       checkNightComplete(io, room);
@@ -724,6 +766,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('dayReady', inRoom((room) => {
+      if (!allow(socket.id)) return;
       if (room.phase !== 'day') return;
       room.dayReady.add(socket.data.playerId);
       const allReady = rooms.alivePlayers(room).every((p) => room.dayReady.has(p.id));
@@ -742,6 +785,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('pardonRequest', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'vote') throw new Error('ليست مرحلة التصويت');
       const me = room.players.get(socket.data.playerId);
       if (!me || !me.alive) throw new Error('لا يمكنك المشاركة');
@@ -758,6 +802,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('executeRequest', inRoom((room, _payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'vote') throw new Error('ليست مرحلة التصويت');
       const me = room.players.get(socket.data.playerId);
       if (!me || !me.alive) throw new Error('لا يمكنك المشاركة');
@@ -774,6 +819,7 @@ function attachSocketHandlers(io) {
     }));
 
     socket.on('defenseChoice', inRoom((room, payload, cb) => {
+      if (!allow(socket.id)) return cb && cb({ error: 'طلبات كثيرة' });
       if (room.phase !== 'defense') throw new Error('ليست مرحلة الدفاع');
       const me = room.players.get(socket.data.playerId);
       if (!me || !me.alive || me.id === room.accusedId) throw new Error('لا يمكنك المشاركة');
@@ -788,6 +834,10 @@ function attachSocketHandlers(io) {
         room.accusedId = null;
         setPhase(io, room, 'vote', game.VOTE_MS, () => endVoteFlow(io, room));
         broadcastVotes(io, room);
+        // كانت منسية هنا (موجودة بالمسار المكافئ للبوتات scheduleBotDefense) — بدونها، لو
+        // دفاع بشري (مو بوت) هو اللي رجّع التصويت، البوتات ما تصوّت أبدًا بالتصويت الجديد
+        // وتعتمد الجولة كاملة على انتهاء مهلة VOTE_MS بصمت البوتات.
+        scheduleBotVotes(io, room);
       }
     }));
 

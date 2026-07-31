@@ -11,8 +11,15 @@ function touch(room) { room.lastActivityAt = Date.now(); }
 
 // أمان: نشيل < > من اسم اللاعب/الفريق حتى لو الواجهة الحالية تعرضها بأمان — طبقة حماية
 // إضافية تمنع حقن HTML لو أي كود مستقبلي عرض الاسم بطريقة غير آمنة (innerHTML مثلًا).
+// قائمة أساسية (مو شاملة) لكلمات مسيئة شائعة — تستبدل الاسم بالكامل باسم افتراضي بدل رفض
+// الانضمام (رفض قد يربك اللاعب)، كطبقة حماية أولى ضد الإساءة الصريحة بأسماء الفرق/اللاعبين.
+const PROFANITY_LIST = ['كلب', 'حمار', 'خرا', 'قحبه', 'قحبة', 'شرموط', 'عاهر', 'زانية', 'fuck', 'shit', 'bitch', 'asshole', 'nigger', 'whore', 'cunt'];
+
 function sanitizeDisplayName(raw) {
-  return String(raw || '').replace(/[<>]/g, '').trim().slice(0, 30);
+  const cleaned = String(raw || '').replace(/[<>]/g, '').trim().slice(0, 30);
+  const lower = cleaned.toLowerCase();
+  if (PROFANITY_LIST.some((w) => lower.includes(w))) return '';
+  return cleaned;
 }
 
 function genCode() {
@@ -187,6 +194,23 @@ function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name, resume })
     };
   }
 
+  // فريق مهجور بالكامل (كل أعضائه منقطعون، ولا أحد منهم يطابق جهاز اللاعب الجديد أعلاه) —
+  // نعيد تصفيره بالكامل بدل تركه "ممتلئ" للأبد وحرمان لاعبين جدد من الانضمام له.
+  if (team.players.length > 0 && team.players.every((p) => p.connected === false)) {
+    clearInterval(team.timer);
+    clearInterval(team.lockTimer);
+    team.players = [];
+    team.name = '';
+    team.started = false;
+    team.roundIndex = 0;
+    team.score = 0;
+    team.elapsed = 0;
+    team.locked = 0;
+    team.wrongCount = 0;
+    team.timer = null;
+    team.lockTimer = null;
+  }
+
   if (team.started) return { error: 'هذا الفريق بدأ اللعب بالفعل' };
   if (team.players.length >= TEAM_SIZE) return { error: 'الفريق مكتمل' };
 
@@ -298,7 +322,9 @@ function submitAnswer(io, socket, answer) {
   const round = room.rounds[Math.min(team.roundIndex, room.rounds.length - 1)];
   if (!round) return { error: 'لا توجد جولة حالية' };
 
-  const ans = String(answer || '').trim().toLowerCase();
+  // حد أقصى لطول الإجابة قبل أي مطابقة — يمنع إرسال نصوص ضخمة (قرب حد الرسالة 1MB بسوكيت.io)
+  // تجبر مطابقة ضبابية O(n) متكررة بلا أي فائدة حقيقية لأي إجابة مشروعة.
+  const ans = String(answer || '').trim().toLowerCase().slice(0, 60);
   // مطابقة جزئية مسموحة فقط لو الجزء الأقصر يغطي 80% على الأقل من الكلمة (يمنع قبول إجابة قصيرة أو ناقصة كإجابة صحيحة).
   const fuzzyMatch = (a, b) => {
     if (a === b) return true;
@@ -505,6 +531,9 @@ function snapshotActiveRooms() {
       ...team,
       timer: null,
       lockTimer: null,
+      // Set لا يُسلسَّل بـJSON.stringify (يرجع {} فاضي) — نحوّله لمصفوفة صراحة حتى لا ينمسح
+      // الطرد بصمت عند أي إعادة تشغيل/نشر (كان يسمح للمطرودين بالرجوع التلقائي بعدها).
+      kickedDeviceIds: [...team.kickedDeviceIds],
       players: team.players.map((player) => ({ ...player, socketId: null, connected: false })),
     })),
   }));
@@ -527,6 +556,7 @@ function restoreActiveRooms(snapshot) {
           index,
           timer: null,
           lockTimer: null,
+          kickedDeviceIds: new Set(Array.isArray(rawTeam.kickedDeviceIds) ? rawTeam.kickedDeviceIds : []),
           players: (rawTeam.players || []).map((player) => ({ ...player, socketId: null, connected: false })),
         });
         restoreTeamTimers(team);

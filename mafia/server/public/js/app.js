@@ -589,6 +589,11 @@ function loadHtml2Canvas() {
       state.error = res.error || null;
       render();
     },
+    async kickPlayer(playerId) {
+      const res = await emitAck('kickPlayer', { playerId });
+      state.error = res.error || null;
+      render();
+    },
     flipCard() {
       state.flipped = true;
     },
@@ -725,6 +730,16 @@ function loadHtml2Canvas() {
 
   socket.on('disconnect', () => {
     state.connection = state.roomCode ? 'reconnecting' : 'offline';
+    render();
+  });
+
+  // القائد طردنا من اللوبي — السيرفر فصل سوكيتنا فعليًا (targetSocket.disconnect غير مستخدم
+  // هنا عمدًا، فقط leave+تصفير data)، فنعيد الواجهة لشاشة البداية بدل ما تبقى معلّقة بحالة قديمة.
+  socket.on('kicked', () => {
+    state.roomCode = null;
+    state.hostId = null;
+    state.players = [];
+    state.error = 'تم طردك من الغرفة';
     render();
   });
 

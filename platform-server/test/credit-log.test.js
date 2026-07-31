@@ -45,6 +45,14 @@ test('setUserCredits (ضبط المشرف اليدوي) يسجّل الفرق ف
   assert.equal(log[0].balanceAfter, 5);
 });
 
+test('setUserCredits يسجّل هوية المشرف الفعلي اللي نفّذ التعديل', async () => {
+  const admin = await db.insertUser({ username: 'clog_admin_actor', phone: '+966500000103' });
+  const user = await db.insertUser({ username: 'clog_admin_target', phone: '+966500000104' });
+  await db.setUserCredits(user.id, 9, 'admin-adjustment', admin.id);
+  const log = db.getCreditLog(user.id);
+  assert.equal(log[0].adminId, admin.id);
+});
+
 test('setUserCredits بدون تغيير فعلي ما يضيف سجل جديد', async () => {
   const user = await db.insertUser({ username: 'clog_nochange', phone: '+966500000004' });
   const before = db.getCreditLog(user.id).length;

@@ -231,3 +231,49 @@ test('startGame: القائد فقط يقدر يبدأ الجولة', () => {
   assert.match(denied.error, /القائد فقط/);
   assert.equal(rooms.startGame(io, cap).ok, true);
 });
+
+test('snapshot/restore: kickedDeviceIds تبقى بعد إعادة تشغيل (لا ترجع Set فاضية)', () => {
+  const { io, room, cap, m1 } = setupFullTeam('t14');
+  rooms.kickPlayer(io, cap, { playerId: room.teams[0].players.find((p) => p.socketId === m1.id).id });
+  assert.equal(room.teams[0].kickedDeviceIds.has('t14-dev-m1'), true);
+
+  const snapshot = rooms.snapshotActiveRooms();
+  const savedTeam = snapshot.find((r) => r.code === room.code).teams[0];
+  // لازم تكون مصفوفة (قابلة لـJSON.stringify) مو Set فاضية بعد التسلسل.
+  assert.deepEqual(savedTeam.kickedDeviceIds, ['t14-dev-m1']);
+
+  const restoredCount = rooms.restoreActiveRooms([{ ...snapshot.find((r) => r.code === room.code), code: '999999' }]);
+  assert.equal(restoredCount, 1);
+  const restoredRoom = rooms.getRoom('999999');
+  assert.equal(restoredRoom.teams[0].kickedDeviceIds instanceof Set, true);
+  assert.equal(restoredRoom.teams[0].kickedDeviceIds.has('t14-dev-m1'), true);
+
+  const rejoinAttempt = rooms.chooseTeam(io, makeMockSocket('t14-m1-new', 't14-dev-m1'), {
+    roomCode: '999999', teamIndex: 0, resume: true,
+  });
+  assert.equal(rejoinAttempt.error, 'kicked');
+});
+
+test('chooseTeam: فريق مهجور بالكامل (كل أعضائه منقطعون) يُستعاد للاعب جديد بدل البقاء ممتلئ للأبد', () => {
+  const { io, room, cap, m1, m2 } = setupFullTeam('t15');
+  [cap, m1, m2].forEach((s) => rooms.leave(io, s));
+  assert.equal(room.teams[0].players.every((p) => p.connected === false), true);
+
+  const newcomer = makeMockSocket('t15-newcomer', 't15-dev-newcomer');
+  const res = rooms.chooseTeam(io, newcomer, { roomCode: room.code, teamIndex: 0, teamName: 'فريق جديد', name: 'لاعب جديد' });
+  assert.equal(res.ok, true);
+  assert.equal(res.isCaptain, true);
+  assert.equal(room.teams[0].players.length, 1);
+  assert.equal(room.teams[0].name, 'فريق جديد');
+});
+
+test('sanitizeDisplayName (عبر chooseTeam): اسم مسيء يُستبدل بالاسم الافتراضي', () => {
+  const io = makeMockIo();
+  const player = makeMockSocket('t16-bad-name', 't16-dev-bad');
+  const room = rooms.createRoom(io, player, { maxPlayers: 3 });
+  const res = rooms.chooseTeam(io, player, { roomCode: room.code, teamIndex: 0, teamName: 'fuck', name: 'shit' });
+  assert.equal(res.ok, true);
+  const team = room.teams[0];
+  assert.equal(team.name, 'فريق 1');
+  assert.equal(team.players[0].name, 'لاعب');
+});

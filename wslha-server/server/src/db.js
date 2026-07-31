@@ -273,15 +273,23 @@ function getRound(id) {
   return { ...r, images: getRoundImages(r.id) };
 }
 function getRoundsCount() { return state.rounds.length; }
+// أقصى قيمة صالحة لـhintPlayerIndex — يطابق حجم الفريق (TEAM_SIZE بـrooms.js، 3 لاعبين).
+// قيمة خارج المدى (0، سالبة، أو أكبر من 3 بسبب غلطة إدخال بلوحة التحكم) تجعل شرط
+// المطابقة بـsendImages/chooseTeam لا يتحقق أبدًا، فلا يستلم أي لاعب التلميح بصمت.
+const MAX_HINT_PLAYER_INDEX = 3;
+function clampHintPlayerIndex(value, fallback) {
+  const idx = Number(value);
+  if (!Number.isFinite(idx) || idx <= 0) return fallback;
+  return Math.min(Math.floor(idx), MAX_HINT_PLAYER_INDEX);
+}
 async function insertRound({ hint, answers, hintPlayerIndex, category, question, showLetters }) {
-  const idx = Number(hintPlayerIndex);
   const id = await backend.nextId('rounds');
   const maxPos = state.rounds.reduce((m, r) => Math.max(m, r.position || r.id || 0), 0);
   const round = {
     id,
     hint,
     answers,
-    hintPlayerIndex: Number.isFinite(idx) && idx > 0 ? Math.floor(idx) : 1,
+    hintPlayerIndex: clampHintPlayerIndex(hintPlayerIndex, 1),
     category: String(category || '').trim(),
     question: String(question || '').trim(),
     // يظهر حرف (A/B/C) بزاوية صورة كل لاعب حسب ترتيبه بالفريق — يفيد جولات "الاختلاف" اللي
@@ -322,6 +330,7 @@ async function updateRound(id, fields) {
   if (fields.question !== undefined) round.question = String(fields.question || '').trim();
   if (fields.answers !== undefined) round.answers = fields.answers;
   if (fields.showLetters !== undefined) round.showLetters = !!fields.showLetters;
+  if (fields.hintPlayerIndex !== undefined) round.hintPlayerIndex = clampHintPlayerIndex(fields.hintPlayerIndex, round.hintPlayerIndex);
   await backend.putRound(round);
   return { ...round, images: getRoundImages(round.id) };
 }

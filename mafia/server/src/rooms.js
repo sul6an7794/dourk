@@ -159,8 +159,11 @@ function joinRoom(code, playerId, name) {
 function leaveRoom(room, playerId) {
   room.players.delete(playerId);
   if (room.hostId === playerId) {
-    const next = room.players.values().next();
-    room.hostId = next.done ? null : next.value.id;
+    // نفضّل أول لاعب متصل فعليًا (نفس تصفية migrateHostToConnectedPlayer) — لو اخترنا أول
+    // عنصر بالـMap بلا تصفية، ممكن نعطي الاستضافة للاعب منقطع الاتصال فعلًا (رقم إدراجه
+    // بالـMap أسبق)، فتفضل الغرفة عالقة برضو (ما أحد يقدر يبدأ لعبة) لحد ما تنتهي مهلة الهجر.
+    const next = [...room.players.values()].find((p) => p.connected);
+    room.hostId = next ? next.id : null;
     // القائد الجديد ما مرّ بخصم تذكرة أبدًا (الانضمام مجاني ومجهول)، فما فيه طريقة نعرف
     // حسابه بالمنصة. نفضّل نخلي "لعبة جديدة" مجانية له بدل خصمها غلط من حساب القائد اللي غادر.
     room.platformUid = null;

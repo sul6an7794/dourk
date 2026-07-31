@@ -98,7 +98,7 @@ function renderWaitingRoom(state, actions) {
   });
   const invite = el('div', 'lobby-invite');
   const qr = el('img', 'lobby-qr');
-  qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&bgcolor=0d1420&color=f2f4f7&data=' + encodeURIComponent(inviteLink);
+  qr.src = qrDataUrl(inviteLink, '#f2f4f7', '#0d1420');
   qr.alt = 'رمز QR للانضمام إلى الغرفة';
   qr.width = 156;
   qr.height = 156;
@@ -129,6 +129,12 @@ function renderWaitingRoom(state, actions) {
     if (p.isBot) row.appendChild(el('span', 'chip chip-gold', '🤖 بوت'));
     if (!p.connected) row.appendChild(el('span', 'pill-off', 'غير متصل'));
     if (p.id === state.hostId) row.appendChild(el('span', 'host-star', '★ القائد'));
+    // القائد يقدر يطرد أي لاعب (غير نفسه) من اللوبي قبل بدء اللعبة فقط.
+    if (isHost && p.id !== state.hostId && !p.isBot) {
+      const kickBtn = el('button', 'small-btn ghost', '✕ طرد');
+      kickBtn.addEventListener('click', () => actions.kickPlayer(p.id));
+      row.appendChild(kickBtn);
+    }
     list.appendChild(row);
   });
   panel.appendChild(list);

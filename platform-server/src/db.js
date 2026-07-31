@@ -113,6 +113,18 @@ async function init() {
     state = loaded || defaultState();
     console.log('تخزين الحسابات: MongoDB (مجموعات مستقلة، دائم) ✅');
   } else {
+    // بدون MONGODB_URI، التخزين ملف محلي على قرص الحاوية — لا ينجو من إعادة نشر عادية على
+    // استضافة بحاويات مؤقتة (Render وغيرها). قبول هذا صامتًا بالإنتاج يعني احتمال ضياع كل
+    // الحسابات والأرصدة بصمت تام عند أول نشر جديد (خطأ إملائي بمتغيّر البيئة، أو نسيان
+    // ضبطه أصلًا) — بلا أي خطأ إقلاع يلفت الانتباه. نوقف الإقلاع صراحة بدل تحذير سهل التفويت،
+    // مع مخرج صريح (ALLOW_LOCAL_ACCOUNTS_STORAGE=1) لو التخزين المحلي مقصود فعلاً (قرص دائم مثلًا).
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_LOCAL_ACCOUNTS_STORAGE !== '1') {
+      throw new Error(
+        'MONGODB_URI غير مضبوط بالإنتاج — التخزين المحلي (accounts.json) لا ينجو من إعادة النشر ' +
+        'ويعني خطر ضياع كل الحسابات والأرصدة بصمت. اضبط MONGODB_URI، أو مرّر ' +
+        'ALLOW_LOCAL_ACCOUNTS_STORAGE=1 صراحة لو التخزين المحلي مقصود فعلاً.'
+      );
+    }
     backend = fileBackend;
     const loaded = await backend.loadAll();
     state = loaded || defaultState();
@@ -150,9 +162,12 @@ function getAllUsers() {
 }
 // سجل تدقيق التذاكر: كل تغيير برصيد أي مستخدم (ليش، كم، والرصيد بعده) — عشان لو مستخدم
 // سأل "ليش انخصمت مني تذكرة" يكون فيه جواب فعلي بدل رقم رصيد خام بدون تاريخ.
-async function logCredit(userId, delta, reason, balanceAfter) {
+// adminId: هوية المشرف اللي نفّذ التغيير فعليًا (لو صادر من لوحة تحكم، مو من النظام نفسه
+// كمكافأة تسجيل جديد مثلًا) — بدونه، نزاع "مين صفّر رصيد هذا المستخدم" غير قابل للحل لو فيه
+// أكثر من مشرف واحد؛ السجل كان يوثّق "مشرف ما، بوقت ما" فقط بلا هوية فعلية.
+async function logCredit(userId, delta, reason, balanceAfter, adminId) {
   const id = await backend.nextId('credit_log');
-  const entry = { id, userId: Number(userId), delta, reason: reason || null, balanceAfter, at: new Date().toISOString() };
+  const entry = { id, userId: Number(userId), delta, reason: reason || null, balanceAfter, adminId: adminId != null ? Number(adminId) : null, at: new Date().toISOString() };
   state.credit_log.push(entry);
   await backend.putCreditLog(entry);
   return entry;
@@ -194,14 +209,14 @@ async function setUserAdmin(id, isAdmin) {
   await backend.putUser(u);
   return u;
 }
-async function setUserCredits(id, credits, reason) {
+async function setUserCredits(id, credits, reason, adminId) {
   const u = getUserById(id);
   if (!u) return null;
   const n = Math.floor(Number(credits));
   const newCredits = Number.isFinite(n) && n >= 0 ? n : 0;
   const delta = newCredits - (u.credits || 0);
   u.credits = newCredits;
-  if (delta !== 0) await logCredit(id, delta, reason || 'admin-set', u.credits);
+  if (delta !== 0) await logCredit(id, delta, reason || 'admin-set', u.credits, adminId);
   await backend.putUser(u);
   return u;
 }

@@ -23,7 +23,7 @@ router.patch('/users/:id', asyncHandler(async (req, res) => {
   if (credits != null) {
     const n = Number(credits);
     if (!Number.isFinite(n) || n < 0) return res.status(400).json({ error: 'قيمة رصيد غير صحيحة' });
-    await db.setUserCredits(id, n, 'admin-adjustment');
+    await db.setUserCredits(id, n, 'admin-adjustment', req.user.id);
   }
   if (isAdmin != null) {
     if (id === req.user.id && !isAdmin) {

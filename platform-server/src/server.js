@@ -5,10 +5,29 @@ const http = require('http');
 const express = require('express');
 const { Server } = require('socket.io');
 
+// حارس عام أخير: أي رفض Promise أو استثناء غير ملتقط بأي كود مستقبلي خارج أغلفة asyncHandler/
+// inRoom الحالية (مثلًا: callback خام من مكتبة خارجية، أو جسم setTimeout) كان سابقًا يُسقط
+// عملية Node بالكامل — يوقف الدخول والتذاكر ولعبتي مافيا ووصّلها لكل المستخدمين المتصلين دفعة
+// وحدة، بدل ما يبقى الخطأ محصورًا بذاك الطلب/الحدث وحده. نسجّله فقط، لا نوقف العملية.
+process.on('unhandledRejection', (reason) => {
+  console.error('رفض Promise غير ملتقط:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('استثناء غير ملتقط:', err);
+});
+
 const PORT = process.env.PORT || 3000;
 // أمان: لا نفتح CORS/سوكيت لأي أصل افتراضيًا. لو ALLOWED_ORIGIN غير مضبوط، نقتصر على
 // نفس الأصل (false) بدل السماح لأي موقع خارجي يفتح اتصال سوكيت حي بالنيابة عن زائر الموقع.
-let ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
+function parseAllowedOrigin(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  if (raw === '*') return '*';
+  const list = raw.split(',').map((origin) => origin.trim()).filter(Boolean);
+  return list.length <= 1 ? (list[0] || false) : list;
+}
+
+let ALLOWED_ORIGIN = parseAllowedOrigin(process.env.ALLOWED_ORIGIN);
 if (!ALLOWED_ORIGIN) {
   ALLOWED_ORIGIN = false;
   console.warn('⚠️  ALLOWED_ORIGIN غير مضبوط — السوكيت مقصور على نفس الأصل فقط. اضبطه في بيئة الإنتاج لو الواجهة على أصل مختلف.');
@@ -59,7 +78,18 @@ const PLATFORM_CSP = [
   "frame-ancestors 'self'",
 ].join('; ');
 
+// التحقق من متغيرات البيئة الحرجة عند الإقلاع لا عند أول طلب حقيقي — بدونه، مفتاح Authentica
+// الناقص/الخطأ بالإنتاج يخلي السيرفر يقلع بنجاح ظاهريًا، وأول من يكتشف العطل فعليًا هو أول
+// مستخدم يحاول يسجّل دخول (OTP هو طريقة الدخول الوحيدة، فهذا يعني تعطّل كامل للدخول بصمت).
+function validateProductionEnv() {
+  if (process.env.NODE_ENV !== 'production') return;
+  if (!process.env.AUTHENTICA_API_KEY) {
+    throw new Error('AUTHENTICA_API_KEY غير مضبوط بالإنتاج — تسجيل الدخول بالكامل (OTP هو الطريقة الوحيدة) سيفشل لكل المستخدمين.');
+  }
+}
+
 async function start(port = PORT) {
+  validateProductionEnv();
   await accountsDb.init();
   await wslhaContentDb.init();
   await seedDefaults();
@@ -78,6 +108,11 @@ async function start(port = PORT) {
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use((req, res, next) => {
+    const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+    if (host === 'www.dourk.sa') return res.redirect(308, 'https://dourk.sa' + req.originalUrl);
+    next();
+  });
+  app.use((req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'SAMEORIGIN');
     res.set('Referrer-Policy', 'no-referrer');
@@ -92,6 +127,27 @@ async function start(port = PORT) {
   // تحليل جسم JSON — لازم قبل أي مسار /api يقرأ req.body (auth/admin/rooms هنا على المنصة
   // نفسها الآن، مو بره داخل تطبيق فرعي مثل وصّلها اللي كان يوفّرها ضمنيًا سابقًا).
   app.use(express.json({ limit: '1mb' }));
+
+  // CORS لمسارات /api فقط — auth.js يدعم صراحة توكن Bearer "للاستخدام من أصل مختلف (النسخة
+  // المستقلة من الواجهة)"، لكن بدون هذي الترويسات المتصفح يمنع الرد قبل ما يوصل لجافاسكربت
+  // العميل أصلًا، فالمسار الموصوف بالتعليق ما كان يشتغل فعليًا من أي أصل خارجي حقيقي.
+  // نفس متغيّر ALLOWED_ORIGIN المستخدم لسوكيت.io — أصل واحد محدد صراحة، لا "*" مع كوكيز.
+  if (ALLOWED_ORIGIN) {
+    app.use('/api', (req, res, next) => {
+      res.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+      res.set('Access-Control-Allow-Credentials', 'true');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+      if (req.method === 'OPTIONS') return res.sendStatus(204);
+      next();
+    });
+  }
+
+  // فحص صحة بسيط قابل للسكربتة — يتأكد إن العملية الشغّالة فعليًا هي آخر نشر، بدل الاعتماد
+  // على curl يدوي وتخمين بالعين (سبق وصار تأخر بالنشر بالإنتاج صعب اكتشافه بدون هذا).
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()), version: require('../package.json').version, now: new Date().toISOString() });
+  });
 
   // واجهة المنصة (الرئيسية): اختيار اللعبة، الحساب، التذاكر، الملف الشخصي.
   app.use(express.static(path.join(__dirname, '..', 'public')));
