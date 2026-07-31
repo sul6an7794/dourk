@@ -41,7 +41,22 @@ function createLedger(ttlMs = 60 * 1000) {
     return setInterval(() => { sweepExpired(db).catch((e) => console.error('فشل استرجاع تذاكر منتهية:', e)); }, intervalMs);
   }
 
-  return { issue, redeem, sweepExpired, startSweep, _size: () => pending.size };
+  // للحفظ الدوري على القرص (نفس فكرة room-snapshots.js) — لو السيرفر انطفى (نشر جديد، تحطم)
+  // بين خصم تذكرة وإصدارها وبين إنشاء الغرفة الفعلي، كانت التذكرة المعلّقة تضيع نهائيًا بدون
+  // استرجاع لأنها ما كانت محفوظة إلا بالذاكرة. نحفظها كلها كما هي (حتى لو منتهية الصلاحية
+  // وقت الحفظ) — بعد الاستعادة، دورة sweepExpired الطبيعية تسترجع رصيد أي تذكرة فاتها وقتها.
+  function serialize() {
+    return [...pending].map(([jti, entry]) => ({ jti, uid: entry.uid, expiresAt: entry.expiresAt }));
+  }
+  function restore(list) {
+    if (!Array.isArray(list)) return 0;
+    for (const item of list) {
+      if (item && item.jti && item.uid != null) pending.set(item.jti, { uid: item.uid, expiresAt: item.expiresAt });
+    }
+    return list.length;
+  }
+
+  return { issue, redeem, sweepExpired, startSweep, serialize, restore, _size: () => pending.size };
 }
 
 const defaultLedger = createLedger();

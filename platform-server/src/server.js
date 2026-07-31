@@ -68,6 +68,8 @@ async function start(port = PORT) {
     const restoredWslha = wslhaRooms.restoreActiveRooms(previousSnapshot.wslha);
     const restoredMafia = mafiaRooms.restoreLobbies(previousSnapshot.mafia);
     if (restoredWslha || restoredMafia) console.log(`استُعيدت ${restoredWslha + restoredMafia} غرفة من آخر تشغيل.`);
+    const restoredTickets = ticketLedger.restore(previousSnapshot.tickets);
+    if (restoredTickets) console.log(`استُعيدت ${restoredTickets} تذكرة معلّقة من آخر تشغيل.`);
   }
 
   const app = express();
@@ -145,6 +147,7 @@ async function start(port = PORT) {
       roomSnapshots.save({
         wslha: wslhaRooms.snapshotActiveRooms(),
         mafia: mafiaRooms.snapshotLobbies(),
+        tickets: ticketLedger.serialize(),
       });
     } catch (error) {
       // تعطل مساحة التخزين لا ينبغي أن يوقف لعبة جارية؛ المحاولة التالية قد تنجح بعد عودة القرص.
