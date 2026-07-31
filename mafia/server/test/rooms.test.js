@@ -23,6 +23,40 @@ test('مغادرة القائد تنقل القيادة للاعب التالي 
   assert.strictEqual(room.hostId, 'p2');
 });
 
+test('migrateHostToConnectedPlayer: ما يسوي شي لو القائد لسا متصل', () => {
+  const room = rooms.createRoom('host1', 'القائد');
+  rooms.joinRoom(room.code, 'p2', 'لاعب٢');
+  const migrated = rooms.migrateHostToConnectedPlayer(room);
+  assert.strictEqual(migrated, false);
+  assert.strictEqual(room.hostId, 'host1');
+});
+
+test('migrateHostToConnectedPlayer: ينقل القيادة لأول لاعب متصل لو القائد منقطع (بدون ما يشيله من الغرفة)', () => {
+  const room = rooms.createRoom('host1', 'القائد');
+  rooms.joinRoom(room.code, 'p2', 'لاعب٢');
+  rooms.joinRoom(room.code, 'p3', 'لاعب٣');
+  room.players.get('host1').connected = false;
+
+  const migrated = rooms.migrateHostToConnectedPlayer(room);
+
+  assert.strictEqual(migrated, true);
+  assert.strictEqual(room.hostId, 'p2');
+  // القائد القديم يبقى بالغرفة (منقطع فقط) — بعكس leaveRoom اللي يشيله كليًا.
+  assert.strictEqual(room.players.has('host1'), true);
+});
+
+test('migrateHostToConnectedPlayer: ما يسوي شي لو ما فيه أي لاعب ثاني متصل (كل اللاعبين منقطعين)', () => {
+  const room = rooms.createRoom('host1', 'القائد');
+  rooms.joinRoom(room.code, 'p2', 'لاعب٢');
+  room.players.get('host1').connected = false;
+  room.players.get('p2').connected = false;
+
+  const migrated = rooms.migrateHostToConnectedPlayer(room);
+
+  assert.strictEqual(migrated, false);
+  assert.strictEqual(room.hostId, 'host1');
+});
+
 test('لعبة جديدة تعيد الغرفة للوبي وتصفّر كل حالة الجولة مع بقاء اللاعبين', () => {
   const room = rooms.createRoom('h', 'القائد');
   for (const id of ['a', 'b', 'c', 'd', 'e']) rooms.joinRoom(room.code, id, id);

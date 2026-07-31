@@ -361,6 +361,18 @@ function handleDisconnectOrLeave(io, socket, { explicit }) {
   } else if (player.socketId === socket.id) {
     player.connected = false;
     room.lastActivityAt = Date.now();
+    // انقطاع القائد تحديدًا (بعكس أي عضو ثاني) — بدون هذا، أي انقطاع مفاجئ لصاحب الغرفة
+    // (تحطم تبويب، إغلاق الجوال) يعلّق الغرفة للأبد: ما أحد يقدر يبدأ لعبة جديدة، وما فيه
+    // تنظيف تلقائي طالما فيه لاعبين ثانين متصلين. بعد مهلة سماح ننقل القيادة تلقائيًا.
+    if (room.hostId === playerId) {
+      if (room.hostGraceTimer) clearTimeout(room.hostGraceTimer);
+      room.hostGraceTimer = setTimeout(() => {
+        room.hostGraceTimer = null;
+        const stillRoom = rooms.getRoom(room.code);
+        if (!stillRoom) return;
+        if (rooms.migrateHostToConnectedPlayer(stillRoom)) broadcastRoomUpdate(io, stillRoom);
+      }, rooms.HOST_DISCONNECT_GRACE_MS);
+    }
     broadcastRoomUpdate(io, room);
   }
 }
@@ -573,6 +585,12 @@ function attachSocketHandlers(io) {
           existing.connected = true;
           existing.socketId = socket.id;
           if (name) existing.name = name;
+          // رجع القائد قبل ما تنتهي مهلة السماح (انظر handleDisconnectOrLeave) — نلغي نقل
+          // القيادة المجدول، يبقى هو القائد.
+          if (room.hostId === deviceId && room.hostGraceTimer) {
+            clearTimeout(room.hostGraceTimer);
+            room.hostGraceTimer = null;
+          }
         } else {
           const result = rooms.joinRoom(code, deviceId, name);
           if (result.error) throw new Error(result.error);

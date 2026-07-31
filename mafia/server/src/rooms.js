@@ -2,6 +2,11 @@ const MIN_PLAYERS = require('./roles').MIN_PLAYERS;
 const MAX_PLAYERS = require('./roles').MAX_PLAYERS;
 
 const ABANDONED_ROOM_MS = 20 * 60 * 1000;
+// لو صاحب الغرفة انقطع فجأة (إغلاق تبويب، تحطم) وباقي اللاعبين متصلين، ما فيه أي تحويل
+// قيادة تلقائي إلا عند مغادرة صريحة — فتفضل الغرفة عالقة للأبد (ما أحد يقدر يبدأ لعبة
+// جديدة، وsweepAbandonedRooms ما يمسحها لأنه فيه لاعبين متصلين). هذي مهلة سماح قبل ما ننقل
+// القيادة تلقائيًا لأول لاعب متصل غيره.
+const HOST_DISCONNECT_GRACE_MS = 45 * 1000;
 const CODE_CHARS = '0123456789';
 
 const rooms = new Map();
@@ -78,6 +83,7 @@ function createRoom(hostId, hostName, platformUid) {
     createdAt: Date.now(),
     lastActivityAt: Date.now(),
     revealTeamOnExpel: false,
+    hostGraceTimer: null,
   }, freshGameState());
   room.players.set(hostId, makePlayer(hostId, hostName));
   rooms.set(code, room);
@@ -167,6 +173,19 @@ function leaveRoom(room, playerId) {
   }
 }
 
+// ينقل القيادة لأول لاعب متصل غير القائد الحالي، بدون ما يشيله من الغرفة (بعكس leaveRoom) —
+// يُستخدم لما القائد يبقى منقطعًا لفترة طويلة (انظر HOST_DISCONNECT_GRACE_MS) بدل ما تفضل
+// الغرفة عالقة للأبد. يرجع true لو صار فيه نقل فعلي.
+function migrateHostToConnectedPlayer(room) {
+  const current = room.players.get(room.hostId);
+  if (current && current.connected) return false;
+  const next = [...room.players.values()].find((p) => p.connected && p.id !== room.hostId);
+  if (!next) return false;
+  room.hostId = next.id;
+  room.platformUid = null;
+  return true;
+}
+
 function alivePlayers(room) {
   return [...room.players.values()].filter((p) => p.alive);
 }
@@ -251,12 +270,14 @@ function restoreLobbies(snapshot) {
 module.exports = {
   MIN_PLAYERS,
   MAX_PLAYERS,
+  HOST_DISCONNECT_GRACE_MS,
   rooms,
   createRoom,
   resetRoomForNewGame,
   getRoom,
   joinRoom,
   leaveRoom,
+  migrateHostToConnectedPlayer,
   alivePlayers,
   sweepAbandonedRooms,
   serializeRoom,
