@@ -273,7 +273,7 @@ function getRound(id) {
   return { ...r, images: getRoundImages(r.id) };
 }
 function getRoundsCount() { return state.rounds.length; }
-async function insertRound({ hint, answers, hintPlayerIndex, category, question }) {
+async function insertRound({ hint, answers, hintPlayerIndex, category, question, showLetters }) {
   const idx = Number(hintPlayerIndex);
   const id = await backend.nextId('rounds');
   const maxPos = state.rounds.reduce((m, r) => Math.max(m, r.position || r.id || 0), 0);
@@ -284,6 +284,9 @@ async function insertRound({ hint, answers, hintPlayerIndex, category, question 
     hintPlayerIndex: Number.isFinite(idx) && idx > 0 ? Math.floor(idx) : 1,
     category: String(category || '').trim(),
     question: String(question || '').trim(),
+    // يظهر حرف (A/B/C) بزاوية صورة كل لاعب حسب ترتيبه بالفريق — يفيد جولات "الاختلاف" اللي
+    // الجواب فيها "مين عنده الصورة المختلفة" بدل وصف محتواها. اختياري، مو كل الجولات تحتاجه.
+    showLetters: !!showLetters,
     position: maxPos + 1,
     created_at: new Date().toISOString(),
   };
@@ -318,6 +321,7 @@ async function updateRound(id, fields) {
   if (fields.hint !== undefined) round.hint = String(fields.hint || '').trim();
   if (fields.question !== undefined) round.question = String(fields.question || '').trim();
   if (fields.answers !== undefined) round.answers = fields.answers;
+  if (fields.showLetters !== undefined) round.showLetters = !!fields.showLetters;
   await backend.putRound(round);
   return { ...round, images: getRoundImages(round.id) };
 }

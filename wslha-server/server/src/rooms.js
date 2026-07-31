@@ -31,6 +31,7 @@ function loadPlayableRounds() {
       hint: r.hint,
       answers: r.answers,
       hintPlayerIndex: r.hintPlayerIndex || 1,
+      showLetters: !!r.showLetters,
       images: r.images.map((i) => i.url),
     }))
     // بالضبط 3 صور (صورة لكل لاعب بالفريق) — جولة بأقل من 3 تعني نفس الصورة تتكرر
@@ -169,7 +170,8 @@ function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name, resume })
       const hintIdx = (round && round.hintPlayerIndex) || 1;
       const playerPos = team.players.findIndex((p) => p.socketId === ghost.socketId);
       const hint = round && playerPos + 1 === hintIdx ? round.hint || '' : '';
-      io.to(socket.id).emit('yourImage', { src, hint });
+      const letter = round && round.showLetters ? letterFor(playerPos) : null;
+      io.to(socket.id).emit('yourImage', { src, hint, letter });
     }
     return {
       ok: true,
@@ -202,6 +204,12 @@ function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name, resume })
   return { ok: true, teamIndex: team.index, isCaptain, teams: teamSummary(room) };
 }
 
+// حرف الصورة (A/B/C) حسب ترتيب اللاعب بالفريق (0-index) — يفيد جولات "الاختلاف" اللي
+// الجواب فيها "مين عنده الصورة المختلفة"، بدل الاعتماد على تسميات نصية متعددة الصيغ.
+function letterFor(playerPos) {
+  return String.fromCharCode(65 + playerPos);
+}
+
 function playerImageFor(room, team, player) {
   const round = team.roundIndex != null ? room.rounds[Math.min(team.roundIndex, room.rounds.length - 1)] : null;
   if (!round || !round.images.length) return null;
@@ -216,7 +224,8 @@ function sendImages(io, room, team) {
     const src = playerImageFor(room, team, p);
     // التلميح يروح فقط للاعب المحدد بالجولة (حسب ترتيب انضمامه للفريق) — باقي لاعبي الفريق لا يستلمون شي.
     const hint = round && i + 1 === hintIdx ? round.hint || '' : '';
-    io.to(p.socketId).emit('yourImage', { src, hint });
+    const letter = round && round.showLetters ? letterFor(i) : null;
+    io.to(p.socketId).emit('yourImage', { src, hint, letter });
   });
 }
 
@@ -538,6 +547,7 @@ module.exports = {
   teamSummary,
   broadcastLobby,
   startGame,
+  sendImages,
   submitAnswer,
   leave,
   leaveTeam,

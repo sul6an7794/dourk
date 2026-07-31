@@ -73,6 +73,36 @@ test('createRoom: جولة بأقل من 3 صور تُستبعد من الجول
   assert.equal(room.rounds.some((r) => r.id === incomplete.id), false, 'الجولة الناقصة (صورتين بس) ما لازم تظهر بالجولات القابلة للعب');
 });
 
+test('sendImages: يرسل حرف الصورة (A/B/C) لكل لاعب فقط لو showLetters مفعّل بالجولة', async () => {
+  const lettersRound = await db.insertRound({ hint: '', answers: ['تجربة'], category: '', showLetters: true });
+  await db.insertRoundImage(lettersRound.id, { filename: 'x.jpg', url: 'https://example.com/x.jpg' });
+  await db.insertRoundImage(lettersRound.id, { filename: 'y.jpg', url: 'https://example.com/y.jpg' });
+  await db.insertRoundImage(lettersRound.id, { filename: 'z.jpg', url: 'https://example.com/z.jpg' });
+
+  const { io, room, cap, m1, m2 } = setupFullTeam('t-letters');
+  const idx = room.rounds.findIndex((r) => r.id === lettersRound.id);
+  assert.notEqual(idx, -1, 'الجولة الجديدة لازم تكون بقائمة الجولات القابلة للعب');
+
+  const team = room.teams[0];
+  team.roundIndex = idx;
+  rooms.sendImages(io, room, team);
+
+  const bySocket = Object.fromEntries(
+    io.emitted.filter((e) => e.event === 'yourImage').map((e) => [e.target, e.payload])
+  );
+  assert.equal(bySocket[cap.id].letter, 'A');
+  assert.equal(bySocket[m1.id].letter, 'B');
+  assert.equal(bySocket[m2.id].letter, 'C');
+});
+
+test('sendImages: ما يرسل أي حرف لو showLetters مو مفعّل بالجولة (الافتراضي)', () => {
+  const { io, room, cap } = setupFullTeam('t-no-letters');
+  const team = room.teams[0];
+  rooms.sendImages(io, room, team);
+  const capImage = io.emitted.find((e) => e.event === 'yourImage' && e.target === cap.id);
+  assert.equal(capImage.payload.letter, null);
+});
+
 test('chooseTeam: اللاعب لا يشغل مقعدين في فريقين مختلفين', () => {
   const io = makeMockIo();
   const player = makeMockSocket('multi-seat', 'multi-seat-device');

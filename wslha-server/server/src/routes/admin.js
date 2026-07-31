@@ -33,6 +33,7 @@ function toApiRound(r) {
     question: r.question || '',
     hintPlayerIndex: r.hintPlayerIndex || 1,
     category: r.category || '',
+    showLetters: !!r.showLetters,
     images: r.images,
   };
 }
@@ -42,7 +43,7 @@ router.get('/rounds', (req, res) => {
 });
 
 router.post('/rounds', async (req, res) => {
-  const { hint, answers, hintPlayerIndex, category, question } = req.body || {};
+  const { hint, answers, hintPlayerIndex, category, question, showLetters } = req.body || {};
   // الإجابة إجبارية (إجابة واحدة على الأقل). التلميح اختياري، وإذا تُرك فاضي فلا تلميح لهذي الجولة.
   const list = String(answers || '')
     .split('،')
@@ -59,6 +60,7 @@ router.post('/rounds', async (req, res) => {
     hintPlayerIndex,
     category: String(category || '').trim(),
     question: String(question || '').trim(),
+    showLetters: !!showLetters,
   });
   res.json(toApiRound(round));
 });
@@ -67,11 +69,12 @@ router.post('/rounds', async (req, res) => {
 router.patch('/rounds/:id', async (req, res) => {
   const round = db.getRound(req.params.id);
   if (!round) return res.status(404).json({ error: 'الجولة غير موجودة' });
-  const { category, hint, question, answers } = req.body || {};
+  const { category, hint, question, answers, showLetters } = req.body || {};
   const fields = {};
   if (category !== undefined) fields.category = category;
   if (hint !== undefined) fields.hint = hint;
   if (question !== undefined) fields.question = question;
+  if (showLetters !== undefined) fields.showLetters = !!showLetters;
   if (answers !== undefined) {
     const list = String(answers || '').split('،').join(',').split(',').map((s) => s.trim()).filter(Boolean);
     if (!list.length) return res.status(400).json({ error: 'الإجابة مطلوبة (إجابة واحدة على الأقل)' });

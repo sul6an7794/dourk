@@ -484,6 +484,10 @@
         </sc-for>
       </select>
     </div>
+    <div style="margin-bottom:18px; display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="newShowLettersCk" checked="{{ newShowLetters }}" onChange="{{ setNewShowLetters }}" style="width:18px; height:18px; cursor:pointer; accent-color:#818cf8;">
+      <label for="newShowLettersCk" style="font-size:13px; font-weight:700; color:#d8d6ee; cursor:pointer;">إظهار حرف الصورة (A/B/C) للاعبين <span style="color:#6b6894; font-weight:500;">(لجولات "مين عنده الصورة المختلفة")</span></label>
+    </div>
     <div style="margin-bottom:18px;">
       <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">صور الجولة <span style="color:#6b6894; font-weight:500;">(بترتيب اللاعبين — الأولى للاعب ١، والثانية للاعب ٢، وهكذا)</span></label>
       <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
@@ -527,6 +531,10 @@
             </sc-for>
           </select>
         </div>
+        <div style="margin-bottom:18px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="editShowLettersCk" checked="{{ editShowLetters }}" onChange="{{ setEditShowLetters }}" style="width:18px; height:18px; cursor:pointer; accent-color:#818cf8;">
+          <label for="editShowLettersCk" style="font-size:13px; font-weight:700; color:#d8d6ee; cursor:pointer;">إظهار حرف الصورة (A/B/C) للاعبين <span style="color:#6b6894; font-weight:500;">(لجولات "مين عنده الصورة المختلفة")</span></label>
+        </div>
         <div style="margin-bottom:18px;">
           <label style="display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#d8d6ee;">صور الجولة <span style="color:#6b6894; font-weight:500;">(بترتيب اللاعبين — الأولى للاعب ١، والثانية للاعب ٢، وهكذا)</span></label>
           <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
@@ -560,6 +568,9 @@
         <sc-if value="{{ r.hasQuestion }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13px; color:#c4b5fd; margin-bottom:12px;">السؤال: {{ r.question }}</div>
         </sc-if>
+        <sc-if value="{{ r.hasLetters }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px; font-weight:700; color:#818cf8; margin-bottom:12px;">🔤 أحرف الصور (A/B/C) ظاهرة للاعبين بهذي الجولة</div>
+        </sc-if>
         <div style="font-size:12px; color:#6b6894; margin-bottom:10px;">رتّب الصور بترتيب اللاعبين — الأولى للاعب ١، والثانية للاعب ٢، وهكذا.</div>
         <div style="display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
           <sc-for list="{{ r.thumbs }}" as="t" hint-placeholder-count="0">
@@ -592,6 +603,9 @@
     <div style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:20px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.35);">
       <div style="position:relative; background:#0a081e;">
         {{ currentImageEl }}
+        <sc-if value="{{ hasImageLetter }}" hint-placeholder-val="{{ false }}">
+        <div title="حرف صورتك" style="position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:10px; background:rgba(129,140,248,.85); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; color:#fff; box-shadow:0 6px 16px rgba(0,0,0,.35);">{{ imageLetter }}</div>
+        </sc-if>
         <sc-if value="{{ showLockView }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute; inset:0; background:rgba(10,8,30,.97); backdrop-filter:blur(16px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; animation:lockShake .5s ease;">
           <div style="width:54px; height:54px; border-radius:50%; background:rgba(244,63,94,.2); border:1px solid rgba(244,63,94,.4); display:flex; align-items:center; justify-content:center; color:#f43f5e;">{{ iconLockLg }}</div>
@@ -740,10 +754,10 @@ class Component extends DCLogic {
     elapsed: 0, roundIndex: 0, answer: '', locked: 0, showHint: false, gameScore: 0, hintText: '', hintShown: false, wrongCount: 0, resultsTickerScore: 0,
     role: 'captain',
     // الاتصال بالخادم
-    connected: false, serverImage: null, lobbyPlayers: [], statusMsg: '', deviceId: null,
+    connected: false, serverImage: null, serverImageLetter: null, lobbyPlayers: [], statusMsg: '', deviceId: null,
     // لوحة التحكم
-    adminRounds: [], adminStats: null, newHint: '', newAnswers: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newImages: [], adminMsg: '',
-    editingRoundId: null, editHint: '', editAnswers: '', editQuestion: '', editCategory: CATEGORY_LIST[0],
+    adminRounds: [], adminStats: null, newHint: '', newAnswers: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], adminMsg: '',
+    editingRoundId: null, editHint: '', editAnswers: '', editQuestion: '', editCategory: CATEGORY_LIST[0], editShowLetters: false,
     serverTeams: [], myTeamIndex: null, namingTeam: null, teamNameInput: '', startRequested: false, shareCopied: false, resultsShareBusy: false, resultsShareDone: false, zoomOpen: false, countdown: 0,
     // الحساب: القوائم والتذاكر وتعديل الملف
     menuOpen: false, creditOpen: false, editMode: false, editSection: null,
@@ -1082,7 +1096,7 @@ class Component extends DCLogic {
     s.on('lobby', (p) => this.setState({ serverTeams: p.teams || [], roomCode: p.roomCode || this.state.roomCode }, () => this.maybeAutoStart()));
     s.on('gameStarted', (st) => { this.stopTimer(); this.setState({ page: 'game', roundIndex: st.roundIndex, gameScore: st.score, elapsed: st.elapsed, hintShown: false, hintText: '', wrongCount: 0, countdown: 3 }, () => this.startCountdown()); });
     s.on('state', (st) => this.setState({ roundIndex: st.roundIndex, gameScore: st.score, elapsed: st.elapsed, locked: st.lockedSeconds }));
-    s.on('yourImage', (im) => this.setState({ serverImage: im.src }));
+    s.on('yourImage', (im) => this.setState({ serverImage: im.src, serverImageLetter: im.letter || null }));
     s.on('correct', () => this.setState({ answer: '', showHint: false }));
     s.on('hint', (d) => this.setState({ hintText: (d && d.text) || '', hintShown: !!(d && d.text) }));
     s.on('locked', (d) => this.setState({ locked: d.lockedSeconds, answer: '' }));
@@ -1273,6 +1287,7 @@ class Component extends DCLogic {
   setNewHint(e) { this.setState({ newHint: e.target.value }); }
   setNewAnswers(e) { this.setState({ newAnswers: e.target.value }); }
   setNewCategory(e) { this.setState({ newCategory: e.target.value }); }
+  setNewShowLetters(e) { this.setState({ newShowLetters: e.target.checked }); }
   // يضيف الصور المختارة إلى معاينة محلية (قبل إنشاء الجولة) — تُرفع فعليًا فقط بعد نجاح
   // الإنشاء، بس تظهر للمشرف فورًا مع زر × لحذف أي صورة أضافها بالغلط قبل الإرسال.
   addNewImages(fileList) {
@@ -1299,11 +1314,12 @@ class Component extends DCLogic {
     const answers = answersRaw.split(/[،,]/).map(a => a.trim()).filter(Boolean);
     const question = (this.state.newQuestion || '').trim();
     const category = this.state.newCategory || CATEGORY_LIST[0];
+    const showLetters = !!this.state.newShowLetters;
     const stagedImages = this.state.newImages || [];
     try {
-      const round = await this.api('/api/wslha-admin/rounds', { method: 'POST', body: JSON.stringify({ hint, answers: answersRaw, question, category }) });
+      const round = await this.api('/api/wslha-admin/rounds', { method: 'POST', body: JSON.stringify({ hint, answers: answersRaw, question, category, showLetters }) });
       this._clearNewImages();
-      this.setState({ newHint: '', newAnswers: '', newQuestion: '' });
+      this.setState({ newHint: '', newAnswers: '', newQuestion: '', newShowLetters: false });
       // نرفع الصور المعاينة (لو فيه) دفعة وحدة بعد ما تتأكد بيانات الجولة نفسها — نفس مسار
       // الرفع الحالي per-round، بس نستدعيه مباشرة بدل ما ننتظر ضغطة "رفع صور" لاحقة.
       if (stagedImages.length) await this.uploadImages(round.id, stagedImages.map((im) => im.file));
@@ -1342,6 +1358,7 @@ class Component extends DCLogic {
       editAnswers: (round.answers || []).join('، '),
       editQuestion: round.question || '',
       editCategory: round.category || CATEGORY_LIST[0],
+      editShowLetters: !!round.showLetters,
     });
   }
   cancelEditRound() { this.setState({ editingRoundId: null }); }
@@ -1349,6 +1366,7 @@ class Component extends DCLogic {
   setEditAnswers(e) { this.setState({ editAnswers: e.target.value }); }
   setEditQuestion(e) { this.setState({ editQuestion: e.target.value }); }
   setEditCategory(e) { this.setState({ editCategory: e.target.value }); }
+  setEditShowLetters(e) { this.setState({ editShowLetters: e.target.checked }); }
   async saveEditRound(id) {
     const answersRaw = (this.state.editAnswers || '').trim();
     if (!answersRaw) { this.setState({ adminMsg: 'أدخل الإجابات المقبولة أولاً' }); return; }
@@ -1360,6 +1378,7 @@ class Component extends DCLogic {
           answers: answersRaw,
           question: (this.state.editQuestion || '').trim(),
           category: this.state.editCategory || CATEGORY_LIST[0],
+          showLetters: !!this.state.editShowLetters,
         }),
       });
       this.setState({ editingRoundId: null });
@@ -1587,6 +1606,7 @@ class Component extends DCLogic {
         answersText: (r.answers || []).join('، '),
         question: r.question || '', hasQuestion: !!r.question,
         category: r.category || '—',
+        hasLetters: !!r.showLetters,
         isFirst: i === 0, isLast: i === arr.length - 1,
         moveUpOpacity: i === 0 ? .35 : 1, moveDownOpacity: i === arr.length - 1 ? .35 : 1,
         moveUp: () => this.moveRound(r.id, 'up'),
@@ -1618,6 +1638,7 @@ class Component extends DCLogic {
       editAnswers: this.state.editAnswers, setEditAnswers: (e) => this.setEditAnswers(e),
       editQuestion: this.state.editQuestion, setEditQuestion: (e) => this.setEditQuestion(e),
       editCategory: this.state.editCategory, setEditCategory: (e) => this.setEditCategory(e),
+      editShowLetters: this.state.editShowLetters, setEditShowLetters: (e) => this.setEditShowLetters(e),
       newQuestion: this.state.newQuestion, setNewQuestion: (e) => this.setNewQuestion(e),
       newImagePreviews: (this.state.newImages || []).map((im, i) => ({
         el: React.createElement('img', { src: im.previewUrl, style: { width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px', display: 'block' } }),
@@ -1634,6 +1655,7 @@ class Component extends DCLogic {
       newHint: this.state.newHint, setNewHint: (e) => this.setNewHint(e),
       newAnswers: this.state.newAnswers, setNewAnswers: (e) => this.setNewAnswers(e),
       newCategory: this.state.newCategory || CATEGORY_LIST[0], setNewCategory: (e) => this.setNewCategory(e),
+      newShowLetters: this.state.newShowLetters, setNewShowLetters: (e) => this.setNewShowLetters(e),
       categoryList: CATEGORY_LIST,
       createRound: () => this.createRound(),
       adminMsg: this.state.adminMsg, hasAdminMsg: !!this.state.adminMsg,
@@ -1686,6 +1708,8 @@ class Component extends DCLogic {
       elapsedDisplay, roundNumber: arNum(ri + 1), roundTotal: arNum(total), hintShown: this.state.hintShown, hintText: this.state.hintText || '',
       playerLabel: uname + ' · ' + arNum(activeCode),
       currentImageEl: React.createElement('img', { src: this.state.serverImage || cur.src, alt: 'صورة الجولة', style: { width: '100%', maxHeight: '62vh', objectFit: 'contain', display: 'block', margin: '0 auto' } }),
+      hasImageLetter: !!this.state.serverImageLetter,
+      imageLetter: this.state.serverImageLetter || '',
       zoomImageEl: React.createElement('img', { src: this.state.serverImage || cur.src, alt: 'صورة الجولة مكبّرة', style: { maxWidth: '92vw', maxHeight: '84vh', objectFit: 'contain', borderRadius: '16px', boxShadow: '0 30px 80px rgba(0,0,0,.6)' } }),
       zoomOpen: this.state.zoomOpen, openZoom: () => this.openZoom(), closeZoom: () => this.closeZoom(),
       iconZoom: I(ic.zoom, 18, '#fff'), iconClose: I(ic.close, 22, '#fff'),
