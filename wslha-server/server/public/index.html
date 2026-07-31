@@ -754,7 +754,7 @@ class Component extends DCLogic {
     // لوحة التحكم
     adminRounds: [], adminStats: null, newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], adminMsg: '',
     editingRoundId: null, editHint: '', editAnswersList: [], editAnswerDraft: '', editQuestion: '', editCategory: CATEGORY_LIST[0], editShowLetters: false,
-    serverTeams: [], myTeamIndex: null, namingTeam: null, teamNameInput: '', startRequested: false, shareCopied: false, resultsShareBusy: false, resultsShareDone: false, zoomOpen: false, countdown: 0,
+    serverTeams: [], myTeamIndex: null, namingTeam: null, teamNameInput: '', startRequested: false, shareCopied: false, resultsShareBusy: false, resultsShareDone: false, zoomOpen: false, zoomImageUrl: null, countdown: 0,
     // الحساب: القوائم والتذاكر وتعديل الملف
     menuOpen: false, creditOpen: false, editMode: false, editSection: null,
     profileName: '', profileMsg: '', profileMsgType: '',
@@ -917,8 +917,9 @@ class Component extends DCLogic {
       this.setState({ user, profileMsg: 'تم تغيير الاسم بنجاح', profileMsgType: 'ok', credits: (user.credits != null ? user.credits : this.state.credits) });
     } catch (e) { this.setState({ profileMsg: this._errText(e), profileMsgType: 'err' }); }
   }
-  openZoom() { this.setState({ zoomOpen: true }); }
-  closeZoom() { this.setState({ zoomOpen: false }); }
+  // url: تُمرَّر عند تكبير صورة جولة من لوحة التحكم (بدل صورة اللاعب بالمباراة الحالية).
+  openZoom(url) { this.setState({ zoomOpen: true, zoomImageUrl: url || null }); }
+  closeZoom() { this.setState({ zoomOpen: false, zoomImageUrl: null }); }
 
   shareUrl() {
     const code = this.state.roomCode || '';
@@ -1489,7 +1490,9 @@ class Component extends DCLogic {
     return I.createElement('div', { style: { position: 'relative', width: size + 'px', height: size + 'px' } },
       I.createElement('img', {
         src: url,
-        style: { width: size + 'px', height: size + 'px', objectFit: 'cover', borderRadius: radius + 'px', display: 'block' },
+        title: 'اضغط للتكبير',
+        style: { width: size + 'px', height: size + 'px', objectFit: 'cover', borderRadius: radius + 'px', display: 'block', cursor: 'zoom-in' },
+        onClick: () => this.openZoom(url),
         onError: (e) => {
           e.target.style.display = 'none';
           const fb = e.target.nextSibling;
@@ -1792,7 +1795,7 @@ class Component extends DCLogic {
       currentImageEl: React.createElement('img', { src: this.state.serverImage || cur.src, alt: 'صورة الجولة', style: { width: '100%', maxHeight: '62vh', objectFit: 'contain', display: 'block', margin: '0 auto' } }),
       hasImageLetter: !!this.state.serverImageLetter,
       imageLetter: this.state.serverImageLetter || '',
-      zoomImageEl: React.createElement('img', { src: this.state.serverImage || cur.src, alt: 'صورة الجولة مكبّرة', style: { maxWidth: '92vw', maxHeight: '84vh', objectFit: 'contain', borderRadius: '16px', boxShadow: '0 30px 80px rgba(0,0,0,.6)' } }),
+      zoomImageEl: React.createElement('img', { src: this.state.zoomImageUrl || this.state.serverImage || cur.src, alt: 'صورة مكبّرة', style: { maxWidth: '92vw', maxHeight: '84vh', objectFit: 'contain', borderRadius: '16px', boxShadow: '0 30px 80px rgba(0,0,0,.6)' } }),
       zoomOpen: this.state.zoomOpen, openZoom: () => this.openZoom(), closeZoom: () => this.closeZoom(),
       iconZoom: I(ic.zoom, 18, '#fff'), iconClose: I(ic.close, 22, '#fff'),
       currentImageHint: cur.hint,
