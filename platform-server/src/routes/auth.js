@@ -66,6 +66,18 @@ function randomDisplayName() {
   return 'لاعب-' + String(Math.floor(1000 + Math.random() * 9000));
 }
 
+// يمنع سباق تزامن: طلبين otp/verify لنفس الرقم بنفس اللحظة (ضغطتين سريعتين، أو محاولتين
+// من جهازين) ممكن يمرّان فحص "المستخدم موجود؟" قبل ما ينحفظ أي منهما (خصوصًا بتخزين الملف
+// المحلي بدون MongoDB، اللي ما عنده فهرس فريد يمنع التكرار) — فينشئ الاثنان حسابًا مكررًا
+// لنفس رقم الجوال، كل واحد ياخذ رصيد ترحيب منفصل. نقفل بالرقم نفسه: أي طلب ثاني لنفس
+// الرقم ينتظر الأول يخلص، وبعدها يعيد الفحص بدل ما ينشئ نسخة ثانية.
+const registrationLocks = new Map(); // phone -> آخر عملية قيد التنفيذ لنفس الرقم
+function withPhoneLock(phone, fn) {
+  const run = (registrationLocks.get(phone) || Promise.resolve()).then(fn, fn);
+  registrationLocks.set(phone, run.catch(() => {}));
+  return run;
+}
+
 router.post('/otp/request', otpRequestLimit, async (req, res) => {
   const phone = String((req.body || {}).phone || '').trim();
   if (!PHONE_RE.test(phone)) {
@@ -104,14 +116,23 @@ router.post('/otp/verify', otpVerifyLimit, async (req, res) => {
     let user = db.getUserByPhone(phone);
     // الواجهة تحتاج تعرف "حساب جديد فعلاً؟" عشان تعرض خطوة اختيار الاسم مرة وحدة بس —
     // بدل ما تطلبه مقدّمًا من كل شخص حتى لو عنده حساب أصلًا (يلخبط اللي يسجّل دخول عادي).
-    const isNew = !user;
+    let isNew = !user;
     if (isNew) {
-      let name = String(username || '').trim();
-      if (!name || !NAME_RE.test(name)) name = randomDisplayName();
-      // لا يمنح أي تسجيل عام صلاحية مشرف. التهيئة الأولى تتطلب اسمًا ورمزًا سريًا من بيئة الخادم.
-      const hasAdmin = db.getAllUsers().some((existing) => !!existing.isAdmin);
-      const isAdmin = !hasAdmin && isBootstrapAdmin(name, bootstrapToken);
-      user = await db.insertUser({ username: name, phone, is_admin: isAdmin });
+      // القفل يضمن إن طلبًا متزامنًا ثانيًا لنفس الرقم يعيد الفحص بدل ما ينشئ حسابًا مكررًا —
+      // isNew تُعاد حسابها هنا فعليًا حسب مين أنشأ الحساب فعلًا (نحن أو طلب سابق سبقنا بالقفل).
+      const result = await withPhoneLock(phone, async () => {
+        const existing = db.getUserByPhone(phone);
+        if (existing) return { user: existing, created: false };
+        let name = String(username || '').trim();
+        if (!name || !NAME_RE.test(name)) name = randomDisplayName();
+        // لا يمنح أي تسجيل عام صلاحية مشرف. التهيئة الأولى تتطلب اسمًا ورمزًا سريًا من بيئة الخادم.
+        const hasAdmin = db.getAllUsers().some((u) => !!u.isAdmin);
+        const isAdmin = !hasAdmin && isBootstrapAdmin(name, bootstrapToken);
+        const created = await db.insertUser({ username: name, phone, is_admin: isAdmin });
+        return { user: created, created: true };
+      });
+      user = result.user;
+      isNew = result.created;
     }
     const token = signToken(user);
     setAuthCookie(req, res, token);
