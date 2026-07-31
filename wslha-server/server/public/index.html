@@ -1485,15 +1485,32 @@ class Component extends DCLogic {
   // صورة جولة قد يتلف رابطها (حذف يدوي من التخزين، أو تعارض بمصدر الصور) — بدل أيقونة
   // "صورة مكسورة" الافتراضية بالمتصفح (تلخبط المشرف بين "لسا يحمّل" و"فعلاً معطوبة")،
   // نستبدلها بلافتة واضحة تدله يحذفها ويرفع بدلها.
+  //
+  // مهم: لوحة التحكم تُعيد رسم الصفحة كاملة (كل الجولات وصورها) مع أي ضغطة حرف بأي حقل
+  // (سؤال، إجابة، تلميح...). بدون memo هنا، كل ضغطة تعني إعادة إنشاء عنصر <img> جديد
+  // لكل صورة بكل الجولات — وأي عطل شبكة عابر لحظة إعادة الرسم يفعّل onError بشكل دائم
+  // (صورة تختفي ويحتاج المشرف يرفعها من جديد رغم إنها موجودة فعليًا). الحل: نخزّن نفس
+  // عنصر React لكل رابط صورة ونعيد استخدامه — يمنع أي إعادة تحميل شبكي غير ضروري.
   imgWithFallback(url, size, radius) {
+    this._imgCache = this._imgCache || new Map();
+    const cacheKey = url + '|' + size + '|' + radius;
+    const cached = this._imgCache.get(cacheKey);
+    if (cached) return cached;
     const I = React;
-    return I.createElement('div', { style: { position: 'relative', width: size + 'px', height: size + 'px' } },
+    const el = I.createElement('div', { style: { position: 'relative', width: size + 'px', height: size + 'px' } },
       I.createElement('img', {
         src: url,
         title: 'اضغط للتكبير',
         style: { width: size + 'px', height: size + 'px', objectFit: 'cover', borderRadius: radius + 'px', display: 'block', cursor: 'zoom-in' },
         onClick: () => this.openZoom(url),
         onError: (e) => {
+          // محاولة واحدة قبل ما نعتبرها فعليًا معطوبة — يمتص أي عطل شبكي عابر.
+          const tries = Number(e.target.getAttribute('data-retries') || '0');
+          if (tries < 1) {
+            e.target.setAttribute('data-retries', String(tries + 1));
+            setTimeout(() => { e.target.src = url + (url.includes('?') ? '&' : '?') + '_r=' + Date.now(); }, 400);
+            return;
+          }
           e.target.style.display = 'none';
           const fb = e.target.nextSibling;
           if (fb) fb.style.display = 'flex';
@@ -1507,6 +1524,8 @@ class Component extends DCLogic {
         },
       }, '⚠ تعذّر تحميل الصورة')
     );
+    this._imgCache.set(cacheKey, el);
+    return el;
   }
 
   qrCells() {

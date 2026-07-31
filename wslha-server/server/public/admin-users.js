@@ -67,7 +67,7 @@
   ov.innerHTML =
     '<div class="wau-card">' +
       '<div class="wau-head"><h3 style="display:flex;align-items:center;gap:8px">' + usersIconSvg + ' المستخدمون</h3>' +
-        '<div class="wau-tools"><button class="wau-saveall">💾 حفظ</button><button class="wau-refresh">↻ تحديث</button><button class="wau-close">إغلاق</button></div>' +
+        '<div class="wau-tools"><button class="wau-saveall">حفظ</button><button class="wau-refresh">↻ تحديث</button><button class="wau-close">إغلاق</button></div>' +
       '</div>' +
       '<div class="wau-count" id="wau-count"></div>' +
       '<input class="wau-search" id="wau-search" type="text" placeholder="بحث بالاسم أو الجوال…">' +
