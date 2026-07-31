@@ -502,7 +502,7 @@ const App = {
       '<footer>' +
         '<div class="tag">لمّ ربعك… والعبها صح</div>' +
         '<div class="links"><a class="footer-link" href="#privacy">سياسة الخصوصية</a><span>·</span><a class="footer-link" href="#terms">الشروط والأحكام</a>' + adminLink + '</div>' +
-        '<div class="socials"><a href="https://www.tiktok.com/@dourk" target="_blank" rel="noopener noreferrer" aria-label="تيك توك" title="تيك توك">' + ICONS.tiktok + '</a><div class="sbc-verify-seal" data-token="N0dGTVFMVGlxVnIyMHNzTlY4R00yUT09"></div></div>' +
+        '<div class="socials"><a href="https://www.tiktok.com/@dourk" target="_blank" rel="noopener noreferrer" aria-label="تيك توك" title="تيك توك">' + ICONS.tiktok + '<span>TikTok</span></a><div class="sbc-verify-seal" data-token="N0dGTVFMVGlxVnIyMHNzTlY4R00yUT09"></div></div>' +
         '<div class="copy">© دورك ٢٠٢٦ — جميع الحقوق محفوظة</div>' +
       '</footer>';
   },
