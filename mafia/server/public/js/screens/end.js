@@ -27,7 +27,7 @@ function renderGameOverScreen(state, actions) {
 
   const me = g.roles.find((r) => r.playerId === MafiaSocket.deviceId);
   if (me) {
-    const personal = el('div', `personal-result ${me.won ? 'won' : 'lost'}`, me.won ? 'نتيجتك: فزت' : 'نتيجتك: خسرت');
+    const personal = el('div', `personal-result ${isMafiaWin ? 'mafia' : 'town'}`, me.won ? 'نتيجتك: فزت' : 'نتيجتك: خسرت');
     wrap.appendChild(personal);
     if (me.roleId === 'joker' && !me.won) {
       wrap.appendChild(el('div', 'personal-reason', 'المهرج لا يفوز إلا إذا قُتل أو أُقصي قبل نهاية اللعبة.'));
@@ -56,7 +56,7 @@ function renderGameOverScreen(state, actions) {
     const group = el('div', `game-summary__group ${tone}`);
     group.appendChild(el('div', 'game-summary__label', title));
     const list = el('div', 'game-summary__list');
-    roles.forEach((role) => list.appendChild(el('span', 'game-summary__player', `${role.name} · ${role.label}`)));
+    roles.forEach((role) => list.appendChild(el('span', `game-summary__player ${role.alignment}`, `${role.name} · ${role.label}`)));
     group.appendChild(list);
     summary.appendChild(group);
   };

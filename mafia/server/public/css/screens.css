@@ -364,8 +364,11 @@ body.cards-drawer-open { overflow: hidden; }
   font-weight: 900; font-size: 17px; padding: 8px 18px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
 }
-.personal-result.won { color: var(--good-light); border-color: rgba(0,183,240,0.55); background: rgba(0,183,240,0.1); }
-.personal-result.lost { color: var(--evil-light); border-color: rgba(255,45,45,0.55); background: rgba(255,45,45,0.1); }
+/* لون "نتيجتك" يطابق لون الفريق الفائز الفعلي (نفس عنوان فازت العصابة/المواطنون فوق) —
+   مو لون ثابت لفوز/خسارة الشخص نفسه. كانت "نتيجتك: فزت" تطلع سماوي دايمًا حتى لو
+   الفائز فعليًا فريق المافيا (الأحمر) — تناقض بصري مباشر مع العنوان فوقها بنفس الشاشة. */
+.personal-result.mafia { color: var(--evil-light); border-color: rgba(255,45,45,0.55); background: rgba(255,45,45,0.1); }
+.personal-result.town { color: var(--good-light); border-color: rgba(0,183,240,0.55); background: rgba(0,183,240,0.1); }
 .personal-reason { max-width: 300px; text-align: center; color: var(--text-dim); font-size: 13px; line-height: 1.7; }
 .win-cards { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
 .win-card { display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -392,8 +395,13 @@ body.cards-drawer-open { overflow: hidden; }
 .game-summary__label { font-size: 12px; font-weight: 900; color: var(--text-dim); }
 .game-summary__list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
 .game-summary__player { padding: 5px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 700; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
-.game-summary__group.survivors .game-summary__player { color: var(--good-light); border-color: rgba(0,183,240,0.28); }
-.game-summary__group.fallen .game-summary__player { color: var(--text-dim); }
+/* اللون يعكس فريق اللاعب الفعلي (خير/شر/محايد)، مو مجرد نجا أو خرج — لاعب مافيا لسا
+   مافيا حتى لو نجا للنهاية، ولازم يبان أحمر مو سماوي. "خرجوا من اللعبة" بس تُعتّم شوي
+   (opacity) لتمييزهم بصريًا كـ"غير نشطين" بدون ما تلغي لون فريقهم. */
+.game-summary__player.evil { color: var(--evil-light); border-color: rgba(255,45,45,0.28); }
+.game-summary__player.good { color: var(--good-light); border-color: rgba(0,183,240,0.28); }
+.game-summary__player.neutral { color: #C9AEFF; border-color: rgba(142,94,255,0.32); }
+.game-summary__group.fallen .game-summary__player { opacity: 0.55; }
 .gameover-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; animation: actionFadeIn 0.35s ease both; }
 
 /* ===== الطبقات الانتقالية ===== */
