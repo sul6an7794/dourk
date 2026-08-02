@@ -2,6 +2,12 @@
  * اضغط Enter في أي حقل إدخال = يضغط الزر الرئيسي في نفس الشاشة (بدون ماوس).
  * طبقة عامة تشمل: الدخول، التسجيل، الانضمام، تغيير الاسم/كلمة المرور، إضافة جولة…
  * تستثني شاشة اللعب (خانة الإجابة تعالج Enter بنفسها) لتفادي الإرسال المزدوج.
+ *
+ * تستثني أيضًا أي حقل عليه data-own-enter="1" (مثل حقل "إجابة جديدة" بلوحة تحكم
+ * وصّلها): بدونها، Enter بهذا الحقل كان يفتح الطبقة هذي أول (capture phase، قبل
+ * onKeyDown حق React) وتضغط أقرب <button> بعده بالصفحة — اللي صار زر حذف صورة
+ * الجولة (×) لأنه أول زر يجي بعد الحقل بترتيب الصفحة، فتنحذف صورة فعليًا من
+ * السيرفر بمجرد إضافة إجابة! هذا كان السبب الحقيقي وراء اختفاء صور الجولات.
  */
 (function () {
   'use strict';
@@ -27,6 +33,7 @@
     var t = e.target;
     if (!t || t.tagName !== 'INPUT') return;
     if (!OK_TYPES[(t.getAttribute('type') || 'text').toLowerCase()]) return;
+    if (t.getAttribute('data-own-enter') === '1') return;
     // شاشة اللعب تعالج Enter بنفسها
     var screen = t.closest('[data-screen-label]');
     if (screen && screen.getAttribute('data-screen-label') === 'Game') return;

@@ -448,7 +448,7 @@
           <sc-for list="{{ newAnswerChips }}" as="a" hint-placeholder-count="0">
             <span style="display:flex; align-items:center; gap:6px; background:rgba(129,140,248,.18); color:#c4b5fd; border-radius:20px; padding:5px 5px 5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">{{ a.text }}<button onClick="{{ a.remove }}" title="حذف" style="width:17px; height:17px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:11px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">×</button></span>
           </sc-for>
-          <input value="{{ newAnswerDraft }}" onInput="{{ setNewAnswerDraft }}" onKeyDown="{{ handleNewAnswerKeyDown }}" onBlur="{{ commitNewAnswerDraft }}" placeholder="كلب، جرو، بوكسر…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
+          <input value="{{ newAnswerDraft }}" onInput="{{ setNewAnswerDraft }}" onKeyDown="{{ handleNewAnswerKeyDown }}" onBlur="{{ commitNewAnswerDraft }}" data-own-enter="1" placeholder="كلب، جرو، بوكسر…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
         </div>
       </div>
     </div>
@@ -506,7 +506,7 @@
               <sc-for list="{{ editAnswerChips }}" as="a" hint-placeholder-count="0">
                 <span style="display:flex; align-items:center; gap:6px; background:rgba(129,140,248,.18); color:#c4b5fd; border-radius:20px; padding:5px 5px 5px 12px; font-size:13px; font-weight:700; white-space:nowrap;">{{ a.text }}<button onClick="{{ a.remove }}" title="حذف" style="width:17px; height:17px; border-radius:50%; border:none; background:rgba(255,255,255,.15); color:#fff; font-size:11px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;">×</button></span>
               </sc-for>
-              <input value="{{ editAnswerDraft }}" onInput="{{ setEditAnswerDraft }}" onKeyDown="{{ handleEditAnswerKeyDown }}" onBlur="{{ commitEditAnswerDraft }}" placeholder="إجابة أخرى…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
+              <input value="{{ editAnswerDraft }}" onInput="{{ setEditAnswerDraft }}" onKeyDown="{{ handleEditAnswerKeyDown }}" onBlur="{{ commitEditAnswerDraft }}" data-own-enter="1" placeholder="إجابة أخرى…" style="flex:1; min-width:100px; background:transparent; border:none; outline:none; color:#f1f0ff; font-family:inherit; font-size:15px; padding:6px 4px;">
             </div>
           </div>
         </div>
