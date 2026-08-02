@@ -154,6 +154,8 @@ function getUserByUsername(username) { return state.users.find((u) => u.username
 function getUserByPhone(phone) { return state.users.find((u) => u.phone === phone) || null; }
 function getUserById(id) { return state.users.find((u) => u.id === Number(id)) || null; }
 function getUsersCount() { return state.users.length; }
+// عدد المستخدمين اللي انضموا برابط دعوة هذا المستخدم — يُعرض بصفحة الحساب.
+function getReferredCount(userId) { return state.users.filter((u) => u.referred_by === Number(userId)).length; }
 function getAllUsers() {
   return state.users
     .slice()
@@ -178,9 +180,9 @@ function getCreditLog(userId, limit = 50) {
     .slice(-limit)
     .reverse();
 }
-async function insertUser({ username, phone, is_admin }) {
+async function insertUser({ username, phone, is_admin, referred_by }) {
   const id = await backend.nextId('users');
-  const user = { id, username, phone, is_admin: is_admin ? 1 : 0, credits: STARTING_CREDITS, created_at: new Date().toISOString() };
+  const user = { id, username, phone, is_admin: is_admin ? 1 : 0, credits: STARTING_CREDITS, referred_by: referred_by != null ? Number(referred_by) : null, created_at: new Date().toISOString() };
   state.users.push(user);
   await backend.putUser(user);
   await logCredit(id, STARTING_CREDITS, 'signup-bonus', STARTING_CREDITS);
@@ -242,5 +244,6 @@ module.exports = {
   setUserCredits,
   deleteUser,
   getUsersCount,
+  getReferredCount,
   insertUser,
 };

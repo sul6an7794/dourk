@@ -26,6 +26,7 @@ const ICONS = {
   ticketLg: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4z"/><path d="M13 7v10"/></svg>',
   bolt: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>',
   users: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  gift: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>',
   tiktok: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69A4.79 4.79 0 0 1 15.82 2h-3.45v12.64a2.9 2.9 0 1 1-2.01-2.76V8.37a6.42 6.42 0 1 0 5.46 6.35V9.08a8.16 8.16 0 0 0 4.77 1.53V7.16a4.83 4.83 0 0 1-1-.47z"/></svg>',
   whatsapp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.14 1.59 5.94L0 24l6.28-1.65a11.94 11.94 0 0 0 5.76 1.47h.01c6.59 0 11.95-5.36 11.95-11.95 0-3.19-1.24-6.19-3.48-8.39zm-8.47 18.3h-.01a9.91 9.91 0 0 1-5.06-1.39l-.36-.21-3.73.98 1-3.63-.24-.37a9.88 9.88 0 0 1-1.52-5.25c0-5.46 4.44-9.9 9.91-9.9 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.47-4.44 9.91-9.88 9.91zm5.43-7.43c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.66.15-.19.3-.76.97-.93 1.17-.17.2-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47a8.93 8.93 0 0 1-1.65-2.05c-.17-.3-.02-.45.13-.6.13-.13.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.66-1.6-.91-2.19-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.8.38-.27.3-1.05 1.03-1.05 2.51s1.08 2.92 1.23 3.12c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.18-1.42-.08-.13-.27-.2-.57-.35z"/></svg>',
   back: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>',
@@ -258,10 +259,12 @@ const App = {
     const verifyBtn = document.getElementById('otpVerifyBtn');
     if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'جارِ التحقق...'; }
     try {
+      const ref = localStorage.getItem('dourk_ref') || undefined;
       const { user, isNew } = await this.api('/api/auth/otp/verify', {
         method: 'POST',
-        body: JSON.stringify({ phone: this.state.otpPhone, otp }),
+        body: JSON.stringify({ phone: this.state.otpPhone, otp, ref }),
       });
+      localStorage.removeItem('dourk_ref');
       this.state.user = user;
       this.state.otpVerifying = false;
       // حساب جديد فعلاً؟ نعرض خطوة اختيار اسم مرة وحدة بس — لو حساب قديم يكمل دخوله على طول
@@ -391,6 +394,19 @@ const App = {
   },
 
   buyTickets() { this.showToast('قريبًا — بوابة الدفع تحت الإعداد'); },
+
+  copyInviteLink() {
+    const field = document.getElementById('inviteLinkField');
+    if (!field) return;
+    const finish = () => this.showToast('تم نسخ رابط الدعوة');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(field.value).then(finish).catch(() => { field.select(); document.execCommand('copy'); finish(); });
+    } else {
+      field.select();
+      document.execCommand('copy');
+      finish();
+    }
+  },
 
   async saveName() {
     const name = document.getElementById('profileNameInput').value.trim();
@@ -685,6 +701,15 @@ const App = {
           '<div style="flex:1;min-width:0;"><div style="font-weight:900;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + this.escape(u.username) + '</div><div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#E0B86A;margin-top:3px;">' + ICONS.ticket + ' ' + AR(u.credits || 0) + ' تذكرة</div></div>' +
         '</div>' +
          '<div class="form-col" style="margin-bottom:18px;">' +
+          '<div class="field-label" style="display:flex;align-items:center;gap:6px;color:#E0B86A;">' + ICONS.gift + ' ادعُ صديق واكسبوا تذكرة سوا</div>' +
+          '<p style="font-size:13px;color:var(--subtext);margin:0 0 10px;line-height:1.6;">لما صديقك يسجّل أول مرة برابطك، تاخذون تذكرة إضافية كل واحد فيكم.' +
+            (u.referredCount ? ' دعوتك حتى الآن: <b style="color:var(--text);">' + AR(u.referredCount) + '</b> صديق.' : '') + '</p>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<input id="inviteLinkField" class="field" readonly value="' + this.escape(location.origin + '/?ref=' + u.id) + '" style="flex:1;min-width:0;font-size:12.5px;color:var(--subtext);" onclick="this.select()">' +
+            '<button class="btn-primary" style="width:auto;margin-top:0;padding:12px 20px;" onclick="App.copyInviteLink()">نسخ</button>' +
+          '</div>' +
+         '</div>' +
+         '<div class="form-col" style="margin-bottom:18px;">' +
           '<div class="field-label">تغيير الاسم</div>' +
           '<div style="display:flex;gap:8px;"><input id="profileNameInput" class="field" maxlength="20" placeholder="الاسم الجديد" style="flex:1;min-width:0;"><button class="btn-primary" style="width:auto;margin-top:0;padding:12px 20px;" onclick="App.saveName()">حفظ</button></div>' +
          '</div>' +
@@ -800,6 +825,10 @@ const App = {
 
   async init() {
     this.setLoading(true);
+    // كود دعوة صديق (?ref=<معرّف الداعي>) — نخزّنه محليًا لين المستخدم يكمّل التسجيل،
+    // حتى لو انتقل بين صفحات/شاشات قبل ما يفتح رمز التحقق.
+    const refParam = new URLSearchParams(window.location.search).get('ref');
+    if (refParam && /^\d+$/.test(refParam)) localStorage.setItem('dourk_ref', refParam);
     await this.refreshMe();
     const roomCode = new URLSearchParams(window.location.search).get('room');
     if (roomCode && /^\d{6}$/.test(roomCode)) {
