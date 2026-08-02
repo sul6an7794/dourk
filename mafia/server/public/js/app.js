@@ -41,6 +41,7 @@ function loadHtml2Canvas() {
     deadlineTs: null,
     revealTeamOnExpel: false,
     voteMs: null,
+    skipNextDayFlash: false,
     error: null,
     role: null,
     myCard: null,
@@ -803,12 +804,14 @@ function loadHtml2Canvas() {
           pulseShell('fx-night-pulse', 900);
         }
       }
-      // ومضة "بدأ النهار" تظهر بس لو الليلة كانت هادئة (ما مات أحد) — لو صار قتل، شاشة
-      // كشف الوفاة (deathReveal) عرضت أصلاً ومضة كبيرة، وومضة ثانية فورًا بعدها كانت
-      // مبالغة بصرية (ومضات متكررة بلا داعي وقت القتل).
-      if (payload.phase === 'day' && prevPhase === 'night') {
+      // ومضة "بدأ النهار" تظهر بس لو الليلة كانت هادئة فعلًا (ما مات أحد، ولا صار نجاة/تحوّل) —
+      // لو صار قتل، deathReveal عرضت أصلاً ومضة كبيرة. ولو صارت نجاة/تحوّل، nightOutcome
+      // (بالأسفل) عرضت ومضتها الخاصة قبل شوي — ومضة "بدأ النهار" فورًا بعدها بكلا الحالتين
+      // كانت تكرار بصري مبالغ فيه (السبب الأصلي وراء "ومضات كثيرة وقت القتل").
+      if (payload.phase === 'day' && prevPhase === 'night' && !state.skipNextDayFlash) {
         showOverlay('day');
       }
+      state.skipNextDayFlash = false;
       if (payload.phase === 'vote') {
         state.defense = null;
       }
@@ -866,6 +869,9 @@ function loadHtml2Canvas() {
     if (outcome === 'saved' || outcome === 'shift') {
       showOverlay(outcome);
       if (outcome === 'saved') pulseShell('fx-hit-shake', 320);
+      // ليلة هادئة بسبب نجاة/تحوّل: هذي الومضة كافية وحدها — امنع ومضة "بدأ النهار"
+      // اللي بتجي فورًا بعدها (roomUpdate يوصل بعد toDayFlow مباشرة بالسيرفر).
+      state.skipNextDayFlash = true;
     }
   });
 
