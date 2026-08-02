@@ -63,12 +63,17 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const roomSnapshots = require('./room-snapshots');
 
-const PLATFORM_CSP = [
+// سياستان بدل وحدة: وصّلها/لوحة تحكمها تحتاج 'unsafe-eval' فعليًا (مترجم القوالب الداخلي
+// support.js يستخدم new Function() وقت التشغيل) — لكن مافيا والمنصة الرئيسية ما تحتاجانه
+// إطلاقًا (ما فيهم أي eval/new Function). تطبيق نفس السياسة المتساهلة على الموقع كامل كان
+// يوسّع سطح هجوم XSS بلا داعي على ثلثي الموقع. الافتراضي الآن الأصرم (بدون unsafe-eval)،
+// ونطبّق النسخة المتساهلة صراحة بس على مسارات وصّلها/الإدارة اللي فعلاً تحتاجها.
+const PLATFORM_CSP_BASE = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   // الواجهة الحالية تستخدم معالجات onclick مضمّنة؛ إبقاؤها هنا يمنع كسر المنصة أثناء الانتقال التدريجي للمعالجات الخارجية.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.socket.io https://cdnjs.cloudflare.com https://unpkg.com",
+  "script-src 'self' 'unsafe-inline'{{EVAL}} blob: https://cdn.socket.io https://cdnjs.cloudflare.com https://unpkg.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
@@ -77,6 +82,8 @@ const PLATFORM_CSP = [
   "frame-src 'self' https://eauthenticate.saudibusiness.gov.sa",
   "frame-ancestors 'self'",
 ].join('; ');
+const PLATFORM_CSP_STRICT = PLATFORM_CSP_BASE.replace('{{EVAL}}', '');
+const PLATFORM_CSP_WSLHA = PLATFORM_CSP_BASE.replace('{{EVAL}}', " 'unsafe-eval'");
 
 // التحقق من متغيرات البيئة الحرجة عند الإقلاع لا عند أول طلب حقيقي — بدونه، مفتاح Authentica
 // الناقص/الخطأ بالإنتاج يخلي السيرفر يقلع بنجاح ظاهريًا، وأول من يكتشف العطل فعليًا هو أول
@@ -117,7 +124,7 @@ async function start(port = PORT) {
     res.set('X-Frame-Options', 'SAMEORIGIN');
     res.set('Referrer-Policy', 'no-referrer');
     res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-    res.set('Content-Security-Policy', PLATFORM_CSP);
+    res.set('Content-Security-Policy', PLATFORM_CSP_STRICT);
     if (req.secure || process.env.NODE_ENV === 'production') {
       res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
@@ -159,11 +166,12 @@ async function start(port = PORT) {
   // صفحة وصّلها الفعلية تُخدَّم صراحة هنا — سيرفر وصّلها نفسه (بالأسفل) يُركَّب على الجذر
   // لخدمة أصوله المطلقة المسار (خطوط، صور، ملفات مساعدة) كما هي، فيحتاج مسار صريح لصفحته.
   const wslhaIndex = path.join(WSLHA_DIR, 'public', 'index.html');
-  app.get(['/wslha', '/wslha/'], (req, res) => res.sendFile(wslhaIndex));
+  const useWslhaCsp = (req, res, next) => { res.set('Content-Security-Policy', PLATFORM_CSP_WSLHA); next(); };
+  app.get(['/wslha', '/wslha/'], useWslhaCsp, (req, res) => res.sendFile(wslhaIndex));
 
   // رابط أقصر وأوضح للوحة تحكم وصّلها بدل /wslha?admin=1 — نفس صفحة وصّلها بالضبط، تُخدَّم
   // مباشرة (لا إعادة توجيه) حتى يبقى شريط العنوان /admin نفسه بعد فتح اللوحة.
-  app.get(['/admin', '/admin/'], (req, res) => res.sendFile(wslhaIndex));
+  app.get(['/admin', '/admin/'], useWslhaCsp, (req, res) => res.sendFile(wslhaIndex));
 
   // حسابات/دخول/إدارة مستخدمين — ملك المنصة نفسها، مشتركة لكل الألعاب، تعمل حتى لو انحذفت
   // أي لعبة لاحقًا (لا تعتمد على مجلد وصّلها أو مافيا إطلاقًا).
@@ -179,7 +187,7 @@ async function start(port = PORT) {
   // وصّلها: أصولها (خطوط، ملفات مساعدة، /img، /uploads) مسارات مطلقة من الجذر، فتُركَّب على الجذر
   // كاملة. عندها فقط /api/wslha-admin لإدارة محتواها الخاص (الجولات/الصور) — لا تلمس /api/auth
   // ولا /api/admin إطلاقًا بعد الآن.
-  app.use(wslhaCreateApp());
+  app.use(useWslhaCsp, wslhaCreateApp());
 
   // شبكة أمان أخيرة: أي خطأ يوصل هنا عبر next(err) (من asyncHandler بمسارات auth/admin/rooms)
   // يرجع JSON مهذّب بدل صفحة HTML افتراضية من Express — وبدونها أصلًا الاستثناء غير المُمسوك

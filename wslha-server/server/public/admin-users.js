@@ -162,6 +162,10 @@
     }
   });
 
-  setInterval(ensureTrigger, 800);
+  // بدل فحص كل 800ms للأبد (حتى واللوحة مقفلة) بلا أي داعي معظم الوقت: نراقب تغيّرات
+  // الصفحة فعليًا (MutationObserver) ونعيد الربط بس لما React يعيد رسم شي فعلًا — يشتغل
+  // بس وقت حدوث تغيير حقيقي، بدل فحص دوري أعمى بغض النظر عن وجود تغيير من عدمه.
   ensureTrigger();
+  var observer = new MutationObserver(ensureTrigger);
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
