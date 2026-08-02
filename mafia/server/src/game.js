@@ -59,8 +59,8 @@ function beginNight(room) {
   room.phase = 'night';
   room.curseNight = room.curseNextNight;
   room.curseNextNight = false;
-  room.stolenVoterId = room.nextStolenVoterId || null;
-  room.nextStolenVoterId = null;
+  // يُمسح فورًا أول كل ليلة — البلوكة يوم وحد بس (اليوم اللي يلي ليلة السرقة)، ما تمتد ليوم ثاني.
+  room.stolenVoterId = null;
   room.mafiaPicks.clear();
   room.killConfirmed = false;
   room.pendingKillId = null;
@@ -83,6 +83,9 @@ function nightRoleFor(room, player) {
   const role = ROLES[player.roleId];
   if (room.curseNight && (player.roleId === 'doctor' || player.roleId === 'sheikh')) return 'curse';
   if (player.roleId === 'fighter' && !room.fighterUsed) return 'fighter';
+  // الحرامي يسرق مرة وحدة طول اللعبة — بعدها يمر بليلة "ديكوي" عادية بدل ما يتكرر عليه
+  // اختيار السرقة كل ليلة (كان السبب وراء تكرار السرقة أكثر من مرة).
+  if (player.roleId === 'thief' && room.thiefUsed) return 'decoy';
   return role.night;
 }
 
@@ -146,6 +149,7 @@ function submitCheck(room, playerId, targetId) {
 function submitSteal(room, playerId, targetId) {
   const player = room.players.get(playerId);
   if (!player || !player.alive || player.roleId !== 'thief') throw new Error('لست الحرامي');
+  if (room.thiefUsed) throw new Error('استخدمت قدرة السرقة مسبقًا — مرة وحدة بس طول اللعبة');
   const target = room.players.get(targetId);
   if (!target || !target.alive || targetId === playerId) throw new Error('هدف غير صالح');
   room.thiefPickId = targetId;
@@ -191,7 +195,7 @@ function autoCompleteNight(room) {
     room.doctorPickId = rand(doctorTargets(room)).id;
   }
   const thief = aliveByRole(room, 'thief');
-  if (thief && !room.thiefPickId) {
+  if (thief && !room.thiefPickId && !room.thiefUsed) {
     const candidates = alivePlayers(room).filter((p) => p.id !== thief.id);
     if (candidates.length) room.thiefPickId = rand(candidates).id;
   }
@@ -201,7 +205,10 @@ function resolveNight(room) {
   autoCompleteNight(room);
 
   if (room.doctorPickId) room.doctorLastPickId = room.doctorPickId;
-  room.nextStolenVoterId = room.thiefPickId || null;
+  // يُفعَّل فورًا لليوم الجاي مباشرة (بدل انتظار الليلة التالية) — كان فيه تأخير دورة كاملة
+  // يخلي الضحية يفقد التصويت باليوم الغلط (المتأخر عن ليلة السرقة الفعلية).
+  room.stolenVoterId = room.thiefPickId || null;
+  if (room.thiefPickId) room.thiefUsed = true;
 
   const victimId = room.pendingKillId;
   room.mafiaLastTargetId = victimId || null;

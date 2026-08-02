@@ -40,6 +40,7 @@ function loadHtml2Canvas() {
     round: 1,
     deadlineTs: null,
     revealTeamOnExpel: false,
+    voteMs: null,
     error: null,
     role: null,
     myCard: null,
@@ -589,6 +590,11 @@ function loadHtml2Canvas() {
       state.error = res.error || null;
       render();
     },
+    async setVoteDuration(seconds) {
+      const res = await emitAck('setVoteDuration', { seconds });
+      state.error = res.error || null;
+      render();
+    },
     async kickPlayer(playerId) {
       const res = await emitAck('kickPlayer', { playerId });
       state.error = res.error || null;
@@ -751,6 +757,7 @@ function loadHtml2Canvas() {
     state.round = payload.round;
     state.deadlineTs = payload.deadlineTs;
     state.revealTeamOnExpel = payload.revealTeamOnExpel;
+    state.voteMs = payload.voteMs;
     state.phase = payload.phase === 'lobby' && !state.roomCode ? 'home' : payload.phase;
     const me = myPlayer();
     state.alive = me ? me.alive : true;
@@ -796,7 +803,10 @@ function loadHtml2Canvas() {
           pulseShell('fx-night-pulse', 900);
         }
       }
-      if (payload.phase === 'day' && ['night', 'deathReveal'].includes(prevPhase)) {
+      // ومضة "بدأ النهار" تظهر بس لو الليلة كانت هادئة (ما مات أحد) — لو صار قتل، شاشة
+      // كشف الوفاة (deathReveal) عرضت أصلاً ومضة كبيرة، وومضة ثانية فورًا بعدها كانت
+      // مبالغة بصرية (ومضات متكررة بلا داعي وقت القتل).
+      if (payload.phase === 'day' && prevPhase === 'night') {
         showOverlay('day');
       }
       if (payload.phase === 'vote') {

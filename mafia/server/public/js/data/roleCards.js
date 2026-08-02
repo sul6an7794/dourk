@@ -46,7 +46,7 @@ const ROLE_CARD_DATA = {
   },
   '11-thief.png': {
     photo: 'thief.webp', nameAr: 'الحرامـي', faction: 'good',
-    ability: 'بالليل يسرق صوت لاعب فيفقد حق التصويت باليوم التالي، دون كشف هويته.',
+    ability: 'يسرق صوت لاعب مرة واحدة طوال اللعبة، فيفقد صاحبه حق التصويت باليوم التالي فقط، دون كشف هويته.',
   },
   '12-fighter.png': {
     photo: 'fighter.webp', nameAr: 'المصارـع', faction: 'good',

@@ -175,6 +175,22 @@ function renderWaitingRoom(state, actions) {
     settingsRow.appendChild(toggleBtn);
     settingsPanel.appendChild(settingsRow);
     settingsPanel.appendChild(el('div', 'muted-note', 'ملاحظة: القتل ليلًا يبقى مجهول الهوية دائمًا حتى النهاية — هذا الخيار يخص الإقصاء بالتصويت فقط.'));
+
+    const voteRow = el('div', 'phase-row');
+    voteRow.appendChild(el('span', '', 'مدة التصويت'));
+    const voteSelect = el('select', 'field');
+    voteSelect.style.width = 'auto';
+    [20, 30, 40, 60, 90, 120].forEach((sec) => {
+      const opt = document.createElement('option');
+      opt.value = String(sec);
+      opt.textContent = sec + ' ثانية';
+      if (Math.round((state.voteMs || 40000) / 1000) === sec) opt.selected = true;
+      voteSelect.appendChild(opt);
+    });
+    voteSelect.addEventListener('change', () => actions.setVoteDuration(Number(voteSelect.value)));
+    voteRow.appendChild(voteSelect);
+    settingsPanel.appendChild(voteRow);
+
     wrap.appendChild(settingsPanel);
   }
 

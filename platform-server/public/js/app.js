@@ -33,6 +33,25 @@ const ICONS = {
   chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
 };
 
+// بيانات بطاقات أدوار مافيا (لعرضها قبل اللعب بخطوة "شوف كل البطاقات") — نفس بيانات
+// mafia/server/public/js/data/roleCards.js، منسوخة هنا لأن هذي الصفحة (المنصة) لا تحمّل
+// حزمة جافاسكربت مافيا الداخلية. الصور نفسها تُخدَّم من /mafia/assets/... (نفس التطبيق
+// المُركَّب تحت بادئة /mafia بسيرفر المنصة، انظر server.js: app.use('/mafia', ...)).
+const ROLE_CARDS_INFO = [
+  { file: '01-mafia.png', photo: 'mafia.webp', nameAr: 'مافيـا', faction: 'evil', ability: 'الأيادي الملطخة. يقتل ليلاً ويخفي أثره نهاراً.' },
+  { file: '02-elcapo.png', photo: 'zaeem.webp', nameAr: 'الزعيـم', faction: 'evil', ability: 'الكلمة الأخيرة له، قائد المافيا يظهر للشيخ كأنه مواطن بريء ولا يُقتل أبداً.' },
+  { file: '03-heiress.png', photo: 'heiress.webp', nameAr: 'الوريثـه', faction: 'evil', ability: 'تتحرك مع العصابة ليلاً لاختيار ضحية، وإذا أُقصيت نهاراً تعطّل قدرات الخير بالليلة التالية.' },
+  { file: '04-doctor.png', photo: 'doctor.webp', nameAr: 'الطبيـب', faction: 'good', ability: 'يحمي لاعباً من القتل ليلاً، ويمكنه حماية نفسه، لكن لا يحمي نفس اللاعب ليلتين متتاليتين.' },
+  { file: '05-sheikh.png', photo: 'sheikh.webp', nameAr: 'الشيـخ', faction: 'good', ability: 'بالعدسة المكبرة، يكشف حقيقة لاعب واحد كل ليلة، إن كان من العصابة أو بريئاً.' },
+  { file: '06-villager.png', photo: 'villager.webp', nameAr: 'القروـي', faction: 'good', ability: 'صوت الحق. لا يملك قدرة خاصة، ويعتمد على النقاش والتحليل لاكتشاف الشر.' },
+  { file: '07-mayor.png', photo: 'mayor.webp', nameAr: 'العمدـه', faction: 'good', ability: 'لأنه العمدة، صوته بالنهار يُحسب بصوتين.' },
+  { file: '08-princess.png', photo: 'princess.webp', nameAr: 'الأميرـة', faction: 'good', ability: 'محبوبة الجميع، عندما يتم التصويت عليها لا تُقصى ولكن تكشف بطاقتها للجميع.' },
+  { file: '09-shapeshifter.png', photo: 'shapeshifter.webp', nameAr: 'المتحوـل', faction: 'good', ability: 'القناع جاهز. مواطن بريء، لكن إذا قُتل ليلاً يتحول سراً إلى فريق الشر.' },
+  { file: '10-joker.png', photo: 'joker.webp', nameAr: 'المهرـج', faction: 'neutral', ability: 'ملك الفوضى. لا يفوز إلا إذا أُقصي أو قُتل، ويفوز حينها مع الفريق الفائز.' },
+  { file: '11-thief.png', photo: 'thief.webp', nameAr: 'الحرامـي', faction: 'good', ability: 'بالليل يسرق صوت لاعب مرة واحدة طوال اللعبة، فيفقد صاحبه حق التصويت باليوم التالي فقط.' },
+  { file: '12-fighter.png', photo: 'fighter.webp', nameAr: 'المصارـع', faction: 'good', ability: 'يختار ليلة واحدة لتفعيل النجاة. إذا فعّلها تُستهلك تلك الليلة حتى لو لم يُقتل.' },
+];
+
 const GAMES = {
   mafia: {
     name: 'مافيا', kicker: 'لعبة الخداع الاجتماعي', cls: 'mafia',
@@ -44,6 +63,7 @@ const GAMES = {
       { n: '١', t: 'افتح الغرفة وشارك رابطها — كل لاعب يدخل من جواله ويعرف دوره بسرية.' },
       { n: '٢', t: 'بالليل المافيا تختار ضحية، والطبيب يحمي، والشيخ يفحص ويشك.' },
       { n: '٣', t: 'بالنهار الكل يتكلم ويتّهم، والتصويت يقرر مين يطلع — آخر فريق يبقى يكسب.' },
+      { n: '٤', t: 'شوف كل بطاقات الأدوار وقدراتها قبل ما تبدأ.', action: 'cards' },
     ],
     counts: null, countLabel: 'عدد اللاعبين المتوقّع', countUnit: 'لاعبًا',
   },
@@ -395,6 +415,35 @@ const App = {
 
   buyTickets() { this.showToast('قريبًا — بوابة الدفع تحت الإعداد'); },
 
+  showRoleCardsModal() {
+    let ov = document.getElementById('roleCardsModal');
+    if (ov) { ov.classList.add('open'); return; }
+    ov = document.createElement('div');
+    ov.id = 'roleCardsModal';
+    ov.className = 'role-cards-overlay';
+    ov.innerHTML =
+      '<div class="role-cards-panel">' +
+        '<div class="role-cards-head"><span>بطاقات مافيا — ' + ROLE_CARDS_INFO.length + ' دورًا</span><button type="button" class="role-cards-close">' + ICONS.close + '</button></div>' +
+        '<div class="role-cards-grid">' +
+          ROLE_CARDS_INFO.map((c) => (
+            '<div class="role-card-item ' + c.faction + '">' +
+              '<img src="/mafia/assets/characters/' + c.photo + '" alt="' + c.nameAr + '" loading="lazy">' +
+              '<div class="role-card-name">' + c.nameAr + '</div>' +
+              '<div class="role-card-ability">' + c.ability + '</div>' +
+            '</div>'
+          )).join('') +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', (e) => { if (e.target === ov) this.closeRoleCardsModal(); });
+    ov.querySelector('.role-cards-close').addEventListener('click', () => this.closeRoleCardsModal());
+    requestAnimationFrame(() => ov.classList.add('open'));
+  },
+  closeRoleCardsModal() {
+    const ov = document.getElementById('roleCardsModal');
+    if (ov) ov.classList.remove('open');
+  },
+
   copyInviteLink() {
     const field = document.getElementById('inviteLinkField');
     if (!field) return;
@@ -624,7 +673,9 @@ const App = {
         '</div>' +
         '<h2 style="font-size:22px;margin-bottom:12px;">كيف تلعبون؟</h2>' +
         '<div class="steps">' + g.steps.map((st) =>
-          '<div class="step-row"><span class="step-num" style="color:' + (g.cls === 'mafia' ? '#FF6B6B' : '#c4b5fd') + ';border-color:' + (g.cls === 'mafia' ? 'rgba(255,45,45,.3)' : 'rgba(129,140,248,.35)') + ';">' + st.n + '</span><div class="step-text">' + st.t + '</div></div>'
+          '<div class="step-row"' + (st.action === 'cards' ? ' onclick="App.showRoleCardsModal()" style="cursor:pointer;" role="button"' : '') + '><span class="step-num" style="color:' + (g.cls === 'mafia' ? '#FF6B6B' : '#c4b5fd') + ';border-color:' + (g.cls === 'mafia' ? 'rgba(255,45,45,.3)' : 'rgba(129,140,248,.35)') + ';">' + st.n + '</span><div class="step-text">' + st.t +
+            (st.action === 'cards' ? ' <span style="color:#FF6B6B;font-weight:700;white-space:nowrap;">اعرضها ›</span>' : '') +
+          '</div></div>'
         ).join('') + '</div>' +
         quickExample +
         '<div class="ticket-banner"><span class="l">' + ICONS.ticket + ' سيتم خصم تذكرة واحدة عند الإنشاء</span>' + ticketsLine + '</div>' +

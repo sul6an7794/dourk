@@ -47,6 +47,7 @@ function freshGameState() {
     curseNextNight: false,
     shiftTwist: false,
     fighterUsed: false,
+    thiefUsed: false,
     fighterGuardActive: false,
     jokerEliminated: false,
 
@@ -83,6 +84,8 @@ function createRoom(hostId, hostName, platformUid) {
     createdAt: Date.now(),
     lastActivityAt: Date.now(),
     revealTeamOnExpel: false,
+    // مدة التصويت بالمللي ثانية — يحددها القائد باللوبي قبل بدء اللعبة (null = افتراضي الخادم).
+    voteMs: null,
     hostGraceTimer: null,
   }, freshGameState());
   room.players.set(hostId, makePlayer(hostId, hostName));
@@ -205,7 +208,7 @@ function sweepAbandonedRooms() {
   }
 }
 
-function serializeRoom(room) {
+function serializeRoom(room, defaultVoteMs) {
   return {
     roomCode: room.code,
     hostId: room.hostId,
@@ -213,6 +216,7 @@ function serializeRoom(room) {
     round: room.round,
     deadlineTs: room.deadlineTs,
     revealTeamOnExpel: room.revealTeamOnExpel,
+    voteMs: room.voteMs || defaultVoteMs || null,
     players: [...room.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
@@ -233,6 +237,7 @@ function snapshotLobbies() {
       platformUid: room.platformUid,
       createdAt: room.createdAt,
       revealTeamOnExpel: room.revealTeamOnExpel,
+      voteMs: room.voteMs,
       players: [...room.players.values()].map((player) => ({
         id: player.id,
         name: player.name,
@@ -254,6 +259,7 @@ function restoreLobbies(snapshot) {
       createdAt: raw.createdAt || Date.now(),
       lastActivityAt: Date.now(),
       revealTeamOnExpel: !!raw.revealTeamOnExpel,
+      voteMs: raw.voteMs || null,
     }, freshGameState());
     for (const source of raw.players || []) {
       if (!source || !source.id) continue;

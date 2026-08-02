@@ -73,7 +73,7 @@ function emitTo(io, player, event, payload) {
 }
 
 function broadcastRoomUpdate(io, room) {
-  io.to(room.code).emit('roomUpdate', rooms.serializeRoom(room));
+  io.to(room.code).emit('roomUpdate', rooms.serializeRoom(room, game.VOTE_MS));
 }
 
 function broadcastLog(io, room) {
@@ -232,7 +232,7 @@ function toDayFlow(io, room) {
 
 function toVoteFlow(io, room) {
   if (room.phase !== 'day') return;
-  setPhase(io, room, 'vote', game.VOTE_MS, () => endVoteFlow(io, room));
+  setPhase(io, room, 'vote', room.voteMs || game.VOTE_MS, () => endVoteFlow(io, room));
   const stolen = room.stolenVoterId ? room.players.get(room.stolenVoterId) : null;
   if (stolen) emitTo(io, stolen, 'voteBlocked', {});
   broadcastVotes(io, room);
@@ -515,7 +515,7 @@ function scheduleBotDefense(io, room) {
         expelFlow(io, room, room.accusedId);
       } else if (room.defenseChange.size >= majorityOf(jury)) {
         room.accusedId = null;
-        setPhase(io, room, 'vote', game.VOTE_MS, () => endVoteFlow(io, room));
+        setPhase(io, room, 'vote', room.voteMs || game.VOTE_MS, () => endVoteFlow(io, room));
         broadcastVotes(io, room);
         scheduleBotVotes(io, room);
       }
@@ -687,6 +687,20 @@ function attachSocketHandlers(io) {
       cb && cb({ ok: true });
     }));
 
+    // مدة التصويت (بالثواني) — يحددها القائد باللوبي. حد أدنى/أقصى معقول يمنع قيمة
+    // عبثية (صفر، أو ساعات) تكسر إيقاع اللعبة.
+    socket.on('setVoteDuration', inRoom((room, payload, cb) => {
+      if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يغيّر هذا الخيار');
+      if (room.phase !== 'lobby') throw new Error('لا يمكن تغيير هذا الخيار بعد بدء اللعبة');
+      const seconds = Number(payload.seconds);
+      if (!Number.isFinite(seconds) || seconds < 15 || seconds > 180) {
+        throw new Error('مدة التصويت لازم تكون بين 15 و180 ثانية');
+      }
+      room.voteMs = Math.round(seconds) * 1000;
+      broadcastRoomUpdate(io, room);
+      cb && cb({ ok: true });
+    }));
+
     socket.on('revealDone', inRoom((room) => {
       if (room.phase !== 'reveal') return;
       room.revealDone.add(socket.data.playerId);
@@ -832,7 +846,7 @@ function attachSocketHandlers(io) {
         expelFlow(io, room, room.accusedId);
       } else if (room.defenseChange.size >= majorityOf(jury)) {
         room.accusedId = null;
-        setPhase(io, room, 'vote', game.VOTE_MS, () => endVoteFlow(io, room));
+        setPhase(io, room, 'vote', room.voteMs || game.VOTE_MS, () => endVoteFlow(io, room));
         broadcastVotes(io, room);
         // كانت منسية هنا (موجودة بالمسار المكافئ للبوتات scheduleBotDefense) — بدونها، لو
         // دفاع بشري (مو بوت) هو اللي رجّع التصويت، البوتات ما تصوّت أبدًا بالتصويت الجديد
