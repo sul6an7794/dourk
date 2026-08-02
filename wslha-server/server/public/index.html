@@ -1729,7 +1729,9 @@ class Component extends DCLogic {
         })),
         editImages: (r.images || []).map((im) => ({
           el: this.imgWithFallback(im.url, 64, 10),
-          remove: () => this.deleteExistingImage(r.id, im.id),
+          // حذف صورة نهائي وفوري بالسيرفر (بدون Save) — لازم تأكيد يمنع حذف بالغلط
+          // (رصدنا حذف صور حقيقي بدون قصد المشرف أثناء تعديل حقول ثانية بنفس الجولة).
+          remove: () => { if (confirm('حذف هذي الصورة نهائيًا؟')) this.deleteExistingImage(r.id, im.id); },
         })),
         del: () => this.deleteRound(r.id),
         onUpload: (e) => { this.uploadImages(r.id, e.target.files); e.target.value = ''; },
