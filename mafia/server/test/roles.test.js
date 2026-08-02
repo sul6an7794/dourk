@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { buildRoleList, assignRoles, assignFlavors, cardFor, isEvil, roleAlignment, FLAVOR_CARDS } = require('../src/roles');
+const { buildRoleList, assignRoles, assignFlavors, cardFor, isEvil, roleAlignment, FLAVOR_CARDS, evilCountFor } = require('../src/roles');
 
 function countBy(list) {
   const counts = {};
@@ -14,20 +14,51 @@ test('عدد الأدوار يطابق عدد اللاعبين دائمًا (٦ 
   }
 });
 
-test('الإلزامي دائمًا موجود: مافيا وطبيب وشيخ واحد لكل منها', () => {
+test('الإلزامي دائمًا موجود: طبيب وشيخ واحد لكل منها', () => {
   for (let n = 6; n <= 10; n++) {
     const counts = countBy(buildRoleList(n));
-    assert.strictEqual(counts.mafia, 1);
     assert.strictEqual(counts.doctor, 1);
     assert.strictEqual(counts.sheikh, 1);
   }
 });
 
-test('المافيا لا تتكرر إلا بعد استهلاك البطاقات الأساسية', () => {
-  for (let n = 6; n <= 12; n++) {
-    assert.strictEqual(countBy(buildRoleList(n)).mafia, 1);
+test('عدد كروت الشر (مافيا/وريثة/زعيم) يتدرج حسب عدد اللاعبين: ٦=١، ٧-٩=٢، ١٠+=٣', () => {
+  assert.strictEqual(evilCountFor(6), 1);
+  assert.strictEqual(evilCountFor(7), 2);
+  assert.strictEqual(evilCountFor(8), 2);
+  assert.strictEqual(evilCountFor(9), 2);
+  assert.strictEqual(evilCountFor(10), 3);
+  assert.strictEqual(evilCountFor(13), 3);
+
+  for (let n = 6; n <= 13; n++) {
+    const counts = countBy(buildRoleList(n));
+    const evilTotal = Object.entries(counts).reduce(
+      (sum, [roleId, count]) => sum + (isEvil(roleId) ? count : 0),
+      0,
+    );
+    assert.strictEqual(evilTotal, evilCountFor(n));
+    assert.strictEqual(counts.mafia, 1, 'المافيا الأساسية دايمًا كرت واحد، والباقي وريثة/زعيم');
   }
-  assert.strictEqual(countBy(buildRoleList(13)).mafia, 2);
+});
+
+test('من ٧ إلى ٩ لاعبين: مافيا + وريثة أو زعيم (وحدة بالضبط، عشوائيًا) لا الاثنين معًا', () => {
+  for (let n = 7; n <= 9; n++) {
+    for (let trial = 0; trial < 30; trial++) {
+      const counts = countBy(buildRoleList(n));
+      assert.strictEqual(counts.mafia, 1);
+      const lateEvilTotal = (counts.heiress || 0) + (counts.zaeem || 0);
+      assert.strictEqual(lateEvilTotal, 1, 'لازم وريثة أو زعيم، وحدة بالضبط');
+    }
+  }
+});
+
+test('١٠ لاعبين وأكثر: مافيا ووريثة وزعيم الثلاثة معًا', () => {
+  for (let n = 10; n <= 13; n++) {
+    const counts = countBy(buildRoleList(n));
+    assert.strictEqual(counts.mafia, 1);
+    assert.strictEqual(counts.heiress, 1);
+    assert.strictEqual(counts.zaeem, 1);
+  }
 });
 
 test('الأدوار الاختيارية نسخة واحدة كحد أقصى ولا وجود لأدوار غير معرفة', () => {
@@ -41,16 +72,13 @@ test('الأدوار الاختيارية نسخة واحدة كحد أقصى و
   }
 });
 
-test('لا يتكرر أي دور قبل استهلاك البطاقات، وبعدها التكرار محصور في المافيا والقروي', () => {
-  for (let n = 6; n <= 12; n++) {
+test('لا يتكرر أي دور قبل استهلاك البطاقات، وكروت الشر (مافيا/وريثة/زعيم) نسخة واحدة لكل منها دائمًا', () => {
+  for (let n = 6; n <= 13; n++) {
     const counts = countBy(buildRoleList(n, () => 0.42));
-    for (const count of Object.values(counts)) assert.strictEqual(count, 1);
-  }
-
-  const full = countBy(buildRoleList(13, () => 0.42));
-  for (const [roleId, count] of Object.entries(full)) {
-    if (roleId === 'mafia') assert.strictEqual(count, 2);
-    else assert.strictEqual(count, 1);
+    for (const [roleId, count] of Object.entries(counts)) {
+      if (roleId === 'villager') assert.ok(count >= 1);
+      else assert.strictEqual(count, 1);
+    }
   }
 });
 

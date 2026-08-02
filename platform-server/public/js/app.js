@@ -33,6 +33,7 @@ const ICONS = {
   whatsapp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.14 1.59 5.94L0 24l6.28-1.65a11.94 11.94 0 0 0 5.76 1.47h.01c6.59 0 11.95-5.36 11.95-11.95 0-3.19-1.24-6.19-3.48-8.39zm-8.47 18.3h-.01a9.91 9.91 0 0 1-5.06-1.39l-.36-.21-3.73.98 1-3.63-.24-.37a9.88 9.88 0 0 1-1.52-5.25c0-5.46 4.44-9.9 9.91-9.9 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.47-4.44 9.91-9.88 9.91zm5.43-7.43c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.66.15-.19.3-.76.97-.93 1.17-.17.2-.34.22-.63.07-.3-.15-1.25-.46-2.38-1.47a8.93 8.93 0 0 1-1.65-2.05c-.17-.3-.02-.45.13-.6.13-.13.3-.34.45-.5.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.66-1.6-.91-2.19-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.8.38-.27.3-1.05 1.03-1.05 2.51s1.08 2.92 1.23 3.12c.15.2 2.12 3.24 5.14 4.55.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.18-1.42-.08-.13-.27-.2-.57-.35z"/></svg>',
   back: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>',
   chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
 };
 
 // بيانات بطاقات أدوار مافيا (لعرضها قبل اللعب بخطوة "شوف كل البطاقات") — نفس بيانات
@@ -40,18 +41,18 @@ const ICONS = {
 // حزمة جافاسكربت مافيا الداخلية. الصور نفسها تُخدَّم من /mafia/assets/... (نفس التطبيق
 // المُركَّب تحت بادئة /mafia بسيرفر المنصة، انظر server.js: app.use('/mafia', ...)).
 const ROLE_CARDS_INFO = [
-  { file: '01-mafia.png', photo: 'mafia.webp', nameAr: 'مافيـا', faction: 'evil', ability: 'الأيادي الملطخة. يقتل ليلاً ويخفي أثره نهاراً.' },
-  { file: '02-elcapo.png', photo: 'zaeem.webp', nameAr: 'الزعيـم', faction: 'evil', ability: 'الكلمة الأخيرة له، قائد المافيا يظهر للشيخ كأنه مواطن بريء ولا يُقتل أبداً.' },
-  { file: '03-heiress.png', photo: 'heiress.webp', nameAr: 'الوريثـه', faction: 'evil', ability: 'تتحرك مع العصابة ليلاً لاختيار ضحية، وإذا أُقصيت نهاراً تعطّل قدرات الخير بالليلة التالية.' },
-  { file: '04-doctor.png', photo: 'doctor.webp', nameAr: 'الطبيـب', faction: 'good', ability: 'يحمي لاعباً من القتل ليلاً، ويمكنه حماية نفسه، لكن لا يحمي نفس اللاعب ليلتين متتاليتين.' },
-  { file: '05-sheikh.png', photo: 'sheikh.webp', nameAr: 'الشيـخ', faction: 'good', ability: 'بالعدسة المكبرة، يكشف حقيقة لاعب واحد كل ليلة، إن كان من العصابة أو بريئاً.' },
-  { file: '06-villager.png', photo: 'villager.webp', nameAr: 'القروـي', faction: 'good', ability: 'صوت الحق. لا يملك قدرة خاصة، ويعتمد على النقاش والتحليل لاكتشاف الشر.' },
-  { file: '07-mayor.png', photo: 'mayor.webp', nameAr: 'العمدـه', faction: 'good', ability: 'لأنه العمدة، صوته بالنهار يُحسب بصوتين.' },
-  { file: '08-princess.png', photo: 'princess.webp', nameAr: 'الأميرـة', faction: 'good', ability: 'محبوبة الجميع، عندما يتم التصويت عليها لا تُقصى ولكن تكشف بطاقتها للجميع.' },
-  { file: '09-shapeshifter.png', photo: 'shapeshifter.webp', nameAr: 'المتحوـل', faction: 'good', ability: 'القناع جاهز. مواطن بريء، لكن إذا قُتل ليلاً يتحول سراً إلى فريق الشر.' },
-  { file: '10-joker.png', photo: 'joker.webp', nameAr: 'المهرـج', faction: 'neutral', ability: 'ملك الفوضى. لا يفوز إلا إذا أُقصي أو قُتل، ويفوز حينها مع الفريق الفائز.' },
-  { file: '11-thief.png', photo: 'thief.webp', nameAr: 'الحرامـي', faction: 'good', ability: 'بالليل يسرق صوت لاعب مرة واحدة طوال اللعبة، فيفقد صاحبه حق التصويت باليوم التالي فقط.' },
-  { file: '12-fighter.png', photo: 'fighter.webp', nameAr: 'المصارـع', faction: 'good', ability: 'يختار ليلة واحدة لتفعيل النجاة. إذا فعّلها تُستهلك تلك الليلة حتى لو لم يُقتل.' },
+  { file: '01-mafia.png', photo: 'mafia.webp', nameAr: 'مافيا', faction: 'evil', ability: 'الأيادي الملطخة. يقتل ليلاً ويخفي أثره نهاراً.' },
+  { file: '02-elcapo.png', photo: 'zaeem.webp', nameAr: 'الزعيم', faction: 'evil', ability: 'الكلمة الأخيرة له، قائد المافيا يظهر للشيخ كأنه مواطن بريء ولا يُقتل أبداً.' },
+  { file: '03-heiress.png', photo: 'heiress.webp', nameAr: 'الوريثة', faction: 'evil', ability: 'تتحرك مع العصابة ليلاً لاختيار ضحية، وإذا أُقصيت نهاراً تعطّل قدرات الخير بالليلة التالية.' },
+  { file: '04-doctor.png', photo: 'doctor.webp', nameAr: 'الطبيب', faction: 'good', ability: 'يحمي لاعباً من القتل ليلاً، ويمكنه حماية نفسه، لكن لا يحمي نفس اللاعب ليلتين متتاليتين.' },
+  { file: '05-sheikh.png', photo: 'sheikh.webp', nameAr: 'الشيخ', faction: 'good', ability: 'بالعدسة المكبرة، يكشف حقيقة لاعب واحد كل ليلة، إن كان من العصابة أو بريئاً.' },
+  { file: '06-villager.png', photo: 'villager.webp', nameAr: 'القروي', faction: 'good', ability: 'صوت الحق. لا يملك قدرة خاصة، ويعتمد على النقاش والتحليل لاكتشاف الشر.' },
+  { file: '07-mayor.png', photo: 'mayor.webp', nameAr: 'العمدة', faction: 'good', ability: 'لأنه العمدة، صوته بالنهار يُحسب بصوتين.' },
+  { file: '08-princess.png', photo: 'princess.webp', nameAr: 'الأميرة', faction: 'good', ability: 'محبوبة الجميع، عندما يتم التصويت عليها لا تُقصى ولكن تكشف بطاقتها للجميع.' },
+  { file: '09-shapeshifter.png', photo: 'shapeshifter.webp', nameAr: 'المتحول', faction: 'good', ability: 'القناع جاهز. مواطن بريء، لكن إذا قُتل ليلاً يتحول سراً إلى فريق الشر.' },
+  { file: '10-joker.png', photo: 'joker.webp', nameAr: 'المهرج', faction: 'neutral', ability: 'ملك الفوضى. لا يفوز إلا إذا أُقصي أو قُتل، ويفوز حينها مع الفريق الفائز.' },
+  { file: '11-thief.png', photo: 'thief.webp', nameAr: 'الحرامي', faction: 'good', ability: 'بالليل يسرق صوت لاعب مرة واحدة طوال اللعبة، فيفقد صاحبه حق التصويت باليوم التالي فقط.' },
+  { file: '12-fighter.png', photo: 'fighter.webp', nameAr: 'المصارع', faction: 'good', ability: 'يختار ليلة واحدة لتفعيل النجاة. إذا فعّلها تُستهلك تلك الليلة حتى لو لم يُقتل.' },
 ];
 
 const GAMES = {
@@ -423,17 +424,33 @@ const App = {
     ov = document.createElement('div');
     ov.id = 'roleCardsModal';
     ov.className = 'role-cards-overlay';
+    const FACTION_SECTIONS = [
+      { faction: 'good', label: 'فريق الخير' },
+      { faction: 'neutral', label: 'دور محايد' },
+      { faction: 'evil', label: 'فريق الشر' },
+    ];
     ov.innerHTML =
       '<div class="role-cards-panel">' +
         '<div class="role-cards-head"><span>بطاقات مافيا — ' + ROLE_CARDS_INFO.length + ' دورًا</span><button type="button" class="role-cards-close">' + ICONS.close + '</button></div>' +
-        '<div class="role-cards-grid">' +
-          ROLE_CARDS_INFO.map((c) => (
-            '<div class="role-card-item ' + c.faction + '">' +
-              '<img src="/mafia/assets/characters/' + c.photo + '" alt="' + c.nameAr + '" loading="lazy">' +
-              '<div class="role-card-name">' + c.nameAr + '</div>' +
-              '<div class="role-card-ability">' + c.ability + '</div>' +
-            '</div>'
-          )).join('') +
+        '<div class="role-cards-scroll">' +
+          FACTION_SECTIONS.map(({ faction, label }) => {
+            const cards = ROLE_CARDS_INFO.filter((c) => c.faction === faction);
+            if (!cards.length) return '';
+            return (
+              '<div class="role-cards-section ' + faction + '">' +
+                '<div class="role-cards-section-title">' + label + '</div>' +
+                '<div class="role-cards-grid">' +
+                  cards.map((c) => (
+                    '<div class="role-card-item ' + c.faction + '">' +
+                      '<img src="/mafia/assets/characters/' + c.photo + '" alt="' + c.nameAr + '" loading="lazy">' +
+                      '<div class="role-card-name">' + c.nameAr + '</div>' +
+                      '<div class="role-card-ability">' + c.ability + '</div>' +
+                    '</div>'
+                  )).join('') +
+                '</div>' +
+              '</div>'
+            );
+          }).join('') +
         '</div>' +
       '</div>';
     document.body.appendChild(ov);

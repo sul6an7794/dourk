@@ -18,7 +18,7 @@ const FLAVOR_CARDS = ['06-villager.png'];
 const BONUS_POOL = ['heiress', 'zaeem', 'thief', 'mayor', 'shapeshifter', 'fighter', 'princess', 'joker'];
 const EARLY_UNIQUE_POOL = ['thief', 'mayor', 'shapeshifter', 'fighter', 'princess', 'joker'];
 const LATE_EVIL_POOL = ['heiress', 'zaeem'];
-const REPEATABLE_POOL = ['mafia', 'villager'];
+const REPEATABLE_POOL = ['villager'];
 
 const MIN_PLAYERS = 6;
 const MAX_PLAYERS = 13;
@@ -55,12 +55,22 @@ function shuffleWith(input, randomFn) {
   return arr;
 }
 
+function evilCountFor(playerCount) {
+  if (playerCount >= 10) return 3;
+  if (playerCount >= 7) return 2;
+  return 1;
+}
+
 function buildRoleList(playerCount, randomFn = Math.random) {
   if (playerCount < MIN_PLAYERS || playerCount > MAX_PLAYERS) {
     throw new Error(`عدد اللاعبين يجب أن يكون بين ${MIN_PLAYERS} و${MAX_PLAYERS}`);
   }
-  const roles = ['mafia', 'doctor', 'sheikh', 'villager'];
-  const uniquePool = [...shuffleWith(EARLY_UNIQUE_POOL, randomFn), ...LATE_EVIL_POOL];
+  const evilCount = evilCountFor(playerCount);
+  const evilExtras = shuffleWith(LATE_EVIL_POOL, randomFn).slice(0, evilCount - 1);
+  const evilRoles = ['mafia', ...evilExtras];
+  while (evilRoles.length < evilCount) evilRoles.push('mafia');
+  const roles = [...evilRoles, 'doctor', 'sheikh', 'villager'];
+  const uniquePool = shuffleWith(EARLY_UNIQUE_POOL, randomFn);
   for (const roleId of uniquePool) {
     if (roles.length >= playerCount) break;
     roles.push(roleId);
@@ -111,6 +121,7 @@ module.exports = {
   roleAlignment,
   rand,
   shuffle,
+  evilCountFor,
   buildRoleList,
   assignRoles,
   assignFlavors,
