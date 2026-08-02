@@ -209,21 +209,35 @@ test('لعنة الوريثة: إعدامها بالتصويت يعطل الطب
   assert.doesNotThrow(() => game.submitProtect(room, 'doc', 'v1'));
 });
 
-test('الحرامي يسرق صوتًا يسري باليوم التالي فقط ثم يُصفَّر', () => {
+test('الحرامي يسرق صوتًا يسري باليوم التالي مباشرة (بدون تأخير دورة)، ثم يُصفَّر لليوم اللي بعده', () => {
   const room = buildTestRoom({ m: 'mafia', doc: 'doctor', sh: 'sheikh', th: 'thief', v1: 'villager', v2: 'villager' });
   game.submitSteal(room, 'th', 'v1');
   game.submitMafiaPick(room, 'm', 'v2');
   game.confirmKill(room, 'm');
   game.resolveNight(room);
 
-  game.beginNight(room);
+  // يُفعَّل فورًا لليوم اللي يلي ليلة السرقة مباشرة — بدون أي beginNight إضافي بينهم.
   assert.strictEqual(room.stolenVoterId, 'v1');
   room.phase = 'vote';
   assert.throws(() => game.toggleVote(room, 'v1', 'm'), /سُرق صوتك/);
   assert.doesNotThrow(() => game.toggleVote(room, 'doc', 'm'));
 
+  // الليلة التالية: البلوكة تُصفَّر (ما تمتد ليوم ثاني).
   game.beginNight(room);
   assert.strictEqual(room.stolenVoterId, null);
+});
+
+test('الحرامي يقدر يسرق مرة وحدة بس طول اللعبة', () => {
+  const room = buildTestRoom({ m: 'mafia', doc: 'doctor', sh: 'sheikh', th: 'thief', v1: 'villager', v2: 'villager' });
+  game.submitSteal(room, 'th', 'v1');
+  game.submitMafiaPick(room, 'm', 'v2');
+  game.confirmKill(room, 'm');
+  game.resolveNight(room);
+  assert.strictEqual(room.thiefUsed, true);
+
+  game.beginNight(room);
+  assert.strictEqual(game.nightRoleFor(room, room.players.get('th')), 'decoy');
+  assert.throws(() => game.submitSteal(room, 'th', 'v2'), /مسبقًا/);
 });
 
 test('صوت العمدة بوزن ٢ خفي يحسم المتهم، وmayorInfluenced يكشف ترجيحه', () => {
