@@ -194,11 +194,8 @@ function autoCompleteNight(room) {
   if (doctor && !room.curseNight && !room.doctorPickId) {
     room.doctorPickId = rand(doctorTargets(room)).id;
   }
-  const thief = aliveByRole(room, 'thief');
-  if (thief && !room.thiefPickId && !room.thiefUsed) {
-    const candidates = alivePlayers(room).filter((p) => p.id !== thief.id);
-    if (candidates.length) room.thiefPickId = rand(candidates).id;
-  }
+  // ملاحظة: الحرامي ما يُسرق تلقائيًا بانتهاء الوقت — قدرته تتأجل لليلة جاية لو ما فعّلها بنفسه
+  // (بعكس المافيا/الطبيب اللي قدراتهم إجبارية كل ليلة، قدرة الحرامي اختيارية ومرة وحدة بس).
 }
 
 function resolveNight(room) {

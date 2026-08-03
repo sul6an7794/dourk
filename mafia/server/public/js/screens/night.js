@@ -205,7 +205,41 @@ function renderSheikhNight(state, actions) {
   return wrap;
 }
 
+function renderThiefActivatePrompt(state, actions) {
+  const wrap = el('div', 'night-screen rise');
+  wrap.appendChild(PhaseRow('chip-gold', `☾ دورك: الحرامي · الجولة ${state.round}`, state.deadlineTs));
+
+  const intro = el('div', 'role-intro');
+  const img = document.createElement('img');
+  img.src = 'assets/characters/thief.webp';
+  img.alt = 'الحرامي';
+  intro.appendChild(img);
+  const txt = el('div', 'txt');
+  txt.appendChild(el('div', 'night-title gold', 'هل تسرق صوتًا الليلة؟'));
+  txt.appendChild(el('div', 'night-sub', 'تملكها مرة واحدة طوال اللعبة. إذا فعّلتها الليلة، من تختاره يفقد صوته غدًا — تُستهلك الميزة فورًا.'));
+  intro.appendChild(txt);
+  wrap.appendChild(intro);
+
+  const footer = el('div', 'night-footer');
+  const hint = el('div', 'hint-line');
+  hint.style.color = 'var(--gold-light)';
+  hint.textContent = 'اختر بحذر: تقدر تأجّلها لليلة أفضل، بس ما ترجع بعد ما تفعّلها.';
+  footer.appendChild(hint);
+
+  const activateBtn = el('button', 'big-btn gold', 'سرقة صوت الليلة');
+  activateBtn.addEventListener('click', () => actions.activateThiefChoice());
+  footer.appendChild(activateBtn);
+
+  const skipBtn = el('button', 'big-btn ghost', 'عدم التفعيل');
+  skipBtn.addEventListener('click', () => actions.finishNight());
+  footer.appendChild(skipBtn);
+  wrap.appendChild(footer);
+  return wrap;
+}
+
 function renderThiefNight(state, actions) {
+  if (!state.thiefWantsSteal) return renderThiefActivatePrompt(state, actions);
+
   const wrap = el('div', 'night-screen rise');
   wrap.appendChild(PhaseRow('chip-gold', `☾ دورك: الحرامي · الجولة ${state.round}`, state.deadlineTs));
 

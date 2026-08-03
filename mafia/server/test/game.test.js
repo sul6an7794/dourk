@@ -240,6 +240,33 @@ test('الحرامي يقدر يسرق مرة وحدة بس طول اللعبة'
   assert.throws(() => game.submitSteal(room, 'th', 'v2'), /مسبقًا/);
 });
 
+test('الحرامي يقدر يأجّل السرقة (عدم التفعيل) بدون ما تُسرق تلقائيًا بنهاية الليل', () => {
+  const room = buildTestRoom({ m: 'mafia', doc: 'doctor', sh: 'sheikh', th: 'thief', v1: 'villager', v2: 'villager' });
+  game.markNightReady(room, 'th');
+  game.submitMafiaPick(room, 'm', 'v1');
+  game.confirmKill(room, 'm');
+  game.resolveNight(room);
+
+  assert.strictEqual(room.thiefPickId, null);
+  assert.strictEqual(room.thiefUsed, false);
+  assert.strictEqual(room.stolenVoterId, null);
+
+  game.beginNight(room);
+  assert.strictEqual(game.nightRoleFor(room, room.players.get('th')), 'steal');
+});
+
+test('انتهاء الوقت بدون أي قرار من الحرامي (ولا حتى عدم التفعيل) يؤجّل القدرة كمان، لا يسرق تلقائيًا', () => {
+  const room = buildTestRoom({ m: 'mafia', doc: 'doctor', sh: 'sheikh', th: 'thief', v1: 'villager', v2: 'villager' });
+  // ما نادى submitSteal ولا markNightReady إطلاقًا — محاكاة انتهاء الوقت بدون أي تفاعل.
+  game.submitMafiaPick(room, 'm', 'v1');
+  game.confirmKill(room, 'm');
+  game.resolveNight(room);
+
+  assert.strictEqual(room.thiefPickId, null);
+  assert.strictEqual(room.thiefUsed, false);
+  assert.strictEqual(room.stolenVoterId, null);
+});
+
 test('صوت العمدة بوزن ٢ خفي يحسم المتهم، وmayorInfluenced يكشف ترجيحه', () => {
   const room = buildTestRoom({ m: 'mafia', mayor: 'mayor', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager' });
   room.phase = 'vote';

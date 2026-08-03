@@ -643,6 +643,10 @@ function loadHtml2Canvas() {
       state.nightSubmitted = true;
       render();
     },
+    activateThiefChoice() {
+      state.thiefWantsSteal = true;
+      render();
+    },
     async confirmSteal() {
       const res = await emitAck('thiefSteal', { targetId: state.nightPick });
       if (!res.error) state.nightSubmitted = true;
@@ -845,6 +849,7 @@ function loadHtml2Canvas() {
   socket.on('nightRole', (payload) => {
     state.nightRole = payload;
     state.nightPick = null;
+    state.thiefWantsSteal = false;
     state.nightSubmitted = false;
     state.sheikhResult = null;
     state.partnerPick = null;

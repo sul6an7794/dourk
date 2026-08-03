@@ -9,7 +9,7 @@ const asyncHandler = require('../async-handler');
 
 // تمثيل عام للمستخدم (بدون رقم الجوال) — يُرسل للواجهة.
 function publicUser(u) {
-  return { id: u.id, username: u.username, isAdmin: !!u.is_admin, credits: u.credits || 0, referredCount: db.getReferredCount(u.id) };
+  return { id: u.id, username: u.username, isAdmin: !!u.is_admin, credits: u.credits || 0 };
 }
 
 // اسم المستخدم: حروف/أرقام/مسافة/_ . - فقط (يمنع رموز XSS مثل < > " ').
@@ -96,7 +96,7 @@ router.post('/otp/request', otpRequestLimit, async (req, res) => {
 });
 
 router.post('/otp/verify', otpVerifyLimit, async (req, res) => {
-  const { phone: rawPhone, otp, username, bootstrapToken, ref } = req.body || {};
+  const { phone: rawPhone, otp, username, bootstrapToken } = req.body || {};
   const phone = String(rawPhone || '').trim();
   if (!PHONE_RE.test(phone) || !String(otp || '').trim()) {
     return res.status(400).json({ error: 'الرقم أو الرمز مفقود' });
@@ -128,13 +128,7 @@ router.post('/otp/verify', otpVerifyLimit, async (req, res) => {
         // لا يمنح أي تسجيل عام صلاحية مشرف. التهيئة الأولى تتطلب اسمًا ورمزًا سريًا من بيئة الخادم.
         const hasAdmin = db.getAllUsers().some((u) => !!u.isAdmin);
         const isAdmin = !hasAdmin && isBootstrapAdmin(name, bootstrapToken);
-        // نظام الدعوات: صديق يدعو صديق، والاثنين ياخذون تذكرة زيادة عند نجاح التسجيل.
-        const referrer = ref ? db.getUserById(Number(ref)) : null;
-        const created = await db.insertUser({ username: name, phone, is_admin: isAdmin, referred_by: referrer ? referrer.id : null });
-        if (referrer) {
-          await db.addCredits(referrer.id, 1, 'referral-bonus');
-          await db.addCredits(created.id, 1, 'referral-bonus');
-        }
+        const created = await db.insertUser({ username: name, phone, is_admin: isAdmin });
         return { user: created, created: true };
       });
       user = result.user;
