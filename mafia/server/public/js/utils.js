@@ -1,5 +1,5 @@
 function arNum(value) {
-  return String(value).replace(/[0-9]/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]);
+  return String(value);
 }
 
 function el(tag, className, text) {

@@ -10,13 +10,12 @@
   font-family: var(--serif); font-weight: 900; font-size: 38px; letter-spacing: 0.16em; padding-inline-start: 0.16em;
   color: var(--gold-light); text-shadow: 0 0 22px rgba(200,154,69,0.5); text-align: center;
 }
-.lobby-invite { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.lobby-invite { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 .lobby-qr {
-  width: 156px; height: 156px; flex: 0 0 156px; padding: 8px; border-radius: 12px;
+  width: 220px; height: 220px; flex: 0 0 220px; padding: 10px; border-radius: 14px;
   background: #0d1420; border: 1px solid rgba(255,255,255,0.12);
 }
-.lobby-invite-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: right; }
-.lobby-invite-copy .muted-note { max-width: 180px; }
+.lobby-invite .muted-note { text-align: center; max-width: 260px; }
 .lobby-players { display: flex; flex-direction: column; gap: 8px; }
 .lobby-player-row {
   display: flex; align-items: center; gap: 10px; background: rgba(5,8,13,0.8);
@@ -31,8 +30,8 @@
 
 @media (max-width: 420px) {
   .lobby-invite { gap: 10px; }
-  .lobby-qr { width: 128px; height: 128px; flex-basis: 128px; }
-  .lobby-invite-copy .muted-note { max-width: 150px; }
+  .lobby-qr { width: 180px; height: 180px; flex-basis: 180px; }
+  .lobby-invite .muted-note { max-width: 220px; }
 }
 
 /* ===== شريط البطاقات ===== */

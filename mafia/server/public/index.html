@@ -50,12 +50,24 @@
   <script src="js/screens/end.js"></script>
   <script src="js/app.js"></script>
   <script>
-    window.addEventListener('load', function () {
-      const loader = document.getElementById('pageLoader');
+    // لو الرابط فيه room/autoCreate (تحويل تلقائي من دورك)، نسيب app.js يخفي هذا اللودر
+    // بنفسه لما تجهز الغرفة فعليًا (window.hidePageLoader) — بدل ما نخفيه هنا عند اكتمال
+    // تحميل السكربتات بس، وتظهر تحته شاشة "جارِ تجهيز غرفتك" منفصلة (كانت تبين كومضة ثانية).
+    // شبكة/جهاز بطيء ما يعلّق المستخدم للأبد — لو ما صار الإخفاء خلال 8 ثواني، نخفيه احتياطيًا.
+    var params = new URLSearchParams(location.search);
+    var needsBootstrap = !!(params.get('room') || params.get('autoCreate') === '1');
+    function hideLoaderNow() {
+      var loader = document.getElementById('pageLoader');
       if (!loader) return;
       loader.classList.add('is-hidden');
       window.setTimeout(function () { loader.remove(); }, 240);
-    });
+    }
+    window.hidePageLoader = hideLoaderNow;
+    if (!needsBootstrap) {
+      window.addEventListener('load', hideLoaderNow);
+    } else {
+      window.setTimeout(hideLoaderNow, 8000);
+    }
   </script>
 </body>
 </html>

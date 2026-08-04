@@ -100,13 +100,11 @@ function renderWaitingRoom(state, actions) {
   const qr = el('img', 'lobby-qr');
   qr.src = qrDataUrl(inviteLink, '#f2f4f7', '#0d1420');
   qr.alt = 'رمز QR للانضمام إلى الغرفة';
-  qr.width = 156;
-  qr.height = 156;
+  qr.width = 220;
+  qr.height = 220;
   invite.appendChild(qr);
-  const inviteCopy = el('div', 'lobby-invite-copy');
-  inviteCopy.appendChild(el('div', 'muted-note', 'امسح الرمز من جوال اللاعب أو شارك الرابط.'));
-  inviteCopy.appendChild(shareBtn);
-  invite.appendChild(inviteCopy);
+  invite.appendChild(el('div', 'muted-note', 'امسح الرمز من جوال اللاعب أو شارك الرابط.'));
+  invite.appendChild(shareBtn);
   wrap.appendChild(invite);
 
   const panel = el('div', 'lobby-panel');

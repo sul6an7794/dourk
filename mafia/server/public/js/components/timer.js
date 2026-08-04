@@ -15,9 +15,12 @@ function Timer(deadlineTs) {
   }
 
   update();
-  // الفاصل يوقف نفسه لوحده بمجرد ما ينتهي العدّاد — ما يحتاج تفكيك خارجي (renderNow يمسح
-  // root.innerHTML بالكامل بكل إعادة رسم على أي حال، فما فيه "unmount" حقيقي نربط فيه دالة تفكيك).
+  // renderNow يمسح root.innerHTML بالكامل بكل إعادة رسم — العنصر يصير منفصل عن DOM بدون
+  // أي تفكيك صريح. لو ما تحققنا من isConnected، كل إعادة رسم تنشئ فاصلًا (interval) جديدًا
+  // يبقى شغّال بالخلفية على عنصر غير مرئي، ويلمس document.body.classList مباشرة — تراكم عدة
+  // فواصل هالشكل هو سبب "التقطيع" اللي كان يصير بشاشة مافيا وقت كثرة إعادات الرسم.
   const interval = setInterval(() => {
+    if (!span.isConnected) { clearInterval(interval); return; }
     update();
     if (deadlineTs && deadlineTs - Date.now() <= 0) clearInterval(interval);
   }, 250);

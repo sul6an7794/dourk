@@ -561,14 +561,14 @@ function loadHtml2Canvas() {
       const res = await emitAck('createRoom', { name, rt });
       state.error = res.error || null;
       // فشل التحويل التلقائي من دورك: نرجّع نموذج الإنشاء اليدوي بدل ما نعلّق على شاشة تحميل للأبد.
-      if (res.error) state.bootstrapping = false;
+      if (res.error) { state.bootstrapping = false; if (window.hidePageLoader) window.hidePageLoader(); }
       render();
     },
     async joinRoom(roomCode, name) {
       const cleanCode = String(roomCode || '').replace(/\D/g, '').slice(0, 6);
       const res = await emitAck('joinRoom', { roomCode: cleanCode, name });
       state.error = res.error || null;
-      if (res.error) state.bootstrapping = false;
+      if (res.error) { state.bootstrapping = false; if (window.hidePageLoader) window.hidePageLoader(); }
       render();
     },
     async startGame() {
@@ -755,6 +755,9 @@ function loadHtml2Canvas() {
   });
 
   socket.on('roomUpdate', (payload) => {
+    // نخفي لودر الصفحة هنا (مو عند اكتمال تحميل السكربتات) لما تجهز الغرفة فعليًا — يمنع ظهور
+    // شاشة "جارِ تجهيز غرفتك" لحظة منفصلة تحت اللودر (كانت تبين كومضة ثانية بعد اللودر نفسه).
+    if (payload.roomCode && window.hidePageLoader) window.hidePageLoader();
     const prevPhase = state.phase;
     state.roomCode = payload.roomCode;
     state.hostId = payload.hostId;
