@@ -155,7 +155,7 @@ router.post('/rounds/:id/images', uploadLimit, (req, res) => {
       res.json(toApiRound(db.getRound(roundId)));
     } catch (e) {
       console.error(e);
-      res.status(500).json({ error: 'خطأ غير متوقع أثناء حفظ الصور' });
+      res.status(500).json({ error: 'ما قدرنا نحفظ الصور، حاول مرة ثانية' });
     }
   });
 });

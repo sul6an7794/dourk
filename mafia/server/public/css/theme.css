@@ -122,7 +122,7 @@ button, input, .big-btn, .vote-btn, .pick-tile { min-width: 0; max-width: 100%; 
 .bg-night {
   background:
     radial-gradient(420px 300px at 78% 6%, rgba(255,45,45,0.20), transparent 65%),
-    radial-gradient(320px 240px at 8% 65%, rgba(0,183,240,0.12), transparent 65%),
+    radial-gradient(320px 240px at 8% 65%, rgba(127,231,255,0.12), transparent 65%),
     linear-gradient(180deg, #1B0A0F, #0A0F16 62%);
 }
 .bg-day {
@@ -168,7 +168,7 @@ button, input, .big-btn, .vote-btn, .pick-tile { min-width: 0; max-width: 100%; 
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.16); color: var(--text-faint);
   transition: all 0.3s;
 }
-.small-btn.on { background: rgba(0,183,240,0.16); border-color: var(--good); color: var(--good-light); }
+.small-btn.on { background: rgba(127,231,255,0.16); border-color: var(--good); color: var(--good-light); }
 
 .spectator-chip {
   margin-top: 10px; text-align: center; font-size: 12px; font-weight: 700; padding: 6px 14px;
@@ -218,8 +218,8 @@ button, input, .big-btn, .vote-btn, .pick-tile { min-width: 0; max-width: 100%; 
 .chip-night-solid { background: rgba(255,45,45,0.18); border: 1px solid var(--evil); color: var(--evil-light); border-radius: 8px; }
 .chip-day { background: rgba(90,95,102,0.25); border: 1px solid rgba(168,175,184,0.4); color: var(--text); }
 .chip-vote { background: rgba(255,177,94,0.14); border: 1px solid rgba(255,177,94,0.5); color: var(--warn); }
-.chip-gold { background: rgba(200,154,69,0.14); border: 1px solid rgba(200,154,69,0.6); color: var(--gold-light); }
-.chip-blue { background: rgba(0,183,240,0.14); border: 1px solid var(--good); color: var(--good-light); }
+.chip-gold { background: rgba(224,184,106,0.14); border: 1px solid rgba(224,184,106,0.6); color: var(--gold-light); }
+.chip-blue { background: rgba(127,231,255,0.14); border: 1px solid var(--good); color: var(--good-light); }
 
 .timer {
   display: inline-flex; align-items: center; justify-content: center;
@@ -267,10 +267,10 @@ button, input, .big-btn, .vote-btn, .pick-tile { min-width: 0; max-width: 100%; 
   font-weight: 700; font-size: 17px; height: 52px; border-radius: 12px; transition: all 0.4s;
   color: #FFF; padding-inline: 12px; text-align: center; line-height: 1.3; overflow-wrap: break-word; word-break: normal;
 }
-.big-btn.blue { background: linear-gradient(180deg, rgba(0,183,240,0.28), rgba(0,80,120,0.34)); border: 1px solid var(--good); box-shadow: 0 0 16px rgba(0,183,240,0.35); }
+.big-btn.blue { background: linear-gradient(180deg, rgba(127,231,255,0.28), rgba(0,80,120,0.34)); border: 1px solid var(--good); box-shadow: 0 0 16px rgba(127,231,255,0.35); }
 .big-btn.red { background: linear-gradient(180deg, rgba(255,45,45,0.28), rgba(90,0,0,0.34)); border: 1px solid var(--evil); }
 .big-btn.red.armed { animation: glowPulse 2s ease-in-out infinite; }
-.big-btn.gold { background: linear-gradient(180deg, rgba(200,154,69,0.32), rgba(100,70,20,0.36)); border: 1px solid var(--gold); }
+.big-btn.gold { background: linear-gradient(180deg, rgba(224,184,106,0.32), rgba(100,70,20,0.36)); border: 1px solid var(--gold); }
 .big-btn.idle { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-faint); box-shadow: none; animation: none; }
 .big-btn.ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); color: var(--text-dim); }
 
@@ -283,7 +283,7 @@ input.field {
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.14);
   color: var(--text); font-family: var(--sans); font-size: 16px; line-height: normal;
 }
-input.field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,154,69,0.2); }
+input.field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(224,184,106,0.2); }
 
 /* التمرير */
 .scroll-y { overflow-y: auto; min-height: 0; }

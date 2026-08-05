@@ -4,6 +4,7 @@ const db = require('../db');
 const { authMiddleware, adminMiddleware } = require('../auth');
 const { rateLimit } = require('../rateLimit');
 const asyncHandler = require('../async-handler');
+const errorLog = require('../error-log');
 
 const adminLimit = rateLimit(120, 60 * 1000, 'admin'); // 120 طلب بالدقيقة لكل IP — كافٍ للاستخدام العادي، يمنع إساءة الاستخدام
 
@@ -52,5 +53,18 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
   if (!ok) return res.status(404).json({ error: 'المستخدم غير موجود' });
   res.json({ ok: true });
 }));
+
+// يسجّل خطأ وهمي عمدًا للتأكد من وصول تنبيه تيليجرام فعليًا بعد ضبط التوكن — بدون انتظار
+// خطأ حقيقي. آمن (ما يمس أي بيانات)، ومحمي بنفس صلاحية المشرف.
+router.post('/errors/test', (req, res) => {
+  errorLog.logError('platform', new Error('رسالة اختبار — تجاهلها، هذا فقط للتأكد إن التنبيه شغّال'), { test: true, triggeredBy: req.user.username });
+  res.json({ ok: true });
+});
+
+// آخر الأخطاء المسجّلة من الموقع كامل (منصة/وصّلها/مافيا) — للتشخيص السريع بدل انتظار
+// شكوى مستخدم. سجل بالذاكرة فقط (آخر 200)، ما يبقى بعد إعادة تشغيل السيرفر.
+router.get('/errors', (req, res) => {
+  res.json({ log: errorLog.getRecentErrors(100) });
+});
 
 module.exports = router;

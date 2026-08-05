@@ -510,15 +510,19 @@ function loadHtml2Canvas() {
     // يلتقط بطاقة النتائج كصورة (html2canvas) ويشاركها (Web Share على الجوال) أو ينزّلها.
     async shareResult() {
       if (state.shareResultBusy) return;
-      const target = document.querySelector('.gameover-screen');
-      if (!target) return;
+      const g = state.gameOver;
+      if (!g) return;
       state.shareResultBusy = true;
-      // تحديث مباشر لزر المشاركة بدل render() كامل — render() يستبدل root.innerHTML بالكامل
-      // (بما فيها .gameover-screen نفسها، اللي target يشاور عليها) فيصير target عنصرًا منفصلًا
-      // عن الصفحة بحلول ما يخلص html2canvas تحميله (تحميل شبكي حقيقي، أبطأ من إطار واحد)،
-      // فيلتقط عنصرًا غير موجود بالصفحة فعليًا وتطلع الصورة فاضية أو مكسورة.
       const shareBtn = document.getElementById('shareResultBtn');
       if (shareBtn) { shareBtn.disabled = true; shareBtn.textContent = 'جارِ التجهيز…'; }
+      // نبني بطاقة مخصّصة للمشاركة (نسبة ستوري 9:16، بدون أزرار/ملخص طويل) بدل التقاط
+      // شاشة النهاية التفاعلية كما هي — نعرضها خارج حدود الشاشة (مو display:none، لازم
+      // تكون مرسومة فعليًا عشان html2canvas يقدر يلتقطها) ثم نشيلها بعد التصوير.
+      const target = buildShareCard(g, g.winner === 'mafia');
+      target.style.position = 'fixed';
+      target.style.top = '0';
+      target.style.left = '-9999px';
+      document.body.appendChild(target);
       try {
         // نستنى تحميل الخطوط المخصّصة فعليًا قبل التقاط الصورة — بدونه html2canvas قد يلتقط
         // بالخط الاحتياطي للمتصفح (لو ما خلص تحميل الخط بعد)، فتطلع الصورة بخط مختلف عن الموقع.
@@ -551,6 +555,7 @@ function loadHtml2Canvas() {
       } catch (e) {
         alert((e && e.message) || 'تعذّرت المشاركة');
       } finally {
+        target.remove();
         state.shareResultBusy = false;
         if (shareBtn) {
           shareBtn.disabled = false;

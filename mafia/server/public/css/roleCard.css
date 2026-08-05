@@ -17,7 +17,7 @@
   border-radius: 999px; background: rgba(5,8,13,0.75); white-space: nowrap;
 }
 .role-card__badge--evil { border: 1px solid var(--evil); color: var(--evil-light); box-shadow: 0 0 6px rgba(255,45,45,0.35); text-shadow: 0 0 5px rgba(255,45,45,0.35); }
-.role-card__badge--good { border: 1px solid var(--good); color: var(--good-light); box-shadow: 0 0 6px rgba(0,183,240,0.3); text-shadow: 0 0 5px rgba(0,183,240,0.3); }
+.role-card__badge--good { border: 1px solid var(--good); color: var(--good-light); box-shadow: 0 0 6px rgba(127,231,255,0.3); text-shadow: 0 0 5px rgba(127,231,255,0.3); }
 .role-card__badge--neutral { border: 1px solid #7e22ce; color: #b98cf0; box-shadow: 0 0 6px rgba(126,34,206,0.32); text-shadow: 0 0 5px rgba(126,34,206,0.32); }
 
 .role-card__bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 4cqw 5.8cqw 6.8cqw; display: flex; flex-direction: column; gap: 1.6cqw; }

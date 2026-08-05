@@ -103,9 +103,15 @@ function createApp() {
     res.status(404).json({ error: 'الصفحة غير موجودة' });
   });
   app.use((err, req, res, next) => {
-    console.error(err);
+    // لو وصّلها شغّالة جوا عملية دورك الموحّدة، نسجّل الخطأ بسجل المنصة المركزي (نفس سجل
+    // مافيا والمنصة نفسها) — لو شغّالة لحالها (تطوير محلي)، نكتفي بـconsole.error عادي.
+    if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.errors) {
+      global.__DOURK_PLATFORM__.errors.log('wslha', err, { path: req.originalUrl, method: req.method });
+    } else {
+      console.error(err);
+    }
     if (res.headersSent) return next(err);
-    res.status(500).json({ error: 'خطأ غير متوقع بالسيرفر' });
+    res.status(500).json({ error: 'صار خطأ من عندنا، حاول مرة ثانية' });
   });
 
   return app;

@@ -607,13 +607,13 @@ const App = {
     const phoneStep = '' +
       '<div class="form-col">' +
         '<div class="phone-row">' +
-          '<select id="authCountryCode" class="field phone-code" onchange="App.onCountryCodeChange(this)">' + countryOptions + '</select>' +
           '<input id="authPhone" type="tel" inputmode="numeric" class="field phone-local" placeholder="5xxxxxxxx" value="' + this.escape(s.otpLocalDraft) + '" oninput="App.state.otpLocalDraft=this.value">' +
+          '<select id="authCountryCode" class="field phone-code" onchange="App.onCountryCodeChange(this)">' + countryOptions + '</select>' +
         '</div>' +
         customCodeField +
         '<div class="hint-banner">' + ICONS.ticket + ' أول تذكرة علينا — تجي مع حسابك الجديد</div>' +
         errorSlot +
-        '<button id="otpSendBtn" class="btn-primary" ' + (s.otpSending ? 'disabled' : '') + ' onclick="App.requestOtp()">' + (s.otpSending ? 'جارِ الإرسال...' : 'إرسال رمز التحقق') + '</button>' +
+        '<button id="otpSendBtn" class="btn-primary" ' + (s.otpSending ? 'disabled' : '') + ' onclick="App.requestOtp()">' + (s.otpSending ? 'جارِ الإرسال...' : 'أرسل رمز التحقق') + '</button>' +
       '</div>';
     const otpBoxes = Array.from({ length: 4 }, (_, i) =>
       '<input class="otp-box" inputmode="numeric" maxlength="1" autocomplete="one-time-code" ' + (s.otpVerifying ? 'disabled' : '') + ' oninput="App.onOtpBoxInput(this,' + i + ')" onkeydown="App.onOtpBoxKeydown(event,' + i + ')">'

@@ -6,6 +6,7 @@ const registry = require('./rooms-registry');
 const ticketLedger = require('./ticket-ledger');
 const creditsBridge = require('./credits-bridge');
 const auth = require('./auth');
+const errorLog = require('./error-log');
 
 function install(db) {
   // تحقّق هوية حقيقي من كوكي الجلسة (نفس آلية تسجيل الدخول الحقيقية) — مو deviceId اللي
@@ -26,6 +27,7 @@ function install(db) {
     tickets: { issue: ticketLedger.issue, redeem: ticketLedger.redeem },
     credits: creditsBridge.createBridge(db),
     auth: { verifyFromCookieHeader },
+    errors: { log: errorLog.logError },
   };
 }
 

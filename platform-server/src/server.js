@@ -9,11 +9,12 @@ const { Server } = require('socket.io');
 // inRoom الحالية (مثلًا: callback خام من مكتبة خارجية، أو جسم setTimeout) كان سابقًا يُسقط
 // عملية Node بالكامل — يوقف الدخول والتذاكر ولعبتي مافيا ووصّلها لكل المستخدمين المتصلين دفعة
 // وحدة، بدل ما يبقى الخطأ محصورًا بذاك الطلب/الحدث وحده. نسجّله فقط، لا نوقف العملية.
+const errorLog = require('./error-log');
 process.on('unhandledRejection', (reason) => {
-  console.error('رفض Promise غير ملتقط:', reason);
+  errorLog.logError('platform', reason, { kind: 'unhandledRejection' });
 });
 process.on('uncaughtException', (err) => {
-  console.error('استثناء غير ملتقط:', err);
+  errorLog.logError('platform', err, { kind: 'uncaughtException' });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -193,9 +194,9 @@ async function start(port = PORT) {
   // يرجع JSON مهذّب بدل صفحة HTML افتراضية من Express — وبدونها أصلًا الاستثناء غير المُمسوك
   // كان يُسقط عملية Node بالكامل لكل المستخدمين دفعة وحدة.
   app.use((err, req, res, next) => {
-    console.error('خطأ غير متوقع بمسار API:', err);
+    errorLog.logError('platform', err, { path: req.originalUrl, method: req.method });
     if (res.headersSent) return next(err);
-    res.status(500).json({ error: 'خطأ غير متوقع بالسيرفر' });
+    res.status(500).json({ error: 'صار خطأ من عندنا، حاول مرة ثانية' });
   });
 
   const server = http.createServer(app);

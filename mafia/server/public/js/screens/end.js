@@ -1,3 +1,34 @@
+// بطاقة مخصّصة للمشاركة (ستوري انستقرام/سناب — نسبة 9:16) بدل التقاط شاشة النهاية
+// التفاعلية كما هي (كانت تظهر فيها أزرار وملخص طويل غير مناسبين للمشاركة).
+function buildShareCard(g, isMafiaWin) {
+  const card = el('div', `share-card ${isMafiaWin ? 'mafia' : 'town'}`);
+
+  const brand = el('div', 'share-card__brand');
+  brand.appendChild(el('span', 'share-card__brand-word', 'دورك'));
+  brand.appendChild(el('span', 'share-card__brand-game', 'مافيا'));
+  card.appendChild(brand);
+
+  card.appendChild(el('div', 'share-card__kicker', 'GAME OVER'));
+  card.appendChild(el('div', `share-card__title ${isMafiaWin ? 'mafia' : 'town'}`, isMafiaWin ? 'فازت العصابة' : 'فاز المواطنون'));
+
+  const grid = el('div', 'share-card__grid');
+  g.winnerCards.forEach((wc) => {
+    const data = roleCardData(wc.file);
+    const cell = el('div', `share-card__player ${data.faction}`);
+    const img = document.createElement('img');
+    img.src = `assets/characters/${data.photo}`;
+    img.alt = data.nameAr;
+    cell.appendChild(img);
+    cell.appendChild(el('span', '', data.nameAr));
+    grid.appendChild(cell);
+  });
+  card.appendChild(grid);
+
+  card.appendChild(el('div', 'share-card__round', `حُسمت في الجولة ${g.round}`));
+  card.appendChild(el('div', 'share-card__cta', 'العب مع أصحابك · dourk.sa'));
+  return card;
+}
+
 function renderDeadScreen(state, actions) {
   const wrap = el('div', 'dead-screen');
   wrap.appendChild(el('div', 'dead-title', state.death ? state.death.deathTitle : ''));
