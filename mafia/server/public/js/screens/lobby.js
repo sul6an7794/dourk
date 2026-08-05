@@ -10,15 +10,20 @@ function LogoBox() {
 }
 
 function renderLobbyScreen(state, actions) {
-  if (!state.roomCode && state.bootstrapping) return renderBootstrapping(state);
-  if (!state.roomCode) return renderHomeForm(state, actions);
-  return renderWaitingRoom(state, actions);
+  // شعار مافيا وباقي عنوان اللوبي يتكرر رسمه بكل إعادة رسم (كل رد سيرفر يعيد بناء الشاشة
+  // بالكامل) — لو شغّلنا حركة الدخول (rise) بكل مرة، الشعار "يرمش" كل ما ينتقل من نموذج
+  // الإنشاء لغرفة الانتظار مباشرة بعد إنشاء الغرفة. نشغّلها مرة وحدة بس أول ظهور بهالجلسة.
+  const showEntrance = !state.lobbyEntranceShown;
+  state.lobbyEntranceShown = true;
+  if (!state.roomCode && state.bootstrapping) return renderBootstrapping(state, showEntrance);
+  if (!state.roomCode) return renderHomeForm(state, actions, showEntrance);
+  return renderWaitingRoom(state, actions, showEntrance);
 }
 
 // تحويل تلقائي من منصة دورك قيد التنفيذ (إنشاء/انضمام) — نعرض تحميل بدل نموذج الإنشاء
 // اليدوي، وإلا يبين للمستخدم إنه وصل لصفحة "إنشاء غرفة" ثانية بعد صفحة المنصة.
-function renderBootstrapping(state) {
-  const wrap = el('div', 'lobby-hero rise');
+function renderBootstrapping(state, showEntrance) {
+  const wrap = el('div', `lobby-hero${showEntrance ? ' rise' : ''}`);
   wrap.appendChild(LogoBox());
   wrap.appendChild(el('p', 'lobby-sub', 'جارِ تجهيز غرفتك…'));
   if (state.error) {
@@ -29,8 +34,8 @@ function renderBootstrapping(state) {
   return wrap;
 }
 
-function renderHomeForm(state, actions) {
-  const wrap = el('div', 'lobby-hero rise');
+function renderHomeForm(state, actions, showEntrance) {
+  const wrap = el('div', `lobby-hero${showEntrance ? ' rise' : ''}`);
   wrap.appendChild(LogoBox());
   wrap.appendChild(el('p', 'lobby-sub', 'لعبة الخداع الاجتماعي'));
 
@@ -76,9 +81,9 @@ function renderHomeForm(state, actions) {
   return wrap;
 }
 
-function renderWaitingRoom(state, actions) {
+function renderWaitingRoom(state, actions, showEntrance) {
   const isHost = state.hostId === MafiaSocket.deviceId;
-  const wrap = el('div', `lobby-hero${state.bootstrapping ? '' : ' rise'}`);
+  const wrap = el('div', `lobby-hero${showEntrance ? ' rise' : ''}`);
 
   wrap.appendChild(LogoBox());
   wrap.appendChild(el('div', 'kicker', 'غرفة الانتظار'));
@@ -174,19 +179,15 @@ function renderWaitingRoom(state, actions) {
     settingsPanel.appendChild(settingsRow);
     settingsPanel.appendChild(el('div', 'muted-note', 'ملاحظة: القتل ليلًا يبقى مجهول الهوية دائمًا حتى النهاية — هذا الخيار يخص الإقصاء بالتصويت فقط.'));
 
-    const voteRow = el('div', 'phase-row');
-    voteRow.appendChild(el('span', '', 'مدة التصويت'));
-    const voteSelect = el('select', 'field');
-    voteSelect.style.width = 'auto';
-    [20, 30, 40, 60, 90, 120].forEach((sec) => {
-      const opt = document.createElement('option');
-      opt.value = String(sec);
-      opt.textContent = sec + ' ثانية';
-      if (Math.round((state.voteMs || 40000) / 1000) === sec) opt.selected = true;
-      voteSelect.appendChild(opt);
+    settingsPanel.appendChild(el('div', 'muted-note', 'مدة التصويت'));
+    const voteRow = el('div', 'phase-row vote-duration-row');
+    const currentSec = Math.round((state.voteMs || 60000) / 1000);
+    [{ sec: 60, label: 'دقيقة' }, { sec: 120, label: 'دقيقتين' }, { sec: 180, label: '3 دقايق' }].forEach(({ sec, label }) => {
+      const optBtn = el('button', `small-btn ${currentSec === sec ? 'on' : ''}`, label);
+      optBtn.type = 'button';
+      optBtn.addEventListener('click', () => actions.setVoteDuration(sec));
+      voteRow.appendChild(optBtn);
     });
-    voteSelect.addEventListener('change', () => actions.setVoteDuration(Number(voteSelect.value)));
-    voteRow.appendChild(voteSelect);
     settingsPanel.appendChild(voteRow);
 
     wrap.appendChild(settingsPanel);

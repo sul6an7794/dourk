@@ -5,7 +5,7 @@ const REVEAL_MS = Number(process.env.MAFIA_REVEAL_MS) || 30000;
 const NIGHT_MS = Number(process.env.MAFIA_NIGHT_MS) || 25000;
 const DEATH_REVEAL_MS = Number(process.env.MAFIA_DEATH_REVEAL_MS) || 5000;
 const DAY_MS = Number(process.env.MAFIA_DAY_MS) || 45000;
-const VOTE_MS = Number(process.env.MAFIA_VOTE_MS) || 40000;
+const VOTE_MS = Number(process.env.MAFIA_VOTE_MS) || 60000;
 const DEFENSE_MS = Number(process.env.MAFIA_DEFENSE_MS) || 60000;
 
 function addLog(room, text, color) {
