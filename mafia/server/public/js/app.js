@@ -81,17 +81,11 @@ function loadHtml2Canvas() {
     princessReveal: null,
     zoomedCard: null,
     zoomedCardRect: null,
-    // تحويل تلقائي من منصة دورك (?room=CODE أو ?autoCreate=1) يبدأ من هنا، قبل أول render —
-    // بدونه أول رسم يعرض نموذج "أنشئ غرفة/انضم" اليدوي لمافيا لثانية قبل ما يوصل ردّ السيرفر،
-    // فيبين للمستخدم وكأنه صفحة "إنشاء غرفة" ثانية بعد صفحة المنصة.
-    bootstrapping: (() => {
-      const p = new URLSearchParams(location.search);
-      return !!(p.get('room') || p.get('autoCreate') === '1');
-    })(),
     connection: 'connecting',
   };
 
   let lastStripKey = null;
+  let lastAnimatedPhase = null;
   let renderQueued = false;
   let pendingVotesUpdate = null;
   let votesUpdateTimer = null;
@@ -285,6 +279,13 @@ function loadHtml2Canvas() {
     } else {
       node = el('div', 'muted-note', 'جارِ التحميل…');
     }
+    // كل شاشة تحمل كلاس "rise" (حركة دخول fade+slide) بشكل ثابت بكودها — لو نفس المرحلة
+    // (phase) لسا معروضة من رسم سابق (يعني السبب مجرد تحديث ثانوي: لاعب جديد انضم، بوت
+    // انضاف، حالة اتصال تغيّرت...) نشيلها عشان الشاشة كلها ما تومض/تعيد حركتها من الصفر
+    // بلا داعي — تشتغل فقط أول ما تدخل مرحلة جديدة فعليًا.
+    if (state.phase === lastAnimatedPhase) node.classList.remove('rise');
+    else lastAnimatedPhase = state.phase;
+
     root.appendChild(node);
 
     if (state.zoomedCard) {
@@ -540,8 +541,13 @@ function loadHtml2Canvas() {
         }
         state.shareResultDone = true;
         if (shareBtn) shareBtn.textContent = 'تمت المشاركة ✓';
-        // آمن هنا نستخدم render() كامل — المشاركة خلصت فعليًا، ما فيه أي التقاط شاشة معلّق.
-        setTimeout(() => { state.shareResultDone = false; render(); }, 1800);
+        // تحديث مباشر بدل render() كامل — render() يعيد بناء شاشة النهاية بالكامل (بطاقات الفوز
+        // والعنوان...) فتُعاد كل حركات الدخول من الصفر لمجرد رجوع نص الزر — رمشة بلا داعي.
+        setTimeout(() => {
+          state.shareResultDone = false;
+          const btn = document.getElementById('shareResultBtn');
+          if (btn) btn.textContent = 'مشاركة النتيجة';
+        }, 1800);
       } catch (e) {
         alert((e && e.message) || 'تعذّرت المشاركة');
       } finally {
@@ -559,16 +565,15 @@ function loadHtml2Canvas() {
     },
     async createRoom(name, rt) {
       const res = await emitAck('createRoom', { name, rt });
-      state.error = res.error || null;
-      // فشل التحويل التلقائي من دورك: نرجّع نموذج الإنشاء اليدوي بدل ما نعلّق على شاشة تحميل للأبد.
-      if (res.error) { state.bootstrapping = false; if (window.hidePageLoader) window.hidePageLoader(); }
+      // ما فيه نموذج إنشاء يدوي نرجّع له عند الفشل — إنشاء الغرف يصير من دورك حصرًا،
+      // فأي خطأ هنا (تذكرة غير صالحة مثلًا) يرجّع المستخدم لصفحة دورك مباشرة.
+      if (res.error) { window.location.href = '/'; return; }
       render();
     },
     async joinRoom(roomCode, name) {
       const cleanCode = String(roomCode || '').replace(/\D/g, '').slice(0, 6);
       const res = await emitAck('joinRoom', { roomCode: cleanCode, name });
-      state.error = res.error || null;
-      if (res.error) { state.bootstrapping = false; if (window.hidePageLoader) window.hidePageLoader(); }
+      if (res.error) { window.location.href = '/'; return; }
       render();
     },
     async startGame() {
@@ -953,7 +958,12 @@ function loadHtml2Canvas() {
     setTimeout(() => {
       if (state.phase === 'gameover') {
         state.gameOverActionsReady = true;
-        render();
+        // تحديث مباشر بدل render() كامل — نفس سبب تحديث زر المشاركة أعلاه: تفادي رمشة
+        // شاشة النهاية كلها (تعيد كل حركات الدخول) لمجرد إظهار زرين بالأسفل.
+        const newGameBtn = document.getElementById('newGameBtn');
+        const leaveBtn = document.getElementById('gameOverLeaveBtn');
+        if (newGameBtn) newGameBtn.style.display = '';
+        if (leaveBtn) leaveBtn.style.display = '';
       }
     }, 1250);
   });
@@ -971,7 +981,10 @@ function loadHtml2Canvas() {
       const autoCreate = params.get('autoCreate') === '1';
       if (!room && !autoCreate) {
         const resume = JSON.parse(localStorage.getItem('mafia_resume') || 'null');
-        if (resume && resume.roomCode) actions.joinRoom(resume.roomCode, resume.name || '');
+        if (resume && resume.roomCode) { actions.joinRoom(resume.roomCode, resume.name || ''); return; }
+        // ما فيه رابط تحويل صالح ولا غرفة نستأنفها — ما فيه نموذج إنشاء/انضمام يدوي هنا،
+        // إنشاء الغرف يصير من دورك حصرًا.
+        window.location.href = '/';
         return;
       }
       window.history.replaceState(null, '', window.location.pathname);

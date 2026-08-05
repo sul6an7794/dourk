@@ -26,12 +26,8 @@ function renderGameOverScreen(state, actions) {
   wrap.appendChild(el('div', `win-title ${isMafiaWin ? 'mafia' : 'town'}`, isMafiaWin ? 'فازت العصابة' : 'فاز المواطنون'));
 
   const me = g.roles.find((r) => r.playerId === MafiaSocket.deviceId);
-  if (me) {
-    const personal = el('div', `personal-result ${isMafiaWin ? 'mafia' : 'town'}`, me.won ? 'نتيجتك: فزت' : 'نتيجتك: خسرت');
-    wrap.appendChild(personal);
-    if (me.roleId === 'joker' && !me.won) {
-      wrap.appendChild(el('div', 'personal-reason', 'المهرج لا يفوز إلا إذا قُتل أو أُقصي قبل نهاية اللعبة.'));
-    }
+  if (me && me.roleId === 'joker' && !me.won) {
+    wrap.appendChild(el('div', 'personal-reason', 'المهرج لا يفوز إلا إذا قُتل أو أُقصي قبل نهاية اللعبة.'));
   }
 
   const cards = el('div', 'win-cards');
@@ -96,6 +92,7 @@ function renderGameOverScreen(state, actions) {
   }
 
   const leaveBtn = el('button', 'big-btn ghost');
+  leaveBtn.id = 'gameOverLeaveBtn';
   leaveBtn.appendChild(document.createTextNode('العودة إلى\u00A0'));
   leaveBtn.appendChild(el('span', 'dourk-return-mark', 'دورك'));
   if (!actionsReady) leaveBtn.style.display = 'none';

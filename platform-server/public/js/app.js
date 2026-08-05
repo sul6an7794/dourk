@@ -836,7 +836,15 @@ const App = {
     this.renderHeader();
     const map = { home: 'screenHome', auth: 'screenAuth', joinName: 'screenJoinName', game: 'screenGame', create: 'screenCreate', tickets: 'screenTickets', profile: 'screenProfile', privacy: 'screenLegal', terms: 'screenLegal' };
     const fn = map[this.state.screen] || 'screenHome';
-    document.getElementById('screenRoot').innerHTML = fn === 'screenLegal' ? this[fn](this.state.screen) : this[fn]();
+    const root = document.getElementById('screenRoot');
+    root.innerHTML = fn === 'screenLegal' ? this[fn](this.state.screen) : this[fn]();
+    // حركة الدخول (fade+slide) تشتغل بس لما الشاشة فعليًا تتغيّر — مو بكل إعادة رسم داخل
+    // نفس الشاشة (مثلاً فتح تأكيد حذف الحساب) كانت تعيد كل الصفحة تومض من جديد بلا داعي.
+    if (this.state.screen !== this._lastAnimatedScreen) {
+      const mainEl = root.querySelector('main');
+      if (mainEl) mainEl.classList.add('enter');
+      this._lastAnimatedScreen = this.state.screen;
+    }
     if (fn === 'screenHome') this.mountSbcSeal();
   },
 

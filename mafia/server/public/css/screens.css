@@ -5,9 +5,8 @@
   display: flex; flex-direction: column; gap: 12px; width: 100%;
   border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 18px; background: rgba(255,255,255,0.02);
 }
-.lobby-divider { text-align: center; color: var(--text-faint); font-size: 13px; }
 .room-code-big {
-  font-family: var(--serif); font-weight: 900; font-size: 38px; letter-spacing: 0.16em; padding-inline-start: 0.16em;
+  font-family: var(--serif); font-weight: 900; font-size: 38px; font-variant-numeric: tabular-nums;
   color: var(--gold-light); text-shadow: 0 0 22px rgba(200,154,69,0.5); text-align: center;
 }
 .lobby-invite { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
@@ -78,14 +77,6 @@ body.cards-drawer-open { overflow: hidden; }
   border-radius: 999px; padding: 5px 12px; font-family: var(--sans); font-weight: 700; font-size: 12px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text-dim);
 }
-.cards-drawer-mine-note {
-  min-height: 34px; display: flex; align-items: center; padding: 7px 10px; border-radius: 10px;
-  font-size: 12px; font-weight: 700; color: var(--gold-light);
-  background: rgba(200,154,69,0.10); border: 1px solid rgba(200,154,69,0.32);
-}
-.cards-drawer-mine-note.evil { color: var(--evil-light); background: rgba(255,45,45,0.09); border-color: rgba(255,45,45,0.28); }
-.cards-drawer-mine-note.good { color: var(--good-light); background: rgba(0,183,240,0.08); border-color: rgba(0,183,240,0.28); }
-.cards-drawer-mine-note.neutral { color: #C9AEFF; background: rgba(142,94,255,0.09); border-color: rgba(142,94,255,0.32); }
 .cards-drawer-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
 .strip-card-row {
   width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; border-radius: 12px;
@@ -359,15 +350,6 @@ body.cards-drawer-open { overflow: hidden; }
 .win-title { font-family: var(--serif); font-weight: 900; font-size: 46px; text-align: center; animation: winnerTitleGlow 1.05s ease both; }
 .win-title.mafia { color: var(--evil); text-shadow: 0 0 26px rgba(255,45,45,0.5); }
 .win-title.town { color: var(--good); text-shadow: 0 0 26px rgba(0,183,240,0.4); }
-.personal-result {
-  font-weight: 900; font-size: 17px; padding: 8px 18px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
-}
-/* لون "نتيجتك" يطابق لون الفريق الفائز الفعلي (نفس عنوان فازت العصابة/المواطنون فوق) —
-   مو لون ثابت لفوز/خسارة الشخص نفسه. كانت "نتيجتك: فزت" تطلع سماوي دايمًا حتى لو
-   الفائز فعليًا فريق المافيا (الأحمر) — تناقض بصري مباشر مع العنوان فوقها بنفس الشاشة. */
-.personal-result.mafia { color: var(--evil-light); border-color: rgba(255,45,45,0.55); background: rgba(255,45,45,0.1); }
-.personal-result.town { color: var(--good-light); border-color: rgba(0,183,240,0.55); background: rgba(0,183,240,0.1); }
 .personal-reason { max-width: 300px; text-align: center; color: var(--text-dim); font-size: 13px; line-height: 1.7; }
 .win-cards { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; max-width: 320px; }
 .win-card { display: flex; flex-direction: column; align-items: center; gap: 6px; }

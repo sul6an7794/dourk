@@ -13,9 +13,12 @@
   --text-faint: #5A5F66;
   --evil: #FF2D2D;
   --evil-light: #FF2D2D;
-  --good: #00B7F0;
+  /* لون واحد فقط لكل مفهوم (خير/ذهبي)، بنفس مبدأ evil/evil-light اللي أصلاً درجة وحدة —
+     كانت هذي المتغيرات بدرجتين مختلفتين فعليًا (غامق/فاتح) لنفس اللون، فيبين للاعب وكأنه
+     أكثر من لون سماوي أو أصفر بمافيا حسب الشاشة، بدل درجة واحدة متسقة بكل مكان. */
+  --good: #7FE7FF;
   --good-light: #7FE7FF;
-  --gold: #C89A45;
+  --gold: #E0B86A;
   --gold-light: #E0B86A;
   --warn: #FFB15E;
   --serif: 'ThmanyahSerif', serif;
@@ -281,13 +284,6 @@ input.field {
   color: var(--text); font-family: var(--sans); font-size: 16px; line-height: normal;
 }
 input.field:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,154,69,0.2); }
-.room-code-input { letter-spacing: 0; }
-.room-code-input::placeholder { letter-spacing: 0; }
-.room-code-input:not(:placeholder-shown) {
-  direction: ltr;
-  letter-spacing: 0;
-  padding-inline-start: 16px;
-}
 
 /* التمرير */
 .scroll-y { overflow-y: auto; min-height: 0; }

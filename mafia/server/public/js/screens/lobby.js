@@ -15,69 +15,22 @@ function renderLobbyScreen(state, actions) {
   // الإنشاء لغرفة الانتظار مباشرة بعد إنشاء الغرفة. نشغّلها مرة وحدة بس أول ظهور بهالجلسة.
   const showEntrance = !state.lobbyEntranceShown;
   state.lobbyEntranceShown = true;
-  if (!state.roomCode && state.bootstrapping) return renderBootstrapping(state, showEntrance);
-  if (!state.roomCode) return renderHomeForm(state, actions, showEntrance);
+  // إنشاء/الانضمام لغرفة يصير فقط من منصة دورك (?room=CODE أو ?autoCreate=1) — ما فيه
+  // نموذج إنشاء/انضمام يدوي داخل مافيا نفسها. لو ما وصل أي رابط تحويل صالح، bootstrapFromQuery
+  // بـapp.js يرجّع المستخدم لصفحة دورك — هذي الشاشة تبين لحظيًا بس ريثما يصير التحويل.
+  if (!state.roomCode) return renderBootstrapping(state, showEntrance);
   return renderWaitingRoom(state, actions, showEntrance);
 }
 
-// تحويل تلقائي من منصة دورك قيد التنفيذ (إنشاء/انضمام) — نعرض تحميل بدل نموذج الإنشاء
-// اليدوي، وإلا يبين للمستخدم إنه وصل لصفحة "إنشاء غرفة" ثانية بعد صفحة المنصة.
 function renderBootstrapping(state, showEntrance) {
   const wrap = el('div', `lobby-hero${showEntrance ? ' rise' : ''}`);
   wrap.appendChild(LogoBox());
-  wrap.appendChild(el('p', 'lobby-sub', 'جارِ تجهيز غرفتك…'));
+  wrap.appendChild(el('p', 'lobby-sub', 'جارِ التحويل إلى دورك…'));
   if (state.error) {
     const err = el('div', 'hint-line', state.error);
     err.style.color = 'var(--evil-light)';
     wrap.appendChild(err);
   }
-  return wrap;
-}
-
-function renderHomeForm(state, actions, showEntrance) {
-  const wrap = el('div', `lobby-hero${showEntrance ? ' rise' : ''}`);
-  wrap.appendChild(LogoBox());
-  wrap.appendChild(el('p', 'lobby-sub', 'لعبة الخداع الاجتماعي'));
-
-  const panel = el('div', 'lobby-panel');
-
-  const nameInput = el('input');
-  nameInput.className = 'field';
-  nameInput.placeholder = 'اسمك';
-  nameInput.maxLength = 20;
-  panel.appendChild(nameInput);
-
-  const createBtn = el('button', 'big-btn red', 'أنشئ غرفة جديدة');
-  createBtn.addEventListener('click', () => actions.createRoom(nameInput.value));
-  panel.appendChild(createBtn);
-
-  panel.appendChild(el('div', 'lobby-divider', 'أو'));
-
-  const codeInput = el('input');
-  codeInput.className = 'field room-code-input';
-  codeInput.placeholder = 'كود الغرفة';
-  codeInput.maxLength = 6;
-  codeInput.inputMode = 'numeric';
-  codeInput.pattern = '[0-9]*';
-  codeInput.style.textAlign = 'center';
-  codeInput.addEventListener('input', () => {
-    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 6);
-  });
-  const linkedRoom = new URLSearchParams(location.search).get('room');
-  if (linkedRoom) codeInput.value = String(linkedRoom).replace(/\D/g, '').slice(0, 6);
-  panel.appendChild(codeInput);
-
-  const joinBtn = el('button', 'big-btn blue', 'انضم للغرفة');
-  joinBtn.addEventListener('click', () => actions.joinRoom(codeInput.value, nameInput.value));
-  panel.appendChild(joinBtn);
-
-  if (state.error) {
-    const err = el('div', 'hint-line', state.error);
-    err.style.color = 'var(--evil-light)';
-    panel.appendChild(err);
-  }
-
-  wrap.appendChild(panel);
   return wrap;
 }
 
@@ -179,7 +132,7 @@ function renderWaitingRoom(state, actions, showEntrance) {
     settingsPanel.appendChild(settingsRow);
     settingsPanel.appendChild(el('div', 'muted-note', 'ملاحظة: القتل ليلًا يبقى مجهول الهوية دائمًا حتى النهاية — هذا الخيار يخص الإقصاء بالتصويت فقط.'));
 
-    settingsPanel.appendChild(el('div', 'muted-note', 'مدة التصويت'));
+    settingsPanel.appendChild(el('div', '', 'مدة التصويت'));
     const voteRow = el('div', 'phase-row vote-duration-row');
     const currentSec = Math.round((state.voteMs || 60000) / 1000);
     [{ sec: 60, label: 'دقيقة' }, { sec: 120, label: 'دقيقتين' }, { sec: 180, label: '3 دقايق' }].forEach(({ sec, label }) => {

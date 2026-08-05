@@ -21,7 +21,6 @@ function CardsStrip(presentCards, myCard, onZoom) {
 
   const uniqueRoles = groups.length;
   const totalCards = presentCards.length;
-  const mineGroup = groups.find((group) => group.mine);
 
   const toggle = el('button', 'cards-drawer-toggle');
   toggle.type = 'button';
@@ -53,10 +52,6 @@ function CardsStrip(presentCards, myCard, onZoom) {
   closeBtn.type = 'button';
   head.appendChild(closeBtn);
   panel.appendChild(head);
-  if (mineGroup) {
-    const mineNote = el('div', `cards-drawer-mine-note ${mineGroup.faction}`, `بطاقتك ضمن القائمة: ${mineGroup.label}`);
-    panel.appendChild(mineNote);
-  }
 
   const list = el('div', 'cards-drawer-list scroll-y');
   groups.forEach((group) => {
