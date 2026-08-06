@@ -412,7 +412,10 @@
       <div style="width:44px; height:44px; border-radius:13px; background:linear-gradient(135deg,#818cf8,#ec4899); display:flex; align-items:center; justify-content:center; color:#fff;">{{ iconCog }}</div>
       <h1 style="font-size:30px; font-weight:900; margin:0;">لوحة التحكم</h1>
     </div>
-    <button id="wau-open-btn" style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:#f1f0ff; border-radius:12px; padding:10px 16px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer;">{{ iconUsers }} إدارة المستخدمين</button>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <button id="waa-open-btn" style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:#f1f0ff; border-radius:12px; padding:10px 16px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer;">{{ iconChart }} تحليلات الزوار</button>
+      <button id="wau-open-btn" style="display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); color:#f1f0ff; border-radius:12px; padding:10px 16px; font-family:inherit; font-weight:700; font-size:14px; cursor:pointer;">{{ iconUsers }} إدارة المستخدمين</button>
+    </div>
   </div>
   <p style="font-size:15px; color:#a9a7cc; margin:0 0 26px;">أضف جولات اللعبة وارفع صورها — كل جولة تحتاج صورة لكل لاعب.</p>
 
@@ -1568,6 +1571,7 @@ class Component extends DCLogic {
       cog: [['circle', { cx: '12', cy: '12', r: '3' }], ['path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' }]],
       upload: [['path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }], ['polyline', { points: '17 8 12 3 7 8' }], ['line', { x1: '12', y1: '3', x2: '12', y2: '15' }]],
       trash: [['polyline', { points: '3 6 5 6 21 6' }], ['path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' }]],
+      chart: [['line', { x1: '18', y1: '20', x2: '18', y2: '10' }], ['line', { x1: '12', y1: '20', x2: '12', y2: '4' }], ['line', { x1: '6', y1: '20', x2: '6', y2: '14' }]],
       ticket: [['path', { d: 'M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z' }], ['path', { d: 'M13 5v2' }], ['path', { d: 'M13 11v2' }], ['path', { d: 'M13 17v2' }]],
       chevron: [['polyline', { points: '6 9 12 15 18 9' }]],
       chevronUp: [['polyline', { points: '18 15 12 9 6 15' }]],
@@ -1766,7 +1770,7 @@ class Component extends DCLogic {
       createRound: () => this.createRound(),
       adminMsg: this.state.adminMsg, hasAdminMsg: !!this.state.adminMsg,
       iconCog: I(ic.cog, 18), iconUpload: I(ic.upload, 16), iconTrash: I(ic.trash, 16),
-      iconUsers: I(ic.users, 16),
+      iconUsers: I(ic.users, 16), iconChart: I(ic.chart, 16),
       iconChevronUp: I(ic.chevronUp, 15), iconChevronDown: I(ic.chevron, 15),
       user: this.state.user || { username: '' },
       isLoggedIn: !!this.state.user, isLoggedOut: !this.state.user,
@@ -1845,5 +1849,5 @@ class Component extends DCLogic {
   }
 }
 </script>
-<script src="/enter-submit.js" defer></script><script src="/admin-users.js" defer></script><script src="/ripple.js" defer></script></body>
+<script src="/enter-submit.js" defer></script><script src="/admin-users.js" defer></script><script src="/admin-analytics.js" defer></script><script src="/ripple.js" defer></script></body>
 </html>
