@@ -7,6 +7,7 @@ const ticketLedger = require('./ticket-ledger');
 const creditsBridge = require('./credits-bridge');
 const auth = require('./auth');
 const errorLog = require('./error-log');
+const analytics = require('./analytics');
 
 function install(db) {
   // تحقّق هوية حقيقي من كوكي الجلسة (نفس آلية تسجيل الدخول الحقيقية) — مو deviceId اللي
@@ -28,6 +29,7 @@ function install(db) {
     credits: creditsBridge.createBridge(db),
     auth: { verifyFromCookieHeader },
     errors: { log: errorLog.logError },
+    analytics: { track: analytics.track },
   };
 }
 

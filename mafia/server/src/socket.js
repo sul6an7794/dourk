@@ -564,6 +564,7 @@ function attachSocketHandlers(io) {
         socket.join(room.code);
         cb && cb({ ok: true, roomCode: room.code, playerId: deviceId });
         broadcastRoomUpdate(io, room);
+        if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created');
       } catch (err) {
         cb && cb({ error: err.message });
       }
@@ -631,6 +632,7 @@ function attachSocketHandlers(io) {
       room.revealDone.clear();
       setPhase(io, room, 'reveal', game.REVEAL_MS, () => beginNightFlow(io, room));
       scheduleBotRevealDone(io, room);
+      if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('game_started');
       cb && cb({ ok: true });
     }));
 

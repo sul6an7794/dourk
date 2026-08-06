@@ -10,6 +10,7 @@ const { Server } = require('socket.io');
 // عملية Node بالكامل — يوقف الدخول والتذاكر ولعبتي مافيا ووصّلها لكل المستخدمين المتصلين دفعة
 // وحدة، بدل ما يبقى الخطأ محصورًا بذاك الطلب/الحدث وحده. نسجّله فقط، لا نوقف العملية.
 const errorLog = require('./error-log');
+const analytics = require('./analytics');
 process.on('unhandledRejection', (reason) => {
   errorLog.logError('platform', reason, { kind: 'unhandledRejection' });
 });
@@ -159,6 +160,13 @@ async function start(port = PORT) {
   // على curl يدوي وتخمين بالعين (سبق وصار تأخر بالنشر بالإنتاج صعب اكتشافه بدون هذا).
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()), version: require('../package.json').version, now: new Date().toISOString() });
+  });
+
+  // عدّاد زيارات مجمّع (رقم يومي بس، بدون كوكي أو أي ربط بهوية) — أول خطوة بقمع التحويل.
+  // فقط الصفحة الرئيسية نفسها (مو كل ملفات JS/CSS/الصور اللي يخدمها express.static بعدها).
+  app.get('/', (req, res, next) => {
+    analytics.track('page_view');
+    next();
   });
 
   // واجهة المنصة (الرئيسية): اختيار اللعبة، الحساب، التذاكر، الملف الشخصي.

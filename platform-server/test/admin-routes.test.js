@@ -7,6 +7,8 @@ const fs = require('node:fs');
 const TEST_DATA_PATH = path.join(__dirname, '.tmp-admin-routes-test-data.json');
 try { fs.unlinkSync(TEST_DATA_PATH); } catch (e) {}
 process.env.ACCOUNTS_DATA_PATH = TEST_DATA_PATH;
+process.env.ANALYTICS_DATA_PATH = path.join(__dirname, '.tmp-admin-routes-test-analytics.json');
+process.env.ERROR_LOG_PATH = path.join(__dirname, '.tmp-admin-routes-test-errors.jsonl');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-not-for-production';
 process.env.ALLOWED_ORIGIN = '*';
 process.env.ADMIN_BOOTSTRAP_USERNAME = 'owner';
@@ -63,6 +65,8 @@ test.after(async () => {
   server.closeAllConnections();
   await new Promise((resolve) => server.close(resolve));
   try { fs.unlinkSync(TEST_DATA_PATH); } catch (e) {}
+  try { fs.unlinkSync(process.env.ANALYTICS_DATA_PATH); } catch (e) {}
+  try { fs.unlinkSync(process.env.ERROR_LOG_PATH); } catch (e) {}
 });
 
 test('البوتستراب فعلًا منح صلاحية مشرف للحساب الأول', () => {

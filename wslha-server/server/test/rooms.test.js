@@ -34,6 +34,15 @@ test.before(async () => {
 });
 test.after(() => { try { fs.unlinkSync(TEST_DATA_PATH); } catch (e) {} });
 
+// اختبارات مطابقة الإجابة تحتاج جولة معروفة بالضبط (إجاباتها 'كلب'/'قطة') — بما إن كل
+// غرفة تاخذ عيّنة عشوائية من مخزون الجولات (rooms.js: pickSessionRounds)، لازم نأكد إن
+// الفريق واقف فعليًا على جولة الاختبار المزروعة (hint: 'اختبار') بدل أول جولة عشوائية.
+function pinToSeedRound(room, teamIndex = 0) {
+  const idx = room.rounds.findIndex((r) => r.hint === 'اختبار');
+  if (idx === -1) throw new Error('جولة الاختبار المزروعة غير موجودة بعيّنة هذي الغرفة');
+  room.teams[teamIndex].roundIndex = idx;
+}
+
 function setupFullTeam(prefix) {
   const io = makeMockIo();
   const cap = makeMockSocket(prefix + '-cap', prefix + '-dev-cap');
@@ -98,6 +107,11 @@ test('sendImages: يرسل حرف الصورة (A/B/C) لكل لاعب فقط ل
 test('sendImages: ما يرسل أي حرف لو showLetters مو مفعّل بالجولة (الافتراضي)', () => {
   const { io, room, cap } = setupFullTeam('t-no-letters');
   const team = room.teams[0];
+  // نأكد إن الفريق واقف على جولة showLetters مو مفعّل فيها — عيّنة الغرفة عشوائية،
+  // ممكن تحط جولة showLetters:true (من اختبار ثاني) أول واحدة بالصدفة.
+  const idx = room.rounds.findIndex((r) => !r.showLetters);
+  assert.notEqual(idx, -1, 'لازم توجد جولة بدون showLetters بعيّنة هذي الغرفة');
+  team.roundIndex = idx;
   rooms.sendImages(io, room, team);
   const capImage = io.emitted.find((e) => e.event === 'yourImage' && e.target === cap.id);
   assert.equal(capImage.payload.letter, null);
@@ -199,6 +213,7 @@ test('kickPlayer: جهاز مطرود يُرفض تلقائيًا لو حاول 
 test('submitAnswer: يقبل الإجابة الصحيحة الكاملة (مطابقة تامة)', () => {
   const { io, room, cap } = setupFullTeam('t9');
   rooms.startGame(io, cap);
+  pinToSeedRound(room);
   const res = rooms.submitAnswer(io, cap, 'كلب');
   assert.equal(res.correct, true);
 });
@@ -206,6 +221,7 @@ test('submitAnswer: يقبل الإجابة الصحيحة الكاملة (مط�
 test('submitAnswer: يرفض إجابة قصيرة جدًا (حرف أو حرفين) حتى لو كانت جزء من الإجابة الصحيحة', () => {
   const { io, room, cap } = setupFullTeam('t10');
   rooms.startGame(io, cap);
+  pinToSeedRound(room);
   const res = rooms.submitAnswer(io, cap, 'ك');
   assert.equal(res.correct, false);
 });
@@ -213,6 +229,7 @@ test('submitAnswer: يرفض إجابة قصيرة جدًا (حرف أو حرف�
 test('submitAnswer: يرفض إجابة جزئية أقل من 80% من طول الكلمة الصحيحة', () => {
   const { io, room, cap } = setupFullTeam('t11');
   rooms.startGame(io, cap);
+  pinToSeedRound(room);
   // "قط" طولها 2 من "قطة" (طول 3) = 66% تقريبًا، أقل من 80%
   const res = rooms.submitAnswer(io, cap, 'قط');
   assert.equal(res.correct, false);
@@ -221,6 +238,7 @@ test('submitAnswer: يرفض إجابة جزئية أقل من 80% من طول �
 test('submitAnswer: القائد فقط يقدر يرسل الإجابة', () => {
   const { io, room, cap, m1 } = setupFullTeam('t12');
   rooms.startGame(io, cap);
+  pinToSeedRound(room);
   const res = rooms.submitAnswer(io, m1, 'كلب');
   assert.match(res.error, /القائد فقط/);
 });

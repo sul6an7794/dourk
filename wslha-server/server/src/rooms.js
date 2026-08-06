@@ -6,8 +6,20 @@ const rooms = new Map(); // roomCode -> room
 const ALLOWED_SIZES = [3, 6, 9, 12, 15];
 const TEAM_SIZE = 3;
 const ABANDONED_GRACE_MS = 20 * 60 * 1000; // 20 دقيقة بدون أي لاعب متصل قبل ما نحذف الغرفة نهائيًا
+// عدد الجولات اللي تاخذها كل غرفة (كل تذكرة) من مخزون الجولات الكامل — بدل ما تفتح كل
+// الجولات المخزّنة (٧٠+) دفعة وحدة لكل تذكرة. قابل للتعديل بدون تغيير الكود.
+const ROUNDS_PER_SESSION = Number(process.env.WSLHA_ROUNDS_PER_SESSION) || 15;
 
 function touch(room) { room.lastActivityAt = Date.now(); }
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 // أمان: نشيل < > من اسم اللاعب/الفريق حتى لو الواجهة الحالية تعرضها بأمان — طبقة حماية
 // إضافية تمنع حقن HTML لو أي كود مستقبلي عرض الاسم بطريقة غير آمنة (innerHTML مثلًا).
@@ -46,6 +58,20 @@ function loadPlayableRounds() {
     .filter((r) => r.images.length === TEAM_SIZE);
 }
 
+// كل غرفة (= تذكرة واحدة) تاخذ عيّنة بحجم ROUNDS_PER_SESSION من مخزون الجولات، مو كل
+// المخزون دفعة وحدة. أول تذكرة "وصّلها" لأي مستخدم (isFirstGame === true، محدّدة من
+// السيرفر عبر سجل حركة رصيده الحقيقي — انظر wslha-server/src/socket.js) تاخذ نفس الجولات
+// التعريفية الثابتة (أول ROUNDS_PER_SESSION بترتيب لوحة التحكم) لكل مستخدم جديد — يمنع فتح
+// حسابات وهمية متعددة عشان الوصول لمخزون الجولات الكامل مجانًا (كل حساب جديد يشوف فقط نفس
+// الجولات التعريفية، لا أكثر). أي تذكرة بعدها تاخذ عيّنة عشوائية من باقي المخزون فقط.
+function pickSessionRounds(isFirstGame) {
+  const pool = loadPlayableRounds();
+  if (isFirstGame === true) return pool.slice(0, ROUNDS_PER_SESSION);
+  if (isFirstGame === false) return shuffle(pool.slice(ROUNDS_PER_SESSION)).slice(0, ROUNDS_PER_SESSION);
+  // isFirstGame غير معروف (وضع مستقل بدون منصة دورك متّصلة) — نرجع لعيّنة عشوائية من كل المخزون.
+  return shuffle(pool).slice(0, ROUNDS_PER_SESSION);
+}
+
 function makeTeam(index) {
   return {
     index,
@@ -68,7 +94,7 @@ function makeTeam(index) {
 
 // الغرفة الواحدة تنقسم لعدة فرق (كل فريق 3 لاعبين). كل فريق يبدأ ويلعب لحاله
 // بدون أي ارتباط ببقية فرق نفس الغرفة.
-function createRoom(io, socket, { maxPlayers }) {
+function createRoom(io, socket, { maxPlayers, isFirstGame }) {
   const code = genCode();
   const mp = ALLOWED_SIZES.includes(Number(maxPlayers)) ? Number(maxPlayers) : 3;
   const numTeams = Math.max(1, Math.floor(mp / TEAM_SIZE));
@@ -76,7 +102,7 @@ function createRoom(io, socket, { maxPlayers }) {
     code,
     maxPlayers: mp,
     teams: Array.from({ length: numTeams }, (_, i) => makeTeam(i)),
-    rounds: loadPlayableRounds(),
+    rounds: pickSessionRounds(isFirstGame),
     results: [], // نتائج الفرق المنتهية داخل هذه الغرفة
     lastActivityAt: Date.now(),
   };
@@ -268,7 +294,7 @@ function startGame(io, socket) {
   const { room, team } = getTeamForSocket(socket);
   if (!room || !team) return { ok: false, error: 'لم يتم العثور على الفريق' };
   touch(room);
-  if (team.started) return { ok: true };
+  if (team.started) return { ok: true, alreadyStarted: true };
   if (socket.id !== getCaptainSocketId(team)) {
     return { ok: false, error: 'القائد فقط يبدأ اللعبة' };
   }

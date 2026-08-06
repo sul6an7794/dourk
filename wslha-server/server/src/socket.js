@@ -41,6 +41,11 @@ function registerSocket(io) {
           cb && cb({ ok: false, error: 'سجّل دخول لإنشاء لعبة', needLogin: true });
           return;
         }
+        // نتأكد قبل الخصم إذا هذي أول تذكرة "وصّلها" فعليًا لهذا المستخدم (عبر سجل حركة الرصيد
+        // الحقيقي، مو أي قيمة من العميل) — يحدد نطاق الجولات اللي تفتح له (انظر rooms.js).
+        const isFirstGame = global.__DOURK_PLATFORM__
+          ? !(await global.__DOURK_PLATFORM__.credits.hasPlayedWslhaBefore(u.id))
+          : undefined;
         // الخصم عبر الجسر المشترك (نفس طبقة credits-bridge اللي مافيا تستخدمها) — يتحقق من
         // الرصيد ويخصم التذكرة بخطوة واحدة، بدون اعتمادية مباشرة على db تبع الحسابات.
         const charged = global.__DOURK_PLATFORM__ && (await global.__DOURK_PLATFORM__.credits.charge(u.id, 'wslha-room-create'));
@@ -49,8 +54,9 @@ function registerSocket(io) {
           cb && cb({ ok: false, error: 'رصيدك لا يكفي لإنشاء لعبة جديدة', credits: credits || 0 });
           return;
         }
-        const room = roomsMgr.createRoom(io, socket, data || {});
+        const room = roomsMgr.createRoom(io, socket, Object.assign({}, data, { isFirstGame }));
         const credits = await global.__DOURK_PLATFORM__.credits.balance(u.id);
+        if (global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created');
         cb && cb({ ok: true, roomCode: room.code, teams: roomsMgr.teamSummary(room), credits });
       } catch (e) {
         cb && cb({ ok: false, error: 'تعذّر إنشاء الغرفة' });
@@ -94,6 +100,9 @@ function registerSocket(io) {
     socket.on('startGame', (data, cb) => {
       if (!withinLimit(socket, 'startGame', 10, 60 * 1000)) { cb && cb(TOO_MANY); return; }
       const res = roomsMgr.startGame(io, socket);
+      if (res.ok && !res.alreadyStarted && global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) {
+        global.__DOURK_PLATFORM__.analytics.track('game_started');
+      }
       cb && cb(res);
     });
 

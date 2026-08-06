@@ -21,7 +21,17 @@ function createBridge(db) {
     return user ? (user.credits || 0) : null;
   }
 
-  return { charge, balance };
+  // لعبة "وصّلها" تعطي أول تذكرة جولات تعريفية ثابتة (نفس الجولات لكل مستخدم جديد)، والتذاكر
+  // اللي بعدها جولات عشوائية من باقي المخزون — يمنع فتح حسابات وهمية متعددة عشان تشوف نفس
+  // مخزون الجولات الكامل مجانًا (كل حساب جديد يشوف فقط الجولات التعريفية الثابتة، لا أكثر).
+  // نتحقق عبر سجل حركة الرصيد الحقيقي (server-side)، لا عبر أي قيمة يرسلها العميل نفسه.
+  async function hasPlayedWslhaBefore(uid) {
+    if (!uid) return true; // بدون هوية، ما نمنح أي وضع "أول مرة" تفضيلي
+    const log = db.getCreditLog(uid, 1000);
+    return log.some((e) => e.reason === 'wslha-room-create');
+  }
+
+  return { charge, balance, hasPlayedWslhaBefore };
 }
 
 module.exports = { createBridge, ROOM_COST };

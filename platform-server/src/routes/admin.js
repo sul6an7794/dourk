@@ -5,6 +5,7 @@ const { authMiddleware, adminMiddleware } = require('../auth');
 const { rateLimit } = require('../rateLimit');
 const asyncHandler = require('../async-handler');
 const errorLog = require('../error-log');
+const analytics = require('../analytics');
 
 const adminLimit = rateLimit(120, 60 * 1000, 'admin'); // 120 طلب بالدقيقة لكل IP — كافٍ للاستخدام العادي، يمنع إساءة الاستخدام
 
@@ -65,6 +66,13 @@ router.post('/errors/test', (req, res) => {
 // شكوى مستخدم. سجل بالذاكرة فقط (آخر 200)، ما يبقى بعد إعادة تشغيل السيرفر.
 router.get('/errors', (req, res) => {
   res.json({ log: errorLog.getRecentErrors(100) });
+});
+
+// أرقام يومية مجمّعة فقط لقمع التحويل (زيارة → طلب رمز → حساب جديد → غرفة → لعبة بدأت) —
+// بلا أي ربط بهوية شخص. آخر 14 يوم افتراضيًا.
+router.get('/analytics', (req, res) => {
+  const days = Math.max(1, Math.min(90, Number(req.query.days) || 14));
+  res.json({ days: analytics.getSummary(days) });
 });
 
 module.exports = router;

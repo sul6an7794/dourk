@@ -6,6 +6,7 @@ const { signToken, authMiddleware, setAuthCookie, clearAuthCookie } = require('.
 const { rateLimit } = require('../rateLimit');
 const authentica = require('../authentica');
 const asyncHandler = require('../async-handler');
+const analytics = require('../analytics');
 
 // تمثيل عام للمستخدم (بدون رقم الجوال) — يُرسل للواجهة.
 function publicUser(u) {
@@ -88,6 +89,7 @@ router.post('/otp/request', otpRequestLimit, async (req, res) => {
   }
   try {
     await authentica.sendOtp(phone);
+    analytics.track('otp_requested');
     // لا نكشف هل الرقم مسجّل من قبل أو لا (يمنع تعداد الحسابات) — نفس الرد دائمًا.
     res.json({ ok: true });
   } catch (e) {
@@ -133,6 +135,7 @@ router.post('/otp/verify', otpVerifyLimit, async (req, res) => {
       });
       user = result.user;
       isNew = result.created;
+      if (isNew) analytics.track('signup_completed');
     }
     const token = signToken(user);
     setAuthCookie(req, res, token);
