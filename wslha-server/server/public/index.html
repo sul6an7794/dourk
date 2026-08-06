@@ -234,20 +234,21 @@
   </sc-if>
   <sc-if value="{{ created }}" hint-placeholder-val="{{ false }}">
   <div style="background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:28px; padding:40px; backdrop-filter:blur(16px); box-shadow:0 30px 80px rgba(0,0,0,.4); text-align:center;">
-    <h2 style="font-size:26px; font-weight:900; margin:0 0 8px;">الغرفة جاهزة!</h2>
-    <p style="font-size:14px; color:#a9a7cc; margin:0 0 8px;">امسح الكود أو شارك الرابط لدعوة فريقك</p>
+    <div style="font-size:12.5px; font-weight:700; color:#a68cf0; margin-bottom:6px;">غرفة الانتظار</div>
+    <h2 style="font-size:26px; font-weight:900; margin:0 0 20px;">الغرفة جاهزة!</h2>
     <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
       <p style="font-size:12px; color:#fbbf24; margin:0 0 22px;">تعذّر الاتصال بالخادم — تم توليد كود تجريبي محلياً</p>
     </sc-if>
-    <div style="font-size:48px; font-weight:900; letter-spacing:10px; color:#c4b5fd; margin:18px 0;">{{ roomCode }}</div>
-    <img src="{{ qrSrc }}" alt="QR" width="190" height="190" loading="lazy" style="background:#15122e; border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:8px; margin-bottom:24px; display:inline-block;">
-    <div style="text-align:right; margin-bottom:20px;">
-      <div style="font-size:13px; font-weight:700; color:#d8d6ee; margin-bottom:8px;">رابط المشاركة</div>
-      <div style="display:flex; gap:8px;">
-        <div style="flex:1; min-width:0; font-size:13px; color:#a9a7cc; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px 14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; direction:ltr; text-align:left;">{{ shareUrl }}</div>
-        <button onClick="{{ copyShare }}" style="display:flex; align-items:center; gap:6px; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:13px; color:#c4b5fd; background:rgba(129,140,248,.14); border:1px solid rgba(129,140,248,.35); padding:0 18px; border-radius:12px; cursor:pointer; white-space:nowrap;" style-hover="background:rgba(129,140,248,.24); color:#fff;">{{ iconShareSm }} {{ shareBtnLabel }}</button>
+    <div style="font-family:'Thmanyah Sans',sans-serif; font-weight:900; font-size:clamp(30px,10vw,46px); letter-spacing:clamp(3px,1.6vw,9px); font-variant-numeric:tabular-nums; color:#c4b5fd; text-shadow:0 0 22px rgba(196,181,253,.5); margin:0 0 22px; direction:ltr;">{{ roomCode }}</div>
+    <div style="position:relative; display:inline-block;">
+      <img src="{{ qrSrc }}" alt="QR" width="190" height="190" loading="lazy" style="background:transparent; border:1px solid rgba(255,255,255,.14); border-radius:12px; padding:8px; display:block;">
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:38px; height:38px; border-radius:50%; background:#15122e; border:2px solid rgba(255,255,255,.25); box-shadow:0 0 0 4px #15122e; display:flex; align-items:center; justify-content:center; gap:3px;">
+        <span style="width:7px; height:7px; border-radius:50%; background:#ff2d2d;"></span>
+        <span style="width:7px; height:7px; border-radius:50%; background:#818cf8;"></span>
       </div>
     </div>
+    <p style="font-size:12.5px; color:#8b88ad; margin:14px auto 20px; max-width:260px;">امسح الرمز من جوال اللاعب أو شارك الرابط.</p>
+    <button onClick="{{ copyShare }}" style="display:inline-flex; align-items:center; gap:6px; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:13px; color:#c4b5fd; background:rgba(129,140,248,.14); border:1px solid rgba(129,140,248,.35); padding:9px 20px; border-radius:999px; cursor:pointer; margin-bottom:26px;" style-hover="background:rgba(129,140,248,.24); color:#fff;">{{ iconShareSm }} {{ shareBtnLabel }}</button>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
       <button onClick="{{ goTeams }}" style="flex:1; min-width:160px; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:16px; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); border:none; padding:15px; border-radius:16px; cursor:pointer; box-shadow:0 14px 32px rgba(236,72,153,.45);" style-hover="filter:brightness(1.08);">اختيار الفريق</button>
       <button onClick="{{ goCreate }}" style="flex:1; min-width:160px; font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:16px; color:#f1f0ff; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); padding:15px; border-radius:16px; cursor:pointer;" style-hover="background:rgba(255,255,255,.1);">غرفة أخرى</button>
@@ -932,11 +933,11 @@ class Component extends DCLogic {
   qrDataUrl(text) {
     try {
       if (typeof qrcode !== 'function') throw new Error('QR library is not ready');
-      const qr = qrcode(0, 'M');
+      const qr = qrcode(0, 'H');
       qr.addData(text);
       qr.make();
       const svg = qr.createSvgTag({ cellSize: 5, margin: 4, scalable: true, alt: 'QR' })
-        .replace('fill="white"', 'fill="#15122e"')
+        .replace('fill="white"', 'fill="transparent"')
         .replace('fill="black"', 'fill="#f1f0ff"');
       return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     } catch (e) {
@@ -1811,7 +1812,7 @@ class Component extends DCLogic {
       transitionLabel: this.state.pendingAdmin ? 'جارِ فتح لوحة التحكم…' : 'جارِ إنشاء غرفتك…',
       roomCode: String(this.state.roomCode), qrCells: this.qrCells(), qrSrc: this.qrDataUrl(this.shareUrl()),
       shareUrl: this.shareUrl(), copyShare: () => this.copyShare(),
-      shareBtnLabel: this.state.shareCopied ? 'تم النسخ' : 'نسخ الرابط',
+      shareBtnLabel: this.state.shareCopied ? 'تم النسخ' : 'نسخ رابط الدعوة',
       shareResults: () => this.shareResults(),
       resultsShareLabel: this.state.resultsShareBusy ? 'جارِ التجهيز…' : (this.state.resultsShareDone ? 'تمت المشاركة ✓' : 'مشاركة النتيجة'),
       resultsShareBusy: this.state.resultsShareBusy,

@@ -36,7 +36,7 @@
     'padding:40px 14px;overflow:auto;direction:rtl}' +
     '#waa-ov.on{display:flex}' +
     '.waa-card{width:min(420px,96vw);background:#161331;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:20px;' +
-    'color:#f1f0ff;font-family:Tajawal,system-ui,sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.6)}' +
+    'color:#f1f0ff;font-family:"Thmanyah Sans",sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.6)}' +
     '.waa-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}' +
     '.waa-head h3{margin:0;font-size:19px;font-weight:800}' +
     '.waa-tools{display:flex;gap:8px}' +

@@ -561,9 +561,9 @@ const App = {
         '<section class="section">' +
           '<h2 style="margin-bottom:16px;">ليش دورك؟</h2>' +
           '<div class="why-list">' +
-            '<div class="why-row"><span class="ic" style="color:#FF2D2D;">' + ICONS.bolt + '</span><div><div class="t">افتح والعب فورًا</div><div class="d">رابط واحد يجمع الكل — لا متجر تطبيقات، ولا تحديثات، ولا «انتظر يحمّل».</div></div></div>' +
-            '<div class="why-row"><span class="ic" style="color:#E0B86A;">' + ICONS.ticketLg + '</span><div><div class="t">واحد يدفع، والكل يلعب</div><div class="d">التذكرة على منشئ الغرفة بس — ربعك كلهم يدخلون بالرقم مجانًا.</div></div></div>' +
-            '<div class="why-row"><span class="ic" style="color:#818cf8;">' + ICONS.users + '</span><div><div class="t">حساب واحد لكل لعبة جاية</div><div class="d">رصيدك واسمك يبقون معك — تلعب مافيا اليوم ووصّلها بكرة بالحساب نفسه.</div></div></div>' +
+            '<div class="why-row"><span class="ic" style="color:#FF2D2D;">' + ICONS.bolt + '</span><div><div class="t">افتح والعب فورًا</div><div class="d">رابط واحد يجمعكم، لا متجر تطبيقات، ولا تحديثات، ولا «انتظره يحمّل».</div></div></div>' +
+            '<div class="why-row"><span class="ic" style="color:#E0B86A;">' + ICONS.ticketLg + '</span><div><div class="t">واحد يدفع، والكل يلعب</div><div class="d">بتذكرة واحدة تنشئ لعبة، وربعك كلهم يدخلون مجانًا.</div></div></div>' +
+            '<div class="why-row"><span class="ic" style="color:#818cf8;">' + ICONS.users + '</span><div><div class="t">حساب واحد، وألعاب أكثر</div><div class="d">بنفس الاسم والرصيد، تلعب مافيا اليوم ووصّلها بكرة.</div></div></div>' +
           '</div>' +
         '</section>' +
       '</main>' +

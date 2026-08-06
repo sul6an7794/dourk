@@ -6,7 +6,7 @@
   border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 18px; background: rgba(255,255,255,0.02);
 }
 .room-code-big {
-  font-family: var(--serif); font-weight: 900; font-size: 38px; font-variant-numeric: tabular-nums;
+  font-family: var(--serif); font-weight: 900; font-size: clamp(30px,10vw,46px); letter-spacing: clamp(3px,1.6vw,9px); font-variant-numeric: tabular-nums;
   color: var(--gold-light); text-shadow: 0 0 22px rgba(224,184,106,0.5); text-align: center;
 }
 .lobby-invite { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
