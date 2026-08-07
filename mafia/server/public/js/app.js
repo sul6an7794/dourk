@@ -56,6 +56,7 @@ function loadHtml2Canvas() {
     nightSubmitted: false,
     partnerPick: null,
     sheikhResult: null,
+    mafiaTeammates: [],
     code: { target: '000000', revealedCount: 0, entered: '' },
     codeTimers: [],
     dayEvent: null,
@@ -788,7 +789,7 @@ function loadHtml2Canvas() {
       Object.assign(state, {
         role: null, myCard: null, presentCards: [], alive: true, spectator: false,
         death: null, flipped: false, revealSent: false, nightRole: null, nightPick: null,
-        nightSubmitted: false, partnerPick: null, sheikhResult: null, dayEvent: null,
+        nightSubmitted: false, partnerPick: null, sheikhResult: null, mafiaTeammates: [], dayEvent: null,
         dayReadySent: false, log: [], notebook: [], votes: {}, raw: {}, prevRaw: {}, accusedId: null,
         pardons: 0, executes: 0, voteBlocked: false, expelStampId: null, defense: null,
         defenseCounts: null, deathRevealName: null, gameOver: null, gameOverActionsReady: false,
@@ -869,6 +870,11 @@ function loadHtml2Canvas() {
     state.partnerPick = null;
     clearCodeTimers();
     if (payload.night === 'decoy' && state.alive && !state.spectator) startCodeDecoy();
+    render();
+  });
+
+  socket.on('mafiaTeammates', (payload) => {
+    state.mafiaTeammates = (payload && payload.teammates) || [];
     render();
   });
 

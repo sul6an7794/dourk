@@ -13,6 +13,7 @@ function renderVoteScreen(state, actions) {
   const wrap = el('div', 'vote-screen rise');
   wrap.appendChild(PhaseRow('chip-vote', 'حان وقت التصويت', state.deadlineTs));
 
+  if (state.mafiaTeammates && state.mafiaTeammates.length > 0) wrap.appendChild(TeammatesBox(state.mafiaTeammates));
   if (state.notebook.length > 0) wrap.appendChild(NotebookBox(state.notebook, true));
 
   const myVote = state.votes[MafiaSocket.deviceId] || null;
