@@ -8,8 +8,8 @@ function countBy(list) {
   return counts;
 }
 
-test('عدد الأدوار يطابق عدد اللاعبين دائمًا (٦ إلى ١٣)', () => {
-  for (let n = 6; n <= 13; n++) {
+test('عدد الأدوار يطابق عدد اللاعبين دائمًا (٦ إلى ١٥)', () => {
+  for (let n = 6; n <= 15; n++) {
     assert.strictEqual(buildRoleList(n).length, n);
   }
 });
@@ -28,9 +28,9 @@ test('عدد كروت الشر (مافيا/وريثة/زعيم) يتدرج حس�
   assert.strictEqual(evilCountFor(8), 2);
   assert.strictEqual(evilCountFor(9), 2);
   assert.strictEqual(evilCountFor(10), 3);
-  assert.strictEqual(evilCountFor(13), 3);
+  assert.strictEqual(evilCountFor(15), 3);
 
-  for (let n = 6; n <= 13; n++) {
+  for (let n = 6; n <= 15; n++) {
     const counts = countBy(buildRoleList(n));
     const evilTotal = Object.entries(counts).reduce(
       (sum, [roleId, count]) => sum + (isEvil(roleId) ? count : 0),
@@ -53,7 +53,7 @@ test('من ٧ إلى ٩ لاعبين: مافيا + وريثة أو زعيم (و�
 });
 
 test('١٠ لاعبين وأكثر: مافيا ووريثة وزعيم الثلاثة معًا', () => {
-  for (let n = 10; n <= 13; n++) {
+  for (let n = 10; n <= 15; n++) {
     const counts = countBy(buildRoleList(n));
     assert.strictEqual(counts.mafia, 1);
     assert.strictEqual(counts.heiress, 1);
@@ -64,7 +64,7 @@ test('١٠ لاعبين وأكثر: مافيا ووريثة وزعيم الثل�
 test('الأدوار الاختيارية نسخة واحدة كحد أقصى ولا وجود لأدوار غير معرفة', () => {
   const optional = ['heiress', 'zaeem', 'thief', 'mayor', 'shapeshifter', 'fighter', 'princess', 'joker'];
   for (let trial = 0; trial < 50; trial++) {
-    const counts = countBy(buildRoleList(13));
+    const counts = countBy(buildRoleList(15));
     for (const r of optional) assert.ok((counts[r] || 0) <= 1, `${r} ظهر أكثر من مرة`);
     for (const r of Object.keys(counts)) {
       assert.ok(['mafia', 'doctor', 'sheikh', 'villager', ...optional].includes(r));
@@ -73,7 +73,7 @@ test('الأدوار الاختيارية نسخة واحدة كحد أقصى و
 });
 
 test('لا يتكرر أي دور قبل استهلاك البطاقات، وكروت الشر (مافيا/وريثة/زعيم) نسخة واحدة لكل منها دائمًا', () => {
-  for (let n = 6; n <= 13; n++) {
+  for (let n = 6; n <= 15; n++) {
     const counts = countBy(buildRoleList(n, () => 0.42));
     for (const [roleId, count] of Object.entries(counts)) {
       if (roleId === 'villager') assert.ok(count >= 1);
@@ -82,9 +82,9 @@ test('لا يتكرر أي دور قبل استهلاك البطاقات، وك�
   }
 });
 
-test('buildRoleList يرفض الأعداد خارج ٦-١٣', () => {
+test('buildRoleList يرفض الأعداد خارج ٦-١٥', () => {
   assert.throws(() => buildRoleList(5));
-  assert.throws(() => buildRoleList(14));
+  assert.throws(() => buildRoleList(16));
 });
 
 test('القروي فقط يحصل على بطاقة القروي كنكهة، والأميرة صارت دوراً مستقلاً', () => {
