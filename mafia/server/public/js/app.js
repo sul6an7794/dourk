@@ -571,14 +571,15 @@ function loadHtml2Canvas() {
     async createRoom(name, rt) {
       const res = await emitAck('createRoom', { name, rt });
       // ما فيه نموذج إنشاء يدوي نرجّع له عند الفشل — إنشاء الغرف يصير من دورك حصرًا،
-      // فأي خطأ هنا (تذكرة غير صالحة مثلًا) يرجّع المستخدم لصفحة دورك مباشرة.
-      if (res.error) { window.location.href = '/'; return; }
+      // فأي خطأ هنا (تذكرة غير صالحة مثلًا) يرجّع المستخدم لصفحة دورك مباشرة، مع رسالة
+      // الخطأ بترويسة الرابط عشان دورك يعرضها توست بدل ما يختفي المستخدم بصمت.
+      if (res.error) { window.location.href = '/?joinError=' + encodeURIComponent(res.error); return; }
       render();
     },
     async joinRoom(roomCode, name) {
       const cleanCode = String(roomCode || '').replace(/\D/g, '').slice(0, 6);
       const res = await emitAck('joinRoom', { roomCode: cleanCode, name });
-      if (res.error) { window.location.href = '/'; return; }
+      if (res.error) { window.location.href = '/?joinError=' + encodeURIComponent(res.error); return; }
       render();
     },
     async startGame() {

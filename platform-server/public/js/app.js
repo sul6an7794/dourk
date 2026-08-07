@@ -987,7 +987,16 @@ const App = {
   async init() {
     this.setLoading(true);
     await this.refreshMe();
-    const roomCode = new URLSearchParams(window.location.search).get('room');
+    const params = new URLSearchParams(window.location.search);
+    const joinError = params.get('joinError');
+    if (joinError) {
+      window.history.replaceState(null, '', window.location.pathname);
+      this.setLoading(false);
+      this.render();
+      this.showToast(joinError);
+      return;
+    }
+    const roomCode = params.get('room');
     if (roomCode && /^\d{6}$/.test(roomCode)) {
       return this.continueJoin(roomCode);
     }
