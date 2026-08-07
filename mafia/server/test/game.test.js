@@ -114,6 +114,20 @@ test('الوريثة تتحرك ليلاً مع المافيا وتشارك في
   assert.strictEqual(room.players.get('v1').alive, false);
 });
 
+test('الزعيم يتحرك ليلاً مع المافيا ويقتل مثلها تمامًا', () => {
+  const room = buildTestRoom({ m: 'mafia', z: 'zaeem', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager' });
+  assert.strictEqual(game.nightRoleFor(room, room.players.get('z')), 'kill');
+
+  game.submitMafiaPick(room, 'm', 'v1');
+  game.submitMafiaPick(room, 'z', 'v1');
+  game.confirmKill(room, 'z');
+  game.submitProtect(room, 'doc', 'v2');
+
+  const result = game.resolveNight(room);
+  assert.strictEqual(result.outcome, 'killed');
+  assert.strictEqual(room.players.get('v1').alive, false);
+});
+
 test('مافيتان: التأكيد يرفض قبل التطابق ويقبل بعده', () => {
   const room = buildTestRoom({ m1: 'mafia', m2: 'mafia', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager', v3: 'villager', v4: 'villager', v5: 'villager', v6: 'villager', v7: 'villager' });
   game.submitMafiaPick(room, 'm1', 'v1');
@@ -137,11 +151,12 @@ test('مافيتان متعادلتان عند انتهاء الوقت: ضحية
   assert.ok(room.log.some((l) => l.text.includes('تعادل قرار العصابة')));
 });
 
-test('فحص الشيخ: الزعيم من العصابة (لا حصانة) والدفتر يتراكم ويرفض التكرار', () => {
+test('فحص الشيخ: الزعيم عشوائي (خير أو شر) والدفتر يتراكم ويرفض التكرار', () => {
   const room = buildTestRoom({ m: 'mafia', z: 'zaeem', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager' });
 
   const r1 = game.submitCheck(room, 'sh', 'z');
-  assert.strictEqual(r1.isEvil, true);
+  assert.strictEqual(typeof r1.isEvil, 'boolean');
+  assert.strictEqual(room.sheikhNotebooks.get('sh').get('z'), r1.isEvil);
 
   const r2 = game.submitCheck(room, 'sh', 'v1');
   assert.strictEqual(r2.isEvil, false);
