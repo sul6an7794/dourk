@@ -8,6 +8,7 @@ const creditsBridge = require('./credits-bridge');
 const auth = require('./auth');
 const errorLog = require('./error-log');
 const analytics = require('./analytics');
+const stats = require('./stats');
 
 function install(db) {
   // تحقّق هوية حقيقي من كوكي الجلسة (نفس آلية تسجيل الدخول الحقيقية) — مو deviceId اللي
@@ -30,6 +31,7 @@ function install(db) {
     auth: { verifyFromCookieHeader },
     errors: { log: errorLog.logError },
     analytics: { track: analytics.track },
+    stats: { recordMafia: stats.recordMafia, recordWslha: stats.recordWslha },
   };
 }
 

@@ -143,6 +143,16 @@ function recordResult(room, team) {
     elapsed: team.elapsed,
   });
 }
+// إحصائيات شخصية لكل عضو بالفريق (لو مسجّل حساب) عند إنهاء الجلسة كاملة — الضيوف بدون
+// حساب (platformUid فارغ) يُستثنون تلقائيًا.
+function recordTeamStats(team) {
+  if (!global.__DOURK_PLATFORM__ || !team.score) return;
+  const hintRounds = team.hintRoundsThisSession || 0;
+  for (const p of team.players) {
+    if (!p.platformUid) continue;
+    global.__DOURK_PLATFORM__.stats.recordWslha(p.platformUid, team.score, hintRounds, team.elapsed);
+  }
+}
 function roomResultsPayload(room) {
   const teams = (room.results || [])
     .slice()
@@ -243,7 +253,8 @@ function chooseTeam(io, socket, { roomCode, teamIndex, teamName, name, resume })
   const isCaptain = team.players.length === 0;
   if (isCaptain) team.name = sanitizeDisplayName(teamName) || 'فريق ' + (team.index + 1);
   const id = team.nextPlayerId++;
-  team.players.push({ id, socketId: socket.id, name: sanitizeDisplayName(name) || 'لاعب', isCaptain, deviceId, connected: true });
+  const platformUid = (socket.data.user && socket.data.user.id) || null;
+  team.players.push({ id, socketId: socket.id, name: sanitizeDisplayName(name) || 'لاعب', isCaptain, deviceId, connected: true, platformUid });
 
   socket.join(room.code);
   socket.join(room.code + ':' + team.index);
@@ -311,6 +322,7 @@ function startGame(io, socket) {
   team.elapsed = 0;
   team.locked = 0;
   team.wrongCount = 0;
+  team.hintRoundsThisSession = 0; // عدد الجولات اللي احتاجت تلميح (٣ إجابات خاطئة+) بالجلسة الحالية — لإحصائيات اللاعب.
 
   const teamChannel = room.code + ':' + team.index;
   io.to(teamChannel).emit('gameStarted', { roundIndex: 0, score: 0, elapsed: 0 });
@@ -367,6 +379,7 @@ function submitAnswer(io, socket, answer) {
   const teamChannel = room.code + ':' + team.index;
 
   if (ok) {
+    if (team.wrongCount >= 3) team.hintRoundsThisSession = (team.hintRoundsThisSession || 0) + 1;
     team.score += 1;
     team.roundIndex += 1;
     if (team.roundIndex >= room.rounds.length) {
@@ -374,6 +387,7 @@ function submitAnswer(io, socket, answer) {
       team.timer = null;
       team.started = false;
       recordResult(room, team);
+      recordTeamStats(team);
       io.to(teamChannel).emit('finished', { score: team.score, results: roomResultsPayload(room) });
       broadcastRoomResults(io, room);
     } else {

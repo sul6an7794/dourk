@@ -479,7 +479,7 @@
             </div>
           </sc-for>
           <sc-if value="{{ newImagesNotFull }}" hint-placeholder-val="{{ true }}">
-          <label style="display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:#c4b5fd; background:rgba(129,140,248,.12); border:1px dashed rgba(129,140,248,.4); padding:10px 16px; border-radius:12px; cursor:pointer;" style-hover="background:rgba(129,140,248,.2);">{{ iconUpload }} رفع صور<input type="file" accept="image/*" multiple onChange="{{ onAddNewImages }}" style="display:none;"></label>
+          <label onDragOver="{{ onNewImagesDragOver }}" onDragLeave="{{ onNewImagesDragLeave }}" onDrop="{{ onNewImagesDrop }}" style="display:flex; align-items:center; gap:7px; font-size:13px; font-weight:700; color:{{ newImagesDragColor }}; background:{{ newImagesDragBg }}; border:1px dashed {{ newImagesDragBorder }}; padding:10px 16px; border-radius:12px; cursor:pointer;" style-hover="background:rgba(129,140,248,.2);">{{ iconUpload }} ارفع أو اسحب الصور هنا (حتى 3 مرة وحدة)<input type="file" accept="image/*" multiple onChange="{{ onAddNewImages }}" style="display:none;"></label>
           </sc-if>
         </div>
         <button onClick="{{ createRound }}" style="font-family:'Thmanyah Sans',sans-serif; font-weight:700; font-size:15px; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); border:none; padding:12px 26px; border-radius:12px; cursor:pointer; white-space:nowrap;" style-hover="filter:brightness(1.08);">+ إنشاء الجولة</button>
@@ -750,7 +750,7 @@ class Component extends DCLogic {
     // الاتصال بالخادم
     connected: false, serverImage: null, serverImageLetter: null, lobbyPlayers: [], statusMsg: '', deviceId: null,
     // لوحة التحكم
-    adminRounds: [], adminStats: null, newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], adminMsg: '',
+    adminRounds: [], adminStats: null, newHint: '', newAnswersList: [], newAnswerDraft: '', newQuestion: '', newCategory: CATEGORY_LIST[0], newShowLetters: false, newImages: [], newImagesDragOver: false, adminMsg: '',
     editingRoundId: null, editHint: '', editAnswersList: [], editAnswerDraft: '', editQuestion: '', editCategory: CATEGORY_LIST[0], editShowLetters: false,
     serverTeams: [], myTeamIndex: null, namingTeam: null, teamNameInput: '', startRequested: false, shareCopied: false, resultsShareBusy: false, resultsShareDone: false, zoomOpen: false, zoomImageUrl: null, countdown: 0,
     // الحساب: القوائم والتذاكر وتعديل الملف
@@ -1352,6 +1352,13 @@ class Component extends DCLogic {
     const added = Array.from(fileList).slice(0, room).map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
     this.setState({ newImages: [...current, ...added] });
   }
+  onNewImagesDragOver(e) { e.preventDefault(); if (!this.state.newImagesDragOver) this.setState({ newImagesDragOver: true }); }
+  onNewImagesDragLeave(e) { e.preventDefault(); this.setState({ newImagesDragOver: false }); }
+  onNewImagesDrop(e) {
+    e.preventDefault();
+    this.setState({ newImagesDragOver: false });
+    this.addNewImages(e.dataTransfer.files);
+  }
   removeNewImage(index) {
     const list = this.state.newImages || [];
     const target = list[index];
@@ -1749,6 +1756,12 @@ class Component extends DCLogic {
       })),
       newImagesNotFull: (this.state.newImages || []).length < MAX_IMAGES_PER_ROUND,
       onAddNewImages: (e) => { this.addNewImages(e.target.files); e.target.value = ''; },
+      onNewImagesDragOver: (e) => this.onNewImagesDragOver(e),
+      onNewImagesDragLeave: (e) => this.onNewImagesDragLeave(e),
+      onNewImagesDrop: (e) => this.onNewImagesDrop(e),
+      newImagesDragColor: this.state.newImagesDragOver ? '#fff' : '#c4b5fd',
+      newImagesDragBg: this.state.newImagesDragOver ? 'rgba(129,140,248,.28)' : 'rgba(129,140,248,.12)',
+      newImagesDragBorder: this.state.newImagesDragOver ? 'rgba(129,140,248,.9)' : 'rgba(129,140,248,.4)',
       hasAdminRounds: (this.state.adminRounds || []).length > 0,
       adminStats: this.state.adminStats ? {
         activeRooms: arNum(this.state.adminStats.activeRooms), totalPlayers: arNum(this.state.adminStats.totalPlayers),

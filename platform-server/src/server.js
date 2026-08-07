@@ -63,6 +63,7 @@ const ticketLedger = require('./ticket-ledger');
 const roomsRoute = require('./routes/rooms');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
+const statsRoutes = require('./routes/stats');
 const roomSnapshots = require('./room-snapshots');
 
 // سياستان بدل وحدة: وصّلها/لوحة تحكمها تحتاج 'unsafe-eval' فعليًا (مترجم القوالب الداخلي
@@ -195,6 +196,7 @@ async function start(port = PORT) {
 
   // تسجيل/دخول/تذاكر/إدارة — مسار موحّد لكل اللعبتين، قبل تركيب أي سيرفر لعبة.
   app.use('/api/rooms', roomsRoute);
+  app.use('/api/stats', statsRoutes);
 
   // مافيا: أصولها كلها مسارات نسبية، فتُركَّب بأمان تحت بادئة فرعية.
   app.use('/mafia', mafiaCreateApp());

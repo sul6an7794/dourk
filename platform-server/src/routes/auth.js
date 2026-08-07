@@ -21,7 +21,7 @@ const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 // إرسال الرمز يكلّف رسالة SMS فعلية — حد أضيق من التحقق لمنع استنزاف الرصيد بالإساءة.
 // هذي الحدود بعنوان IP (انظر rateLimit.js) — بمفردها ما تكفي ضد مهاجم موزّع على عدة
 // عناوين يستهدف رقم جوال واحد بالذات، فأضفنا حد إضافي بالرقم نفسه بالأسفل (phoneRateLimiter).
-const otpRequestLimit = rateLimit(5, 5 * 60 * 1000, 'otp-request');
+const otpRequestLimit = rateLimit(20, 5 * 60 * 1000, 'otp-request');
 const otpVerifyLimit = rateLimit(20, 5 * 60 * 1000, 'otp-verify');
 const profileLimit = rateLimit(30, 5 * 60 * 1000, 'profile');
 const BOOTSTRAP_ADMIN_USERNAME = String(process.env.ADMIN_BOOTSTRAP_USERNAME || '').trim();

@@ -321,6 +321,18 @@ function gameOverFlow(io, room, winner, why) {
   room.deadlineTs = null;
   io.to(room.code).emit('gameOver', result);
   broadcastRoomUpdate(io, room);
+  recordGameStats(room, result);
+}
+
+// إحصائيات شخصية لكل لاعب مسجّل حساب فعليًا بدورك (الضيوف بدون حساب يُستثنون تلقائيًا —
+// platformUid يبقى null لهم). البوتات ما عندها platformUid أصلًا فتُستثنى بنفس الطريقة.
+function recordGameStats(room, result) {
+  if (!global.__DOURK_PLATFORM__) return;
+  for (const r of result.roles) {
+    const player = room.players.get(r.playerId);
+    if (!player || !player.platformUid) continue;
+    global.__DOURK_PLATFORM__.stats.recordMafia(player.platformUid, r.alignment, r.won);
+  }
 }
 
 function resendState(io, room, playerId) {
@@ -609,7 +621,7 @@ function attachSocketHandlers(io) {
             room.hostGraceTimer = null;
           }
         } else {
-          const result = rooms.joinRoom(code, deviceId, name);
+          const result = rooms.joinRoom(code, deviceId, name, socket.data.platformUserId);
           if (result.error) throw new Error(result.error);
           room.players.get(deviceId).socketId = socket.id;
         }

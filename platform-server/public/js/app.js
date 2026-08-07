@@ -33,6 +33,9 @@ const ICONS = {
   back: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg>',
   chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
   close: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
+  target: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  hint: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
 };
 
 // بيانات بطاقات أدوار مافيا (لعرضها قبل اللعب بخطوة "شوف كل البطاقات") — نفس بيانات
@@ -88,6 +91,9 @@ const App = {
   state: {
     screen: 'home',
     user: null,
+    statsTab: 'mafia',
+    statsData: null,
+    statsLoading: false,
     otpStage: 'phone',
     otpCountryCode: '+966',
     otpLocalDraft: '',
@@ -473,6 +479,23 @@ const App = {
     }
   },
 
+  async openStats() {
+    this.state.screen = 'stats';
+    this.state.statsLoading = !this.state.statsData;
+    this.render();
+    window.scrollTo(0, 0);
+    try {
+      const data = await this.api('/api/stats');
+      this.state.statsData = data;
+    } catch (e) {
+      this.showToast(e.message);
+    }
+    this.state.statsLoading = false;
+    this.render();
+  },
+
+  setStatsTab(tab) { this.state.statsTab = tab; this.render(); },
+
   showDeleteConfirm() { this.state.deleteConfirm = true; this.render(); },
   cancelDeleteAccount() { this.state.deleteConfirm = false; this.render(); },
 
@@ -743,6 +766,87 @@ const App = {
       '</main>';
   },
 
+  statsRing(pct, colorStroke) {
+    const c = 2 * Math.PI * 50;
+    const offset = Math.max(0, Math.min(c, c * (1 - pct / 100)));
+    return '<svg width="110" height="110" viewBox="0 0 120 120">' +
+      '<circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12"/>' +
+      '<circle cx="60" cy="60" r="50" fill="none" stroke="' + colorStroke + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + offset.toFixed(1) + '" transform="rotate(-90 60 60)"/>' +
+      '<text x="60" y="56" text-anchor="middle" font-size="26" font-weight="900" fill="#F2F1F7">' + AR(pct) + '٪</text>' +
+      '</svg>';
+  },
+
+  statsBar(label, count, total, color) {
+    const pct = total ? Math.round((count / total) * 100) : 0;
+    return '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#F2F1F7;margin-bottom:6px;"><span>' + label + '</span><span>' + AR(count) + '</span></div>' +
+      '<div style="height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:14px;"><div style="height:100%;border-radius:3px;width:' + pct + '%;background:' + color + ';"></div></div>';
+  },
+
+  screenStats() {
+    const s = this.state, u = s.user;
+    if (!u) { this.go('home'); return ''; }
+    const tab = s.statsTab;
+    const tabsHtml =
+      '<div style="display:flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:4px;margin-bottom:18px;">' +
+        '<button onclick="App.setStatsTab(\'mafia\')" style="flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ' + (tab === 'mafia' ? 'rgba(224,184,106,.4)' : 'transparent') + ';background:' + (tab === 'mafia' ? 'rgba(224,184,106,.14)' : 'transparent') + ';color:' + (tab === 'mafia' ? '#E0B86A' : '#8B8AA3') + ';cursor:pointer;">مافيا</button>' +
+        '<button onclick="App.setStatsTab(\'wslha\')" style="flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:800;border:1px solid ' + (tab === 'wslha' ? 'rgba(129,140,248,.4)' : 'transparent') + ';background:' + (tab === 'wslha' ? 'rgba(129,140,248,.14)' : 'transparent') + ';color:' + (tab === 'wslha' ? '#c4b5fd' : '#8B8AA3') + ';cursor:pointer;">وصّلها</button>' +
+      '</div>';
+
+    let contentHtml;
+    if (s.statsLoading) {
+      contentHtml = '<div style="text-align:center;color:var(--faint);padding:40px 0;">جارِ التحميل…</div>';
+    } else if (tab === 'mafia') {
+      const m = (s.statsData && s.statsData.mafia) || { gamesPlayed: 0, wins: 0, evil: 0, good: 0, neutral: 0 };
+      if (!m.gamesPlayed) {
+        contentHtml = '<div style="text-align:center;color:var(--faint);padding:40px 20px;">لسا ما لعبت مافيا بحسابك — إحصائياتك بتظهر هنا أول ما تخلّص جولة.</div>';
+      } else {
+        const winPct = Math.round((m.wins / m.gamesPlayed) * 100);
+        contentHtml =
+          '<div style="display:flex;align-items:center;gap:20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;margin-bottom:22px;">' +
+            this.statsRing(winPct, '#E0B86A') +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div><div style="font-size:22px;font-weight:900;color:#F2F1F7;line-height:1;">' + AR(m.gamesPlayed) + '</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px;">جولة لعبتها</div></div>' +
+              '<div><div style="font-size:22px;font-weight:900;color:#F2F1F7;line-height:1;">' + AR(m.wins) + '</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px;">فوز</div></div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:12px;font-weight:800;color:#E0B86A;letter-spacing:.04em;margin:0 0 14px;">توزيع أدوارك</div>' +
+          this.statsBar('فريق الشر', m.evil, m.gamesPlayed, '#ff2d2d') +
+          this.statsBar('فريق الخير', m.good, m.gamesPlayed, '#7fe7ff') +
+          this.statsBar('محايد', m.neutral, m.gamesPlayed, '#E0B86A');
+      }
+    } else {
+      const w = (s.statsData && s.statsData.wslha) || { roundsPlayed: 0, hintRounds: 0, totalElapsedSeconds: 0 };
+      if (!w.roundsPlayed) {
+        contentHtml = '<div style="text-align:center;color:var(--faint);padding:40px 20px;">لسا ما لعبت وصّلها بحسابك — إحصائياتك بتظهر هنا أول ما تخلّصون جلسة.</div>';
+      } else {
+        const cleanRounds = w.roundsPlayed - w.hintRounds;
+        const cleanPct = Math.round((cleanRounds / w.roundsPlayed) * 100);
+        const avgSec = Math.round(w.totalElapsedSeconds / w.roundsPlayed);
+        const avgLabel = Math.floor(avgSec / 60) + ':' + String(avgSec % 60).padStart(2, '0');
+        contentHtml =
+          '<div style="display:flex;align-items:center;gap:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:20px;margin-bottom:22px;">' +
+            this.statsRing(cleanPct, '#c4b5fd') +
+            '<div style="display:flex;flex-direction:column;gap:10px;">' +
+              '<div><div style="font-size:22px;font-weight:900;color:#F2F1F7;line-height:1;">' + AR(w.roundsPlayed) + '</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px;">جولة لعبتها</div></div>' +
+              '<div><div style="font-size:22px;font-weight:900;color:#F2F1F7;line-height:1;">' + avgLabel + '</div><div style="font-size:11.5px;color:var(--faint);margin-top:2px;">متوسط وقت الحل</div></div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="font-size:12px;font-weight:800;color:#c4b5fd;letter-spacing:.04em;margin:0 0 14px;">كيف تحلّون الجولات؟</div>' +
+          this.statsBar('حلّيتوها بسرعة', cleanRounds, w.roundsPlayed, '#818cf8') +
+          this.statsBar('احتجتوا تلميح', w.hintRounds, w.roundsPlayed, '#ec4899');
+      }
+    }
+
+    return '' +
+      '<main data-screen="stats">' +
+        '<button class="back-btn" onclick="App.go(\'profile\')">' + ICONS.back + ' حسابك</button>' +
+        '<h1 style="font-size:26px;margin:10px 0 20px;display:flex;align-items:center;gap:10px;">' + ICONS.target + ' إحصائياتك</h1>' +
+        tabsHtml +
+        contentHtml +
+        '<div class="footer-tag">دورك — تلعبها صح</div>' +
+      '</main>';
+  },
+
   screenProfile() {
     const s = this.state, u = s.user;
     if (!u) { this.go('home'); return ''; }
@@ -754,6 +858,10 @@ const App = {
           '<div class="avatar">' + this.escape(u.username.trim().charAt(0).toUpperCase()) + '</div>' +
           '<div style="flex:1;min-width:0;"><div style="font-weight:900;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + this.escape(u.username) + '</div><div style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#E0B86A;margin-top:3px;">' + ICONS.ticket + ' ' + AR(u.credits || 0) + ' تذكرة</div></div>' +
         '</div>' +
+         '<button class="row-btn" onclick="App.openStats()">' +
+           '<span style="display:flex;align-items:center;gap:9px;">' + ICONS.target + ' إحصائياتك</span>' +
+           ICONS.chevron +
+         '</button>' +
          '<div class="form-col" style="margin-bottom:18px;">' +
           '<div class="field-label">تغيير الاسم</div>' +
           '<div style="display:flex;gap:8px;"><input id="profileNameInput" class="field" maxlength="20" placeholder="الاسم الجديد" style="flex:1;min-width:0;"><button class="btn-primary" style="width:auto;margin-top:0;padding:12px 20px;" onclick="App.saveName()">حفظ</button></div>' +
@@ -834,7 +942,7 @@ const App = {
 
   render() {
     this.renderHeader();
-    const map = { home: 'screenHome', auth: 'screenAuth', joinName: 'screenJoinName', game: 'screenGame', create: 'screenCreate', tickets: 'screenTickets', profile: 'screenProfile', privacy: 'screenLegal', terms: 'screenLegal' };
+    const map = { home: 'screenHome', auth: 'screenAuth', joinName: 'screenJoinName', game: 'screenGame', create: 'screenCreate', tickets: 'screenTickets', profile: 'screenProfile', stats: 'screenStats', privacy: 'screenLegal', terms: 'screenLegal' };
     const fn = map[this.state.screen] || 'screenHome';
     const root = document.getElementById('screenRoot');
     root.innerHTML = fn === 'screenLegal' ? this[fn](this.state.screen) : this[fn]();

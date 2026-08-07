@@ -88,7 +88,7 @@ function createRoom(hostId, hostName, platformUid) {
     voteMs: null,
     hostGraceTimer: null,
   }, freshGameState());
-  room.players.set(hostId, makePlayer(hostId, hostName));
+  room.players.set(hostId, makePlayer(hostId, hostName, platformUid));
   rooms.set(code, room);
   if (global.__DOURK_PLATFORM__) global.__DOURK_PLATFORM__.rooms.register(code, 'mafia');
   return room;
@@ -106,7 +106,7 @@ function resetRoomForNewGame(room) {
   }
 }
 
-function makePlayer(id, name) {
+function makePlayer(id, name, platformUid) {
   return {
     id,
     name,
@@ -118,6 +118,9 @@ function makePlayer(id, name) {
     deathTitle: null,
     deathReason: null,
     isBot: false,
+    // حساب منصة دورك لهذا اللاعب تحديدًا (لو مسجّل دخول) — يُستخدم فقط لتسجيل إحصائياته
+    // الشخصية عند انتهاء اللعبة. الضيوف بدون حساب ببساطة قيمتها null فتُستثنى من التسجيل.
+    platformUid: platformUid || null,
   };
 }
 
@@ -149,12 +152,12 @@ function getRoom(code) {
   return rooms.get(code) || null;
 }
 
-function joinRoom(code, playerId, name) {
+function joinRoom(code, playerId, name, platformUid) {
   const room = getRoom(code);
   if (!room) return { error: 'الغرفة غير موجودة' };
   if (room.phase !== 'lobby') return { error: 'الجولة بدأت بالفعل' };
   if (room.players.size >= MAX_PLAYERS) return { error: 'الغرفة ممتلئة' };
-  room.players.set(playerId, makePlayer(playerId, name));
+  room.players.set(playerId, makePlayer(playerId, name, platformUid));
   room.lastActivityAt = Date.now();
   return { room };
 }
@@ -242,6 +245,7 @@ function snapshotLobbies() {
         id: player.id,
         name: player.name,
         isBot: !!player.isBot,
+        platformUid: player.platformUid || null,
       })),
     }));
 }
@@ -263,7 +267,7 @@ function restoreLobbies(snapshot) {
     }, freshGameState());
     for (const source of raw.players || []) {
       if (!source || !source.id) continue;
-      const player = makePlayer(source.id, source.name);
+      const player = makePlayer(source.id, source.name, source.platformUid);
       player.isBot = !!source.isBot;
       player.connected = false;
       room.players.set(player.id, player);

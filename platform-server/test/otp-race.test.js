@@ -9,6 +9,7 @@ try { fs.unlinkSync(TEST_DATA_PATH); } catch (e) {}
 process.env.ACCOUNTS_DATA_PATH = TEST_DATA_PATH;
 process.env.ANALYTICS_DATA_PATH = path.join(__dirname, '.tmp-otp-race-test-analytics.json');
 process.env.ERROR_LOG_PATH = path.join(__dirname, '.tmp-otp-race-test-errors.jsonl');
+process.env.STATS_DATA_PATH = path.join(__dirname, '.tmp-otp-race-test-stats.json');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-not-for-production';
 process.env.ALLOWED_ORIGIN = '*';
 
@@ -34,6 +35,7 @@ test.after(async () => {
   try { fs.unlinkSync(TEST_DATA_PATH); } catch (e) {}
   try { fs.unlinkSync(process.env.ANALYTICS_DATA_PATH); } catch (e) {}
   try { fs.unlinkSync(process.env.ERROR_LOG_PATH); } catch (e) {}
+  try { fs.unlinkSync(process.env.STATS_DATA_PATH); } catch (e) {}
 });
 
 test('otp/verify: طلبان متزامنان لنفس رقم الجوال ينتجان حسابًا واحدًا فقط بدون تكرار', async () => {
