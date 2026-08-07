@@ -170,7 +170,13 @@ async function start(port = PORT) {
   });
 
   // واجهة المنصة (الرئيسية): اختيار اللعبة، الحساب، التذاكر، الملف الشخصي.
-  app.use(express.static(path.join(__dirname, '..', 'public')));
+  // css/js: كاش قصير (10 دق)، الصور: يوم، الـHTML بلا كاش عشان النشر الجديد يظهر فورًا.
+  app.use(express.static(path.join(__dirname, '..', 'public'), {
+    setHeaders: (res, filePath) => {
+      if (/\.(css|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=600');
+      else if (/\.(png|jpe?g|webp|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=86400');
+    },
+  }));
 
   // صفحة وصّلها الفعلية تُخدَّم صراحة هنا — سيرفر وصّلها نفسه (بالأسفل) يُركَّب على الجذر
   // لخدمة أصوله المطلقة المسار (خطوط، صور، ملفات مساعدة) كما هي، فيحتاج مسار صريح لصفحته.

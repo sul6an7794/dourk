@@ -67,7 +67,15 @@ function createApp() {
   // وميض تبديل الخط عند كل تحديث (font-display ما يفيد لو الخط يوصل متأخر بسبب
   // جولة شبكة revalidation في كل مرة).
   app.use('/fonts', express.static(path.join(publicDir, 'fonts'), { maxAge: '1y', immutable: true }));
-  app.use(express.static(publicDir));
+  // css/js: كاش قصير (10 دق) يخفف طلبات إعادة التحقق المتكررة بدون ما يأخّر ظهور نشر جديد طويلاً.
+  // الصور: كاش أطول (يوم) لأنها نادرًا ما تتغيّر. الـHTML يبقى بلا كاش (max-age=0 الافتراضي)
+  // عشان أي نشر جديد يظهر فورًا بدون تحديث إجباري (hard refresh) من المستخدم.
+  app.use(express.static(publicDir, {
+    setHeaders: (res, filePath) => {
+      if (/\.(css|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=600');
+      else if (/\.(png|jpe?g|webp|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=86400');
+    },
+  }));
   // توافق مع صور قديمة مخزّنة محليًا (إن وُجدت)
   app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 

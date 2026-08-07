@@ -25,7 +25,13 @@ if (!ALLOWED_ORIGIN) {
 
 function createApp() {
   const app = express();
-  app.use(express.static(path.join(__dirname, '..', 'public')));
+  // css/js: كاش قصير (10 دق)، الصور: يوم، الـHTML بلا كاش عشان النشر الجديد يظهر فورًا.
+  app.use(express.static(path.join(__dirname, '..', 'public'), {
+    setHeaders: (res, filePath) => {
+      if (/\.(css|js)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=600');
+      else if (/\.(png|jpe?g|webp|ico|svg)$/i.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=86400');
+    },
+  }));
   app.get('/health', (_req, res) => res.json({ ok: true }));
   return app;
 }
