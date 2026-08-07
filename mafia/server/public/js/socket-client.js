@@ -10,9 +10,20 @@ const MafiaSocket = (() => {
 
   const socket = io({ path: '/mafia/socket.io/', auth: { deviceId: getDeviceId() } });
 
-  function emitAck(event, payload) {
+  function emitAck(event, payload, timeoutMs = 8000) {
     return new Promise((resolve) => {
-      socket.emit(event, payload, (res) => resolve(res || { error: 'لا استجابة من الخادم' }));
+      let done = false;
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        resolve({ error: 'ما وصل رد من الخادم، تحقق من اتصالك وحاول مرة ثانية' });
+      }, timeoutMs);
+      socket.emit(event, payload, (res) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(res || { error: 'لا استجابة من الخادم' });
+      });
     });
   }
 
