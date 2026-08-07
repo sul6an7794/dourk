@@ -6,7 +6,7 @@ const ROLE_CARD_DATA = {
   },
   '02-elcapo.png': {
     photo: 'zaeem.webp', nameAr: 'الزعيم', faction: 'evil',
-    ability: 'قائد المافيا، يتحرك مع العصابة ليلاً ويقتل مثلهم تمامًا.',
+    ability: 'قائد المافيا، يتحرك مع العصابة ليلاً ويقتل مثلهم تمامًا. فحص الشيخ له عشوائي (خير أو شر) بدل نتيجة حقيقية ثابتة.',
   },
   '03-heiress.png': {
     photo: 'heiress.webp', nameAr: 'الوريثة', faction: 'evil',

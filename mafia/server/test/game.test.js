@@ -151,11 +151,12 @@ test('مافيتان متعادلتان عند انتهاء الوقت: ضحية
   assert.ok(room.log.some((l) => l.text.includes('تعادل قرار العصابة')));
 });
 
-test('فحص الشيخ: الزعيم من العصابة (لا حصانة) والدفتر يتراكم ويرفض التكرار', () => {
+test('فحص الشيخ: الزعيم عشوائي (خير أو شر) والدفتر يتراكم ويرفض التكرار', () => {
   const room = buildTestRoom({ m: 'mafia', z: 'zaeem', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager' });
 
   const r1 = game.submitCheck(room, 'sh', 'z');
-  assert.strictEqual(r1.isEvil, true);
+  assert.strictEqual(typeof r1.isEvil, 'boolean');
+  assert.strictEqual(room.sheikhNotebooks.get('sh').get('z'), r1.isEvil);
 
   const r2 = game.submitCheck(room, 'sh', 'v1');
   assert.strictEqual(r2.isEvil, false);

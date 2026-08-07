@@ -139,7 +139,7 @@ function submitCheck(room, playerId, targetId) {
   if (!target || !target.alive || targetId === playerId) throw new Error('هدف غير صالح');
   const notebook = room.sheikhNotebooks.get(playerId) || new Map();
   if (notebook.has(targetId)) throw new Error('تحققت منه سابقًا');
-  const evil = target.roleId === 'joker' ? rand([true, false]) : isEvil(target.roleId);
+  const evil = (target.roleId === 'joker' || target.roleId === 'zaeem') ? rand([true, false]) : isEvil(target.roleId);
   notebook.set(targetId, evil);
   room.sheikhNotebooks.set(playerId, notebook);
   room.sheikhCheckId = targetId;
