@@ -372,14 +372,28 @@ function handleDisconnectOrLeave(io, socket, { explicit }) {
   const player = room.players.get(playerId);
   if (!player) return;
 
-  if (explicit) {
+  // لعبة جارية فعليًا (بعد اللوبي، قبل النهاية): مغادرة صريحة تُعامَل كانقطاع اتصال بحت
+  // (يبقى بقائمة اللاعبين، بس غير متصل) بدل حذفه كليًا — عشان لو تحدد الفائز لاحقًا يُحسب
+  // له إحصائياته الشخصية بغض النظر إنه غادر أو لا. الحذف الكامل يبقى فقط قبل بدء اللعبة
+  // (لوبي) أو بعد انتهائها (gameover) حيث ما فيه نتيجة معلّقة يحتاجها.
+  const gameInProgress = room.phase !== 'lobby' && room.phase !== 'gameover';
+  if (explicit && !gameInProgress) {
     const roomCode = room.code;
     socket.leave(roomCode);
     socket.data.roomCode = null;
     socket.data.playerId = null;
     rooms.leaveRoom(room, playerId);
     if (rooms.getRoom(roomCode)) broadcastRoomUpdate(io, room);
-  } else if (player.socketId === socket.id) {
+    return;
+  }
+  if (player.socketId === socket.id) {
+    if (explicit) {
+      // مغادرة صريحة أثناء لعبة جارية: يسيب غرفة السوكيت فعليًا (ما يستقبل بث بعدها)، بس
+      // يبقى داخل room.players (غير متصل) حتى تُحسب نتيجته لو انتهت اللعبة لاحقًا.
+      socket.leave(room.code);
+      socket.data.roomCode = null;
+      socket.data.playerId = null;
+    }
     player.connected = false;
     room.lastActivityAt = Date.now();
     // انقطاع القائد تحديدًا (بعكس أي عضو ثاني) — بدون هذا، أي انقطاع مفاجئ لصاحب الغرفة

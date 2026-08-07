@@ -371,10 +371,28 @@ function submitAnswer(io, socket, answer) {
     if (shorter.length < 2) return false;
     return longer.includes(shorter) && shorter.length >= longer.length * 0.8;
   };
+  // إجابات مكوّنة من أرقام بس (مثلاً "4 و 6 و 10"): نقارن الأرقام نفسها كمجموعة، بغض النظر
+  // عن الفاصل المستخدم (و/فاصلة/سلاش/مسافة) أو ترتيب كتابتها — استخراج كل الأرقام من النص
+  // وترتيبها تصاعديًا قبل المقارنة. ما تنطبق على إجابات فيها حروف (تبقى محصورة بـfuzzyMatch).
+  const isNumericList = (s) => /\d/.test(s) && /^[\d\s,،/\\+و-]+$/.test(s);
+  const numberTokens = (s) => {
+    const m = s.match(/\d+/g);
+    return m ? m.map(Number).sort((x, y) => x - y) : null;
+  };
+  const numericMatch = (a, b) => {
+    if (!isNumericList(a)) return false;
+    const na = numberTokens(a);
+    const nb = numberTokens(b);
+    if (!na || !nb || na.length !== nb.length) return false;
+    return na.every((n, i) => n === nb[i]);
+  };
   const ok =
     round.answers.length === 0
       ? ans.length >= 2
-      : ans.length >= 2 && round.answers.some((a) => fuzzyMatch(String(a).trim().toLowerCase(), ans));
+      : ans.length >= 2 && round.answers.some((a) => {
+          const stored = String(a).trim().toLowerCase();
+          return fuzzyMatch(stored, ans) || numericMatch(stored, ans);
+        });
 
   const teamChannel = room.code + ':' + team.index;
 
