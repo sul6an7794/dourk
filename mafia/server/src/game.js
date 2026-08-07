@@ -34,7 +34,7 @@ function presentCardFiles(room) {
 }
 
 function isMafiaKiller(roleId) {
-  return roleId === 'mafia' || roleId === 'heiress' || roleId === 'shifted';
+  return roleId === 'mafia' || roleId === 'heiress' || roleId === 'zaeem' || roleId === 'shifted';
 }
 
 function aliveMafias(room) {

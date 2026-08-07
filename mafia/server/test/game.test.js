@@ -114,6 +114,20 @@ test('الوريثة تتحرك ليلاً مع المافيا وتشارك في
   assert.strictEqual(room.players.get('v1').alive, false);
 });
 
+test('الزعيم يتحرك ليلاً مع المافيا ويقتل مثلها تمامًا', () => {
+  const room = buildTestRoom({ m: 'mafia', z: 'zaeem', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager' });
+  assert.strictEqual(game.nightRoleFor(room, room.players.get('z')), 'kill');
+
+  game.submitMafiaPick(room, 'm', 'v1');
+  game.submitMafiaPick(room, 'z', 'v1');
+  game.confirmKill(room, 'z');
+  game.submitProtect(room, 'doc', 'v2');
+
+  const result = game.resolveNight(room);
+  assert.strictEqual(result.outcome, 'killed');
+  assert.strictEqual(room.players.get('v1').alive, false);
+});
+
 test('مافيتان: التأكيد يرفض قبل التطابق ويقبل بعده', () => {
   const room = buildTestRoom({ m1: 'mafia', m2: 'mafia', doc: 'doctor', sh: 'sheikh', v1: 'villager', v2: 'villager', v3: 'villager', v4: 'villager', v5: 'villager', v6: 'villager', v7: 'villager' });
   game.submitMafiaPick(room, 'm1', 'v1');

@@ -6,7 +6,7 @@ const ROLE_CARD_DATA = {
   },
   '02-elcapo.png': {
     photo: 'zaeem.webp', nameAr: 'الزعيم', faction: 'evil',
-    ability: 'الكلمة الأخيرة له، قائد المافيا يظهر للشيخ كأنه مواطن بريء ولا يُقتل أبداً.',
+    ability: 'قائد المافيا، يتحرك مع العصابة ليلاً ويقتل مثلهم تمامًا.',
   },
   '03-heiress.png': {
     photo: 'heiress.webp', nameAr: 'الوريثة', faction: 'evil',

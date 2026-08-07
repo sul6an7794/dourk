@@ -5,7 +5,7 @@ const ROLES = {
   villager: { id: 'villager', label: 'القروي', card: '06-villager.png', team: 'خير', night: 'decoy' },
   princess: { id: 'princess', label: 'الأميرة', card: '08-princess.png', team: 'خير', night: 'decoy' },
   heiress: { id: 'heiress', label: 'الوريثة', card: '03-heiress.png', team: 'شر', night: 'kill' },
-  zaeem: { id: 'zaeem', label: 'الزعيم', card: '02-elcapo.png', team: 'شر', night: 'decoy' },
+  zaeem: { id: 'zaeem', label: 'الزعيم', card: '02-elcapo.png', team: 'شر', night: 'kill' },
   thief: { id: 'thief', label: 'الحرامي', card: '11-thief.png', team: 'خير', night: 'steal' },
   mayor: { id: 'mayor', label: 'العمدة', card: '07-mayor.png', team: 'خير', night: 'decoy' },
   shapeshifter: { id: 'shapeshifter', label: 'المتحول', card: '09-shapeshifter.png', team: 'خير', night: 'decoy' },
