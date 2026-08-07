@@ -51,6 +51,18 @@ function NotebookBox(notebook, compact) {
   return box;
 }
 
+function TeammatesBox(teammates) {
+  const box = el('div', 'notebook-box');
+  box.appendChild(el('span', 'nb-title', 'رفاقك بالعصابة'));
+  const chips = el('div', 'nb-chips');
+  teammates.forEach((t) => {
+    const data = ROLE_CARD_DATA[t.card];
+    chips.appendChild(el('span', 'nb-chip evil', (data ? data.nameAr + ' — ' : '') + t.name));
+  });
+  box.appendChild(chips);
+  return box;
+}
+
 function CityLog(log) {
   const box = el('div', 'city-log');
   box.appendChild(el('span', 'log-title', 'سجل المدينة'));
@@ -71,6 +83,7 @@ function renderDayScreen(state, actions) {
   const wrap = el('div', 'day-screen rise');
   wrap.appendChild(PhaseRow('chip-day', `☀ النهار — الجولة ${state.round}`, state.deadlineTs));
   wrap.appendChild(eventCardFor(state));
+  if (state.mafiaTeammates && state.mafiaTeammates.length > 0) wrap.appendChild(TeammatesBox(state.mafiaTeammates));
   if (state.notebook.length > 0) wrap.appendChild(NotebookBox(state.notebook, false));
   wrap.appendChild(CityLog(state.log));
 

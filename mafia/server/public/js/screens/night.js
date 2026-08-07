@@ -85,6 +85,8 @@ function renderMafiaNight(state, actions) {
   head.appendChild(el('div', 'night-sub', 'المدينة نائمة. أنت تقرر.'));
   wrap.appendChild(head);
 
+  if (state.mafiaTeammates && state.mafiaTeammates.length > 0) wrap.appendChild(TeammatesBox(state.mafiaTeammates));
+
   const partnerPickId = state.partnerPick ? state.partnerPick.targetId : null;
   wrap.appendChild(PickGrid(state.nightRole.targets, state.nightPick, 'red', (id) => actions.pickNightTarget(id), (t) => (
     partnerPickId === t.id

@@ -127,7 +127,15 @@ function sendRoleChange(io, room, player) {
 
 function mafiaPartners(room, player) {
   if (!game.isMafiaKiller(player.roleId)) return [];
-  return game.aliveMafias(room).filter((m) => m.id !== player.id).map((m) => ({ id: m.id, name: m.name }));
+  return game.aliveMafias(room).filter((m) => m.id !== player.id)
+    .map((m) => ({ id: m.id, name: m.name, card: game.playerCard(room, m) }));
+}
+
+// يُرسل لأعضاء العصابة الأحياء فقط (مافيا/وريثة/زعيم/متحوّل بعد تحوله) — أسماء وبطاقات
+// بقية أعضاء العصابة، يبقى ظاهرًا طول الليل والنهار، لا فقط وقت اختيار الضحية.
+function sendMafiaTeammates(io, room, player) {
+  if (!player.alive || !game.isMafiaKiller(player.roleId)) return;
+  emitTo(io, player, 'mafiaTeammates', { teammates: mafiaPartners(room, player) });
 }
 
 function sendNightRole(io, room, player) {
@@ -174,6 +182,7 @@ function beginNightFlow(io, room) {
   }
   setPhase(io, room, 'night', game.NIGHT_MS, () => resolveNightFlow(io, room));
   for (const p of room.players.values()) sendNightRole(io, room, p);
+  for (const p of room.players.values()) sendMafiaTeammates(io, room, p);
   scheduleBotNightActions(io, room);
 }
 
@@ -227,6 +236,7 @@ function toDayFlow(io, room) {
   setPhase(io, room, 'day', game.DAY_MS, () => toVoteFlow(io, room));
   io.to(room.code).emit('dayInfo', { event: game.dayEvent(room), log: room.log });
   for (const p of room.players.values()) sendNotebook(io, room, p);
+  for (const p of room.players.values()) sendMafiaTeammates(io, room, p);
   scheduleBotDayReady(io, room);
 }
 
@@ -341,6 +351,7 @@ function resendState(io, room, playerId) {
   sendRole(io, room, player);
   broadcastLog(io, room);
   sendNotebook(io, room, player);
+  sendMafiaTeammates(io, room, player);
   if (!player.alive) {
     emitTo(io, player, 'youDied', {
       deathTitle: player.deathTitle,
