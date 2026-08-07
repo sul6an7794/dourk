@@ -548,7 +548,7 @@
 
         <sc-if value="{{ !r.editing }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-          <div style="flex:1;"><div style="font-size:16px; font-weight:800;">{{ r.hint }}</div><div style="font-size:13px; color:#a9a7cc; margin-top:3px;">الإجابات: {{ r.answersText }}</div></div>
+          <div style="flex:1; min-width:0;"><div style="font-size:16px; font-weight:800; overflow-wrap:break-word;">{{ r.hint }}</div><div style="font-size:13px; color:#a9a7cc; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">الإجابات: {{ r.answersText }}</div></div>
           <div style="font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,#818cf8,#ec4899); padding:5px 12px; border-radius:20px; white-space:nowrap;">{{ r.category }}</div>
           <sc-if value="{{ r.imagesIncomplete }}" hint-placeholder-val="{{ false }}">
           <div style="font-size:13px; font-weight:700; color:{{ r.imageCountColor }}; background:{{ r.imageCountBg }}; padding:5px 12px; border-radius:20px; white-space:nowrap;">{{ r.imageCountLabel }}</div>
