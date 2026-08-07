@@ -67,7 +67,7 @@ function renderWaitingRoom(state, actions, showEntrance) {
 
   const panel = el('div', 'lobby-panel');
   const head = el('div', 'phase-row');
-  head.appendChild(el('span', 'chip chip-gold', `اللاعبون ${arNum(state.players.length)} / ${arNum(13)}`));
+  head.appendChild(el('span', 'chip chip-gold', `اللاعبون ${arNum(state.players.length)} / ${arNum(15)}`));
   head.appendChild(el('span', 'muted-note', 'الحد الأدنى ٦'));
   panel.appendChild(head);
 
@@ -103,14 +103,14 @@ function renderWaitingRoom(state, actions, showEntrance) {
     const botCount = el('input');
     botCount.type = 'number';
     botCount.min = '1';
-    botCount.max = String(13 - state.players.length);
-    botCount.value = String(Math.min(5, Math.max(1, 13 - state.players.length)));
+    botCount.max = String(15 - state.players.length);
+    botCount.value = String(Math.min(5, Math.max(1, 15 - state.players.length)));
     botCount.className = 'field';
     botCount.style.width = '70px';
-    botCount.disabled = state.players.length >= 13;
+    botCount.disabled = state.players.length >= 15;
     botRow.appendChild(botCount);
     const addBotsBtn = el('button', 'small-btn', '🤖 أضف بوتات');
-    addBotsBtn.disabled = state.players.length >= 13;
+    addBotsBtn.disabled = state.players.length >= 15;
     addBotsBtn.addEventListener('click', () => actions.addBots(Number(botCount.value) || 1));
     botRow.appendChild(addBotsBtn);
     const hasBots = state.players.some((p) => p.isBot);

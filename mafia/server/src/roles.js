@@ -21,7 +21,7 @@ const LATE_EVIL_POOL = ['heiress', 'zaeem'];
 const REPEATABLE_POOL = ['villager'];
 
 const MIN_PLAYERS = 6;
-const MAX_PLAYERS = 13;
+const MAX_PLAYERS = 15;
 
 function isEvil(roleId) {
   return roleId === 'mafia' || roleId === 'heiress' || roleId === 'zaeem' || roleId === 'shifted';
