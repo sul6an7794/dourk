@@ -386,12 +386,25 @@ function submitAnswer(io, socket, answer) {
     if (!na || !nb || na.length !== nb.length) return false;
     return na.every((n, i) => n === nb[i]);
   };
+  // إجابات نصية على شكل قائمة (مثلاً "موز، تفاح، كرز"): يلتزم اللاعب بنفس الترتيب، بس ما
+  // يهم نوع الفاصل (فاصلة أو كلمة "و" منفصلة بمسافة). نتعمّد ما نقسّم على "و" الملتصقة
+  // بكلمة (مثل "وتفاح") لأنها حرف عادي بأغلب الكلمات العربية، فتقسيمها بشكل عام يكسر إجابات
+  // شرعية كثيرة — بس نقسّم على "و" لما تكون كلمة قائمة بذاتها بين مسافتين.
+  const splitList = (s) => s.split(/\s*[,،/\\+]\s*|\s+و\s+/).map((t) => t.trim()).filter(Boolean);
+  const orderedListMatch = (a, b) => {
+    const ta = splitList(a);
+    const tb = splitList(b);
+    if (ta.length < 2 || ta.length !== tb.length) return false;
+    // كل عنصر يقارَن بنفس مرونة fuzzyMatch (يسمح بفروقات إملائية بسيطة زي "تفاحة"/"تفاح")
+    // بدل تطابق حرفي صارم — بس بشرط بقاء نفس الترتيب وعدد العناصر.
+    return ta.every((t, i) => fuzzyMatch(t, tb[i]));
+  };
   const ok =
     round.answers.length === 0
       ? ans.length >= 2
       : ans.length >= 2 && round.answers.some((a) => {
           const stored = String(a).trim().toLowerCase();
-          return fuzzyMatch(stored, ans) || numericMatch(stored, ans);
+          return fuzzyMatch(stored, ans) || numericMatch(stored, ans) || orderedListMatch(stored, ans);
         });
 
   const teamChannel = room.code + ':' + team.index;
