@@ -70,9 +70,9 @@ router.get('/errors', (req, res) => {
 
 // أرقام يومية مجمّعة فقط لقمع التحويل (زيارة → طلب رمز → حساب جديد → غرفة → لعبة بدأت) —
 // بلا أي ربط بهوية شخص. آخر 14 يوم افتراضيًا.
-router.get('/analytics', (req, res) => {
+router.get('/analytics', asyncHandler(async (req, res) => {
   const days = Math.max(1, Math.min(90, Number(req.query.days) || 14));
-  res.json({ days: analytics.getSummary(days) });
-});
+  res.json({ days: await analytics.getSummary(days) });
+}));
 
 module.exports = router;
