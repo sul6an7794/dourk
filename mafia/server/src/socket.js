@@ -48,7 +48,15 @@ function clearBadJoin(key) {
   badJoinAttempts.delete(key);
 }
 
-function botDelay(min = 400, max = 1800) {
+// قابل للضبط عبر البيئة (تستخدمه اختبارات integration.test.js) — لازم يبقى أقصر من
+// أقصر مهلة مرحلة مضبوطة بالاختبار (مثلًا NIGHT_MS=600ms)، وإلا فعل البوت المتأخر
+// يفوّت المرحلة (الحارس `room.phase !== 'night'` يتجاهله بصمت) فتتكرر جولات فاضية
+// بلا قتل ولا تصويت لحد ما الصدفة توفّق، وهذا كان يفلّت اللعبة أحيانًا فوق مهلة
+// الاختبار الخارجية (Timeout) رغم إن اللعبة نفسها سليمة منطقيًا.
+function botDelay(
+  min = Number(process.env.MAFIA_BOT_DELAY_MIN) || 400,
+  max = Number(process.env.MAFIA_BOT_DELAY_MAX) || 1800
+) {
   return min + Math.random() * (max - min);
 }
 

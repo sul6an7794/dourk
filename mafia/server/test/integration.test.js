@@ -4,6 +4,11 @@ process.env.MAFIA_DEATH_REVEAL_MS = '200';
 process.env.MAFIA_DAY_MS = '250';
 process.env.MAFIA_VOTE_MS = '400';
 process.env.MAFIA_DEFENSE_MS = '300';
+// لازم أقصر من أقصر مهلة مرحلة فوق (DEATH_REVEAL_MS=200) — بدونها كان تأخير البوت
+// الافتراضي (حتى 1800ms) يفوّت مهل المراحل المضغوطة هذي، فتتكرر جولات فاضية بلا
+// حسم وتُفلّت اللعبة أحيانًا فوق مهلة الاختبار الخارجية (20-25 ثانية) بلا أي سبب حقيقي.
+process.env.MAFIA_BOT_DELAY_MIN = '5';
+process.env.MAFIA_BOT_DELAY_MAX = '40';
 
 const test = require('node:test');
 const assert = require('node:assert');
