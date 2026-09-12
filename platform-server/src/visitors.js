@@ -93,10 +93,15 @@ function countryOf(ip) {
   }
 }
 
-// req: كائن Express request. path يُمرَّر صراحة (بدل req.path) حتى يقدر المستدعي يستثني
-// امتدادات ثابتة (css/js/صور) بدون تعقيد بهذا الملف.
+// الموقع خلف Cloudflare (مؤكد: ترويسة Server: cloudflare + CF-RAY بكل رد) — يعني req.ip
+// (المعتمد بـrateLimit.js لأغراض أمنية) غالبًا يرجّع عنوان هوب وسيط لا عنوان الزائر
+// الحقيقي، فتحديد الدولة عليه يفشل غالبًا. CF-Connecting-IP هي الترويسة اللي Cloudflare
+// نفسه يضبطها بعنوان الزائر الحقيقي دائمًا لأي طلب فعليًا مرّ عبره. نستخدمها هنا فقط
+// لغرض العرض/تصنيف استدلالي غير أمني (لا حظر تلقائي مبني عليها) — لو حد قدر يوصل
+// للسيرفر مباشرة متجاوزًا Cloudflare لقدر يزوّرها، لكن هذا لا يؤثر إلا على دقة لوحة
+// التحكم لا على أي قرار أمني فعلي (rateLimit.js يبقى يعتمد فقط على req.ip الموثوق).
 function recordVisit(req, reqPath) {
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const ip = req.headers['cf-connecting-ip'] || req.ip || req.socket.remoteAddress || 'unknown';
   const userAgent = req.headers['user-agent'] || '';
   const rapid = isRapid(ip);
   const { label, reason } = classify({ ip, userAgent, path: reqPath, rapid });
