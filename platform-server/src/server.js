@@ -188,6 +188,10 @@ async function start(port = PORT) {
     },
   }));
 
+  // رابط أقصر وأسهل تذكّرًا للوحة تحكم المنصة (تحليلات/زوار/أخطاء) بدل الحاجة لتذكّر
+  // اسم الملف بالضبط — نفس ملف platform-admin.html اللي يخدمه express.static فوق.
+  app.get(['/platform-admin', '/platform-admin/'], (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'platform-admin.html')));
+
   // صفحة وصّلها الفعلية تُخدَّم صراحة هنا — سيرفر وصّلها نفسه (بالأسفل) يُركَّب على الجذر
   // لخدمة أصوله المطلقة المسار (خطوط، صور، ملفات مساعدة) كما هي، فيحتاج مسار صريح لصفحته.
   const wslhaIndex = path.join(WSLHA_DIR, 'public', 'index.html');
