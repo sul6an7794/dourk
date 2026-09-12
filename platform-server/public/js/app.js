@@ -15,9 +15,10 @@ function sbcApplyScale(frame, naturalHeight) {
 // باقات شراء التذاكر — بوابة الدفع لسا تحت الإعداد (buyTickets يعرض "قريبًا" فقط حاليًا)،
 // بس الأسعار والباقات جاهزة بالواجهة عشان تكون آخر خطوة (ربط بوابة الدفع) بس لما تجي.
 const TICKET_PACKAGES = [
-  { id: 'p5', count: 5, price: 9 },
-  { id: 'p15', count: 15, price: 22, save: 20, best: true },
-  { id: 'p40', count: 40, price: 50, save: 35 },
+  { id: 'p1', count: 1, price: 7 },
+  { id: 'p3', count: 3, price: 12, save: 43 },
+  { id: 'p6', count: 6, price: 21, save: 50 },
+  { id: 'p10', count: 10, price: 32, save: 54, best: true },
 ];
 const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 // السعودية أول اختيار افتراضي (الجمهور الأساسي)، وباقي دول الخليج بعدها.
