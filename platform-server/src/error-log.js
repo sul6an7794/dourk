@@ -1,16 +1,31 @@
 const fs = require('fs');
 const path = require('path');
 
-// سجل أخطاء داخلي بسيط: يخزّن آخر الأخطاء بالذاكرة (للقراءة الفورية) ويضيفها بملف محلي
-// (سطر JSON لكل خطأ) — بدون قاعدة بيانات خارجية أو خدمة طرف ثالث. مصمم للتشخيص وقت
-// الحاجة، لا لتحليلات دقيقة — لو المنصة كبرت لدرجة يصعب متابعتها كذا، وقتها ننتقل لخدمة
-// متخصصة (Sentry مثلًا).
+// سجل أخطاء داخلي بسيط: يخزّن آخر الأخطاء (للقراءة الفورية) بلا خدمة طرف ثالث. تخزين
+// مزدوج (نفس نمط db.js/analytics.js/stats.js بالضبط): MongoDB لو MONGODB_URI مضبوط
+// (ينجو من إعادة النشر)، وإلا ملف محلي (يُمسح بكل نشر — يكفي للتطوير المحلي والاختبارات
+// الآلية فقط). مصمم للتشخيص وقت الحاجة، لا لتحليلات دقيقة — لو المنصة كبرت لدرجة يصعب
+// متابعتها كذا، وقتها ننتقل لخدمة متخصصة (Sentry مثلًا).
 const LOG_PATH = process.env.ERROR_LOG_PATH || path.join(__dirname, '..', 'data', 'error-log.jsonl');
 const MAX_MEMORY = 200;
 const TELEGRAM_MIN_GAP_MS = 10 * 60 * 1000; // ما نرسل نفس الخطأ بالضبط تيليجرام أكثر من مرة كل ١٠ دقايق — يمنع إغراق الشات لو خطأ يتكرر بسرعة.
 
 const recent = [];
 const lastTelegramSentAt = new Map();
+let ErrorLog = null;
+
+function useMongo() {
+  return !!process.env.MONGODB_URI;
+}
+
+function getModel() {
+  if (!ErrorLog) {
+    const mongoose = require('mongoose');
+    const schema = new mongoose.Schema({ _id: String, entries: { type: [Object], default: [] } }, { strict: false, versionKey: false });
+    ErrorLog = mongoose.model('m_error_log', schema, 'error_log');
+  }
+  return ErrorLog;
+}
 
 function appendToFile(entry) {
   try {
@@ -53,12 +68,24 @@ function logError(source, err, context) {
   console.error(`[${entry.source}]`, entry.message);
   recent.push(entry);
   if (recent.length > MAX_MEMORY) recent.shift();
-  appendToFile(entry);
+  if (useMongo()) {
+    getModel().updateOne(
+      { _id: 'log' },
+      { $push: { entries: { $each: [entry], $position: 0, $slice: MAX_MEMORY } } },
+      { upsert: true }
+    ).catch((e) => console.error('تعذّر تسجيل الخطأ بـMongoDB:', e.message));
+  } else {
+    appendToFile(entry);
+  }
   sendTelegramAlert(entry).catch(() => {});
   return entry;
 }
 
-function getRecentErrors(limit = 50) {
+async function getRecentErrors(limit = 50) {
+  if (useMongo()) {
+    const doc = await getModel().findById('log').lean();
+    return ((doc && doc.entries) || []).slice(0, limit);
+  }
   return recent.slice(-limit).reverse();
 }
 

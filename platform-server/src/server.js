@@ -11,6 +11,7 @@ const { Server } = require('socket.io');
 // وحدة، بدل ما يبقى الخطأ محصورًا بذاك الطلب/الحدث وحده. نسجّله فقط، لا نوقف العملية.
 const errorLog = require('./error-log');
 const analytics = require('./analytics');
+const visitors = require('./visitors');
 process.on('unhandledRejection', (reason) => {
   errorLog.logError('platform', reason, { kind: 'unhandledRejection' });
 });
@@ -131,6 +132,14 @@ async function start(port = PORT) {
     if (req.secure || process.env.NODE_ENV === 'production') {
       res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
+    next();
+  });
+
+  // سجل زيارات مبسّط (IP + دولة + تصنيف استدلالي حقيقي/بوت/فحص) — يستثني الأصول الثابتة
+  // (css/js/صور) حتى لا يغرق السجل بكل ملف يحمّله المتصفح لصفحة واحدة يفتحها زائر حقيقي.
+  const STATIC_ASSET_RE = /\.(css|js|png|jpe?g|webp|ico|svg|woff2?|ttf|map)$/i;
+  app.use((req, res, next) => {
+    if (!STATIC_ASSET_RE.test(req.path)) visitors.recordVisit(req, req.path);
     next();
   });
 

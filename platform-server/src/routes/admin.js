@@ -6,6 +6,7 @@ const { rateLimit } = require('../rateLimit');
 const asyncHandler = require('../async-handler');
 const errorLog = require('../error-log');
 const analytics = require('../analytics');
+const visitors = require('../visitors');
 
 const adminLimit = rateLimit(120, 60 * 1000, 'admin'); // 120 طلب بالدقيقة لكل IP — كافٍ للاستخدام العادي، يمنع إساءة الاستخدام
 
@@ -63,16 +64,23 @@ router.post('/errors/test', (req, res) => {
 });
 
 // آخر الأخطاء المسجّلة من الموقع كامل (منصة/وصّلها/مافيا) — للتشخيص السريع بدل انتظار
-// شكوى مستخدم. سجل بالذاكرة فقط (آخر 200)، ما يبقى بعد إعادة تشغيل السيرفر.
-router.get('/errors', (req, res) => {
-  res.json({ log: errorLog.getRecentErrors(100) });
-});
+// شكوى مستخدم. آخر 200 (Mongo لو متاح، وإلا بالذاكرة فقط — يُمسح بإعادة تشغيل السيرفر).
+router.get('/errors', asyncHandler(async (req, res) => {
+  res.json({ log: await errorLog.getRecentErrors(100) });
+}));
 
 // أرقام يومية مجمّعة فقط لقمع التحويل (زيارة → طلب رمز → حساب جديد → غرفة → لعبة بدأت) —
 // بلا أي ربط بهوية شخص. آخر 14 يوم افتراضيًا.
 router.get('/analytics', asyncHandler(async (req, res) => {
   const days = Math.max(1, Math.min(90, Number(req.query.days) || 14));
   res.json({ days: await analytics.getSummary(days) });
+}));
+
+// آخر الزوار (IP + دولة + تصنيف استدلالي: حقيقي/بوت/محاولة فحص/طلبات سريعة) — التصنيف
+// مؤشر أولي فقط للفحص اليدوي، مو حكم نهائي (زائر حقيقي وراء VPN قد يُصنَّف بالخطأ).
+router.get('/visitors', asyncHandler(async (req, res) => {
+  const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 100));
+  res.json({ visitors: await visitors.getVisitors(limit) });
 }));
 
 module.exports = router;

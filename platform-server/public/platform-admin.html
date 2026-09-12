@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة تحكم دورك</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body{direction:rtl;padding:20px;max-width:1100px;margin:0 auto;}
+  #shell,#bgGlow{display:none;}
+  h1{font-size:22px;margin-bottom:4px;}
+  .sub{color:var(--subtext);font-size:13px;margin-bottom:22px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:22px;}
+  .kpi{background:var(--surface1);border:1px solid var(--border1);border-radius:14px;padding:14px 16px;}
+  .kpi .n{font-family:'Thmanyah Serif Display',serif;font-weight:900;font-size:26px;font-variant-numeric:tabular-nums;}
+  .kpi .l{color:var(--faint);font-size:12px;margin-top:2px;}
+  section{background:var(--surface1);border:1px solid var(--border1);border-radius:16px;padding:16px;margin-bottom:18px;}
+  section h2{font-family:'Thmanyah Sans',sans-serif;font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .twrap{overflow-x:auto;}
+  th{color:var(--faint);text-align:right;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border1);white-space:nowrap;}
+  td{padding:6px 8px;border-bottom:1px solid var(--surface2);white-space:nowrap;font-variant-numeric:tabular-nums;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+  .b-real{background:rgba(52,199,120,.15);color:var(--success);}
+  .b-bot{background:rgba(255,255,255,.08);color:var(--faint);}
+  .b-attack_probe{background:rgba(255,45,45,.15);color:var(--error-text);}
+  .b-rapid_requests{background:rgba(224,184,106,.18);color:var(--gold);}
+  .b-suspicious{background:rgba(224,184,106,.12);color:var(--gold);}
+  .muted{color:var(--faint);}
+  #gate,#loading{padding:40px 16px;text-align:center;color:var(--subtext);}
+  #gate a{text-decoration:underline;}
+  .refresh{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;}
+  #app{display:none;}
+</style>
+</head>
+<body>
+<h1>لوحة تحكم دورك</h1>
+<div class="sub" id="verLine">—</div>
+
+<div id="loading">جار التحميل…</div>
+<div id="gate" style="display:none">
+  محتاج تسجّل دخولك كمشرف من <a href="/">الصفحة الرئيسية</a> ثم ترجع هنا.
+</div>
+
+<div id="app">
+  <div class="grid" id="kpis"></div>
+
+  <section>
+    <h2>الزوار (آخر 100) <button class="refresh" onclick="loadVisitors()">تحديث</button></h2>
+    <div class="twrap">
+      <table id="visitorsTable">
+        <thead><tr><th>الوقت</th><th>الدولة</th><th>IP</th><th>المسار</th><th>التصنيف</th><th>السبب</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>قمع التحويل (آخر 14 يوم) <button class="refresh" onclick="loadAnalytics()">تحديث</button></h2>
+    <div class="twrap">
+      <table id="analyticsTable">
+        <thead><tr><th>اليوم</th><th>زيارة</th><th>طلب رمز</th><th>حساب جديد</th><th>غرفة</th><th>لعبة بدأت</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>آخر الأخطاء <button class="refresh" onclick="loadErrors()">تحديث</button></h2>
+    <div class="twrap">
+      <table id="errorsTable">
+        <thead><tr><th>الوقت</th><th>المصدر</th><th>الرسالة</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const COUNTRY_FLAG = (cc) => {
+  if (!cc || cc.length !== 2) return '🏳️';
+  return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 127397 + c.charCodeAt(0)));
+};
+const LABEL_AR = { real: 'حقيقي', bot: 'بوت', attack_probe: 'محاولة فحص', rapid_requests: 'طلبات سريعة', suspicious: 'مريب' };
+const fmtTime = (iso) => new Date(iso).toLocaleString('ar-SA', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+async function api(path) {
+  const res = await fetch(path, { credentials: 'same-origin' });
+  if (res.status === 401 || res.status === 403) throw { authFailed: true };
+  if (!res.ok) throw new Error('فشل الطلب: ' + path);
+  return res.json();
+}
+
+async function loadVisitors() {
+  const { visitors } = await api('/api/admin/visitors?limit=100');
+  document.querySelector('#visitorsTable tbody').innerHTML = visitors.map((v) => `
+    <tr>
+      <td>${fmtTime(v.at)}</td>
+      <td>${COUNTRY_FLAG(v.country)} ${v.country || '—'}</td>
+      <td class="muted">${v.ip}</td>
+      <td class="muted">${v.path}</td>
+      <td><span class="badge b-${v.label}">${LABEL_AR[v.label] || v.label}</span></td>
+      <td class="muted">${v.reason || ''}</td>
+    </tr>`).join('') || '<tr><td colspan="6" class="muted">لا توجد بيانات بعد</td></tr>';
+
+  const kpis = document.getElementById('kpis');
+  const counts = visitors.reduce((acc, v) => (acc[v.label] = (acc[v.label] || 0) + 1, acc), {});
+  kpis.innerHTML = ['real', 'bot', 'attack_probe', 'rapid_requests', 'suspicious'].map((k) => `
+    <div class="kpi"><div class="n">${counts[k] || 0}</div><div class="l">${LABEL_AR[k]}</div></div>`).join('');
+}
+
+async function loadAnalytics() {
+  const { days } = await api('/api/admin/analytics?days=14');
+  document.querySelector('#analyticsTable tbody').innerHTML = days.map((d) => `
+    <tr><td>${d.date}</td><td>${d.page_view}</td><td>${d.otp_requested}</td><td>${d.signup_completed}</td><td>${d.room_created}</td><td>${d.game_started}</td></tr>
+  `).join('');
+}
+
+async function loadErrors() {
+  const { log } = await api('/api/admin/errors?');
+  document.querySelector('#errorsTable tbody').innerHTML = log.slice(0, 30).map((e) => `
+    <tr><td>${fmtTime(e.at)}</td><td class="muted">${e.source}</td><td>${(e.message || '').slice(0, 140)}</td></tr>
+  `).join('') || '<tr><td colspan="3" class="muted">لا توجد أخطاء مسجّلة</td></tr>';
+}
+
+async function loadHealth() {
+  const res = await fetch('/api/health');
+  const h = await res.json();
+  document.getElementById('verLine').textContent = `نسخة ${h.version} — يعمل منذ ${Math.floor(h.uptimeSeconds / 60)} دقيقة`;
+}
+
+(async function init() {
+  try {
+    await loadHealth();
+    await Promise.all([loadVisitors(), loadAnalytics(), loadErrors()]);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('gate').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>
