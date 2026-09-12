@@ -32,6 +32,10 @@ input:focus-visible{border-color:#E0B86A;}
 h1,h2{font-family:'Thmanyah Serif Display',serif;font-feature-settings:'salt' 1;font-weight:900;margin:0;}
 
 @keyframes dwrkUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+/* نفس حركة dwrkUp بالضبط، بس تحافظ على توسيط #toast أفقيًا (translateX(-50%)) طول الحركة —
+   dwrkUp نفسها تلغي أي transform ثابت بالعنصر (تستبدله بـtranslateY فقط)، وهذا كان يفلت
+   توست الرسائل الطويلة (مثل تنبيه بوابة الدفع) خارج حافة الشاشة باليمين على الجوال. */
+@keyframes dwrkToastUp{from{opacity:0;transform:translate(-50%,12px);}to{opacity:1;transform:translate(-50%,0);}}
 @keyframes dwrkPop{0%{transform:scale(.6);opacity:0;}70%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
 @keyframes dwrkDot{0%,100%{transform:scale(1);opacity:.4;}50%{transform:scale(1.35);opacity:1;}}
 
@@ -212,7 +216,7 @@ footer .socials a:hover{transform:translateY(-2px);border-color:var(--gold);colo
 .legal-note{margin-top:22px;padding:14px 16px;border-right:2px solid #818cf8;background:rgba(129,140,248,.07);color:var(--muted);font-size:13px;line-height:1.8;}
 
 /* toast + loading */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;background:var(--btn-bg);color:var(--btn-text);border:1px solid var(--border2);border-radius:999px;padding:11px 22px;font-size:13.5px;font-weight:700;box-shadow:0 14px 40px rgba(0,0,0,.5);white-space:nowrap;animation:dwrkUp .25s ease both;display:none;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;background:var(--btn-bg);color:var(--btn-text);border:1px solid var(--border2);border-radius:999px;padding:11px 22px;font-size:13.5px;font-weight:700;box-shadow:0 14px 40px rgba(0,0,0,.5);white-space:normal;text-align:center;max-width:calc(100vw - 32px);width:max-content;animation:dwrkToastUp .25s ease both;display:none;}
 #toast.show{display:block;}
 #loadingOverlay{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:var(--bg);}
 #loadingOverlay.show{display:flex;}
