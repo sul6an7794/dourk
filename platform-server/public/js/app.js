@@ -12,6 +12,13 @@ function sbcApplyScale(frame, naturalHeight) {
   const scale = h > SBC_SEAL_EXPANDED_THRESHOLD ? 1 : Math.min(1, SBC_SEAL_TARGET_HEIGHT / h);
   frame.style.transform = 'translateX(-50%) scale(' + scale + ')';
 }
+// باقات شراء التذاكر — بوابة الدفع لسا تحت الإعداد (buyTickets يعرض "قريبًا" فقط حاليًا)،
+// بس الأسعار والباقات جاهزة بالواجهة عشان تكون آخر خطوة (ربط بوابة الدفع) بس لما تجي.
+const TICKET_PACKAGES = [
+  { id: 'p5', count: 5, price: 9 },
+  { id: 'p15', count: 15, price: 22, save: 20, best: true },
+  { id: 'p40', count: 40, price: 50, save: 35 },
+];
 const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 // السعودية أول اختيار افتراضي (الجمهور الأساسي)، وباقي دول الخليج بعدها.
 const COUNTRY_CODES = [
@@ -419,7 +426,7 @@ const App = {
     }
   },
 
-  buyTickets() { this.showToast('قريبًا — بوابة الدفع تحت الإعداد'); },
+  buyTickets(packageId) { this.showToast('قريبًا — بوابة الدفع تحت الإعداد'); },
 
   showRoleCardsModal() {
     let ov = document.getElementById('roleCardsModal');
@@ -754,13 +761,27 @@ const App = {
   screenTickets() {
     const s = this.state;
     const credits = s.user ? (s.user.credits || 0) : 0;
+    const packagesHtml = TICKET_PACKAGES.map((p) => {
+      const best = p.best ? ' style-hover="filter:brightness(1.04);"' : '';
+      const border = p.best ? 'rgba(224,184,106,.6)' : 'rgba(255,255,255,.1)';
+      const bg = p.best ? 'rgba(224,184,106,.07)' : 'rgba(255,255,255,.03)';
+      const badge = p.best ? '<span style="position:absolute;top:-9px;right:14px;background:#E0B86A;color:#06060D;font-size:10px;font-weight:900;padding:2px 10px;border-radius:999px;">الأوفر</span>' : '';
+      const save = p.save ? '<span style="font-size:11px;color:#34C778;font-weight:700;margin-inline-start:8px;">وفّر ' + AR(p.save) + '٪</span>' : '';
+      return '' +
+        '<button onclick="App.buyTickets(\'' + p.id + '\')"' + best + ' style="width:100%;position:relative;display:flex;align-items:center;justify-content:space-between;border:1px solid ' + border + ';background:' + bg + ';border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;text-align:right;">' +
+          badge +
+          '<span style="font-size:16px;font-weight:900;color:var(--text);">' + AR(p.count) + ' تذكرة' + save + '</span>' +
+          '<span style="font-size:15px;font-weight:900;color:var(--text);">' + AR(p.price) + ' ريال</span>' +
+        '</button>';
+    }).join('');
     return '' +
       '<main data-screen="tickets">' +
         '<button class="back-btn" onclick="App.go(\'home\')">' + ICONS.back + ' الرئيسية</button>' +
         '<h1 style="font-size:30px;margin:10px 0 20px;">تذاكرك</h1>' +
         '<div class="tickets-card"><div style="color:#E0B86A;margin-bottom:6px;display:flex;justify-content:center;">' + ICONS.ticketLg + '</div><div class="n">' + AR(credits) + '</div><div class="l">رصيدك الحالي — كل غرفة تخصم تذكرة واحدة، لأي لعبة</div></div>' +
-        '<button class="btn-primary" style="background:#E0B86A;color:#06060D;margin-bottom:8px;" onclick="App.buyTickets()">شراء تذاكر</button>' +
-        '<div style="font-size:11.5px;color:var(--faint);text-align:center;margin-bottom:10px;">بوابة الدفع قريبًا — غير متاحة حاليًا</div>' +
+        '<div style="font-size:12px;font-weight:800;color:#E0B86A;letter-spacing:.04em;margin:4px 0 12px;">اشحن رصيدك</div>' +
+        packagesHtml +
+        '<div style="font-size:11.5px;color:var(--faint);text-align:center;margin:6px 0 14px;">بوابة الدفع قريبًا — غير متاحة حاليًا</div>' +
         '<div style="font-size:13px;color:var(--faint);line-height:1.9;text-align:center;max-width:300px;margin:0 auto;">التذكرة تُخصم من منشئ الغرفة فقط. أصدقاؤك ينضمون بالرقم أو الرابط مجانًا.</div>' +
         '<div class="footer-tag">دورك — تلعبها صح</div>' +
       '</main>';
