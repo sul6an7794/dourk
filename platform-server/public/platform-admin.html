@@ -41,6 +41,9 @@
   select.field{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;color-scheme:dark;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A9A8BD' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:left 14px center;padding-left:34px;}
+  /* color-scheme:dark وحده ما يكفي ببعض المتصفحات (كروم/إيدج على ويندوز) — قائمة الخيارات
+     المنبثقة تطلع بيضاء بخلفية بيضاء ونص أبيض بدون هذا التصريح الصريح على option نفسها. */
+  select.field option{background:var(--bg);color:var(--text);}
   .genOut{display:flex;gap:8px;align-items:center;}
   .genOut input.field{flex:1;font-family:monospace;direction:ltr;text-align:left;font-size:13px;}
   .copiedMsg{color:var(--success);font-size:12px;font-weight:700;opacity:0;transition:opacity .2s;white-space:nowrap;}
