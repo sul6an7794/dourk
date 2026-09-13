@@ -8,7 +8,19 @@ const MafiaSocket = (() => {
     return id;
   }
 
-  const socket = io({ path: '/mafia/socket.io/', auth: { deviceId: getDeviceId() } });
+  // نفس الأصل (dourk.sa) مع المنصة، فـlocalStorage مشترك — نقرأ المصدر التسويقي اللي app.js
+  // خزّنه بأول زيارة (لو موجود) بدل ما نطلب من المستخدم أي شي إضافي.
+  function getUtmSource() {
+    try {
+      const raw = localStorage.getItem('dourk_utm');
+      if (!raw) return null;
+      const { v, t } = JSON.parse(raw);
+      if (!v || Date.now() - t > 30 * 24 * 60 * 60 * 1000) return null;
+      return v;
+    } catch (e) { return null; }
+  }
+
+  const socket = io({ path: '/mafia/socket.io/', auth: { deviceId: getDeviceId(), utm: getUtmSource() } });
 
   function emitAck(event, payload, timeoutMs = 8000) {
     return new Promise((resolve) => {

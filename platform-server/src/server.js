@@ -174,8 +174,11 @@ async function start(port = PORT) {
 
   // عدّاد زيارات مجمّع (رقم يومي بس، بدون كوكي أو أي ربط بهوية) — أول خطوة بقمع التحويل.
   // فقط الصفحة الرئيسية نفسها (مو كل ملفات JS/CSS/الصور اللي يخدمها express.static بعدها).
+  // utm_source/utm_campaign (لو موجودة براوت رابط تسويقي زي بايو تيك توك) تحدد مصدر الزيارة —
+  // app.js بالواجهة يحفظها بـlocalStorage عند أول تحميل ليربط بها بقية القمع (otp/تسجيل/غرفة/لعبة).
   app.get('/', (req, res, next) => {
-    analytics.track('page_view');
+    const src = req.query.utm_campaign ? `${req.query.utm_source || ''}:${req.query.utm_campaign}` : req.query.utm_source;
+    analytics.track('page_view', src);
     next();
   });
 

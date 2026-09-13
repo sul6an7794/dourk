@@ -76,6 +76,13 @@ router.get('/analytics', asyncHandler(async (req, res) => {
   res.json({ days: await analytics.getSummary(days) });
 }));
 
+// أداء كل مصدر تسويقي (utm_source[:utm_campaign]) عبر نفس قمع التحويل — يفيد يقارن رابط
+// تيك توك أو صانع محتوى معيّن مقابل غيره بأرقام تحويل حقيقية لا مجرد مشاهدات.
+router.get('/analytics/sources', asyncHandler(async (req, res) => {
+  const days = Math.max(1, Math.min(90, Number(req.query.days) || 14));
+  res.json({ sources: await analytics.getSourceSummary(days) });
+}));
+
 // آخر الزوار (IP + دولة + تصنيف استدلالي: حقيقي/بوت/محاولة فحص/طلبات سريعة) — التصنيف
 // مؤشر أولي فقط للفحص اليدوي، مو حكم نهائي (زائر حقيقي وراء VPN قد يُصنَّف بالخطأ).
 router.get('/visitors', asyncHandler(async (req, res) => {

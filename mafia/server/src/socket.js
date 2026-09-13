@@ -571,6 +571,9 @@ function scheduleBotDefense(io, room) {
 function attachSocketHandlers(io) {
   io.on('connection', (socket) => {
     const deviceId = socket.handshake.auth && socket.handshake.auth.deviceId;
+    // مصدر تسويقي (utm) اختياري من العميل — يُنظَّف فعليًا داخل analytics.track نفسها،
+    // هنا فقط نمرّره كما هو (غير موثوق، أي عميل يقدر يرسل أي قيمة).
+    const utm = socket.handshake.auth && socket.handshake.auth.utm;
 
     // هوية حقيقية من كوكي جلسة دورك (لو متاحة) — منفصلة تمامًا عن deviceId اللي يبقى أساس
     // صلاحيات اللعب العادية (قائد/طرد/بدء) كما هو. deviceId يقدر أي متصفح يخترعه بنفسه،
@@ -603,13 +606,14 @@ function attachSocketHandlers(io) {
         }
         const name = sanitizeName(payload && payload.name);
         const room = rooms.createRoom(deviceId, name, platformUid);
+        room.utmSource = utm || null;
         room.players.get(deviceId).socketId = socket.id;
         socket.data.roomCode = room.code;
         socket.data.playerId = deviceId;
         socket.join(room.code);
         cb && cb({ ok: true, roomCode: room.code, playerId: deviceId });
         broadcastRoomUpdate(io, room);
-        if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created');
+        if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created', utm);
       } catch (err) {
         cb && cb({ error: err.message });
       }
@@ -677,7 +681,7 @@ function attachSocketHandlers(io) {
       room.revealDone.clear();
       setPhase(io, room, 'reveal', game.REVEAL_MS, () => beginNightFlow(io, room));
       scheduleBotRevealDone(io, room);
-      if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('game_started');
+      if (global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('game_started', room.utmSource);
       cb && cb({ ok: true });
     }));
 

@@ -1,6 +1,32 @@
 // أرقام لاتينية دائمًا (لا تحويل لعربية) — اتساقًا مع وصّلها ومافيا وحقول الأكواد/OTP
 // اللي أصلاً لاتينية بكل الموقع؛ إبقاء الدالة بنفس الاسم يجنّبنا تعديل كل نقاط الاستخدام.
 const AR = (v) => String(v);
+
+// إسناد مصدر تسويقي (utm_source[:utm_campaign] من رابط خارجي زي بايو تيك توك) — يُحفظ أول
+// مرة بـlocalStorage (نفس الأصل، فمافيا ووصّلها يقرآنه مباشرة بدون أي طلب إضافي) ويُستخدم
+// طول قمع التحويل. "أول لمسة" فقط: لو صار عنده مصدر محفوظ لسا صالح (٣٠ يوم)، رابط تاني ما يبدّله.
+const DOURK_UTM_KEY = 'dourk_utm';
+const DOURK_UTM_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+function dourkUtmGet() {
+  try {
+    const raw = localStorage.getItem(DOURK_UTM_KEY);
+    if (!raw) return null;
+    const { v, t } = JSON.parse(raw);
+    if (!v || Date.now() - t > DOURK_UTM_TTL_MS) return null;
+    return v;
+  } catch (e) { return null; }
+}
+(function captureUtmSource() {
+  try {
+    if (dourkUtmGet()) return;
+    const params = new URLSearchParams(location.search);
+    const source = params.get('utm_source');
+    if (!source) return;
+    const campaign = params.get('utm_campaign');
+    const value = campaign ? `${source}:${campaign}` : source;
+    localStorage.setItem(DOURK_UTM_KEY, JSON.stringify({ v: value, t: Date.now() }));
+  } catch (e) { /* localStorage معطّل (خصوصية صارمة) — نتجاهل، القمع الإجمالي يبقى يشتغل بدون تفصيل مصدر */ }
+})();
 // ختم "متجر موثّق" يفرض ارتفاعه الأصلي (٤٤px) أكبر من أيقونة تيك توك المجاورة له بالفوتر
 // (٣٦px) — نصغّره بصريًا (scale) لنفس ارتفاعها بالحالة الافتراضية بس. لما ينبثق تفاصيله
 // بالتحويم يكبر فعليًا بشكل واضح (ليصير قابل للقراءة) — نتجاهل التصغير بهذي الحالة (نعتبر
@@ -121,7 +147,10 @@ const App = {
   },
 
   async api(path, opts) {
-    const res = await fetch(path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts));
+    const headers = { 'Content-Type': 'application/json' };
+    const utm = dourkUtmGet();
+    if (utm) headers['X-Dourk-Src'] = utm;
+    const res = await fetch(path, Object.assign({ credentials: 'include', headers }, opts));
     let body = null;
     try { body = await res.json(); } catch (e) {}
     if (!res.ok) throw new Error((body && body.error) || 'صار خطأ، حاول مرة ثانية');

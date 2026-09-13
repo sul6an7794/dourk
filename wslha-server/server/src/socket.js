@@ -24,6 +24,9 @@ function registerSocket(io) {
     socket.data.user = payload || null;
     socket.data.name = (payload && payload.username) || null;
     socket.data.deviceId = (socket.handshake.auth && socket.handshake.auth.deviceId) || null;
+    // مصدر تسويقي (utm) اختياري من العميل — يُنظَّف فعليًا داخل analytics.track نفسها،
+    // هنا فقط نمرّره كما هو (غير موثوق، أي عميل يقدر يرسل أي قيمة).
+    socket.data.utm = (socket.handshake.auth && socket.handshake.auth.utm) || null;
 
     socket.on('createRoom', async (data, cb) => {
       if (!withinLimit(socket, 'createRoom', 10, 60 * 1000)) { cb && cb(TOO_MANY); return; }
@@ -56,7 +59,7 @@ function registerSocket(io) {
         }
         const room = roomsMgr.createRoom(io, socket, Object.assign({}, data, { isFirstGame }));
         const credits = await global.__DOURK_PLATFORM__.credits.balance(u.id);
-        if (global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created');
+        if (global.__DOURK_PLATFORM__.analytics) global.__DOURK_PLATFORM__.analytics.track('room_created', socket.data.utm);
         cb && cb({ ok: true, roomCode: room.code, teams: roomsMgr.teamSummary(room), credits });
       } catch (e) {
         cb && cb({ ok: false, error: 'تعذّر إنشاء الغرفة' });
@@ -101,7 +104,7 @@ function registerSocket(io) {
       if (!withinLimit(socket, 'startGame', 10, 60 * 1000)) { cb && cb(TOO_MANY); return; }
       const res = roomsMgr.startGame(io, socket);
       if (res.ok && !res.alreadyStarted && global.__DOURK_PLATFORM__ && global.__DOURK_PLATFORM__.analytics) {
-        global.__DOURK_PLATFORM__.analytics.track('game_started');
+        global.__DOURK_PLATFORM__.analytics.track('game_started', socket.data.utm);
       }
       cb && cb(res);
     });

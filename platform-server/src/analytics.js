@@ -13,6 +13,7 @@ const EVENTS = ['page_view', 'otp_requested', 'signup_completed', 'room_created'
 let state = load();
 let saveTimer = null;
 let AnalyticsDay = null;
+let AnalyticsSource = null;
 
 function useMongo() {
   return !!process.env.MONGODB_URI;
@@ -27,13 +28,25 @@ function getModel() {
   return AnalyticsDay;
 }
 
+// وثيقة واحدة لكل مصدر تسويقي (_id = المصدر نفسه بعد التنظيف)، وبداخلها عدّاد يومي متداخل
+// بنفس شكل m_analytics_days — يسمح نعرف "أي مصدر (تيك توك/حملة معيّنة) جاب زوار تحوّلوا
+// فعليًا للعب" بدل الاكتفاء بأرقام إجمالية بلا مصدر.
+function getSourceModel() {
+  if (!AnalyticsSource) {
+    const mongoose = require('mongoose');
+    const schema = new mongoose.Schema({ _id: String }, { strict: false, versionKey: false });
+    AnalyticsSource = mongoose.model('m_analytics_sources', schema, 'analytics_sources');
+  }
+  return AnalyticsSource;
+}
+
 function load() {
   try {
     if (fs.existsSync(DATA_PATH)) return JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
   } catch (e) {
     console.error('تعذّر قراءة سجل التحليلات، بدأنا من جديد:', e.message);
   }
-  return { days: {} };
+  return { days: {}, sources: {} };
 }
 
 function save() {
@@ -57,16 +70,38 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function track(event) {
+// مصدر تسويقي (utm_source أو "utm_source:utm_campaign") قادم من رابط خارجي — غير موثوق
+// بالكامل (أي حد يقدر يحط أي قيمة براوت العنوان)، فننظّفه بشدة قبل ما يصير _id بـMongoDB
+// أو مفتاح كائن بالذاكرة: أحرف/أرقام/شرطات فقط، طول محدود.
+function sanitizeSource(raw) {
+  if (!raw) return null;
+  const clean = String(raw).toLowerCase().replace(/[^a-z0-9_:-]/g, '').slice(0, 40);
+  return clean || null;
+}
+
+function track(event, source) {
   if (!EVENTS.includes(event)) return;
   const key = todayKey();
   if (useMongo()) {
     getModel().updateOne({ _id: key }, { $inc: { [event]: 1 } }, { upsert: true })
       .catch((e) => console.error('تعذّر تسجيل التحليلة بـMongoDB:', e.message));
+  } else {
+    if (!state.days[key]) state.days[key] = {};
+    state.days[key][event] = (state.days[key][event] || 0) + 1;
+    scheduleSave();
+  }
+
+  const src = sanitizeSource(source);
+  if (!src) return;
+  if (useMongo()) {
+    getSourceModel().updateOne({ _id: src }, { $inc: { [`${key}.${event}`]: 1 } }, { upsert: true })
+      .catch((e) => console.error('تعذّر تسجيل مصدر التحليلة بـMongoDB:', e.message));
     return;
   }
-  if (!state.days[key]) state.days[key] = {};
-  state.days[key][event] = (state.days[key][event] || 0) + 1;
+  if (!state.sources) state.sources = {};
+  if (!state.sources[src]) state.sources[src] = {};
+  if (!state.sources[src][key]) state.sources[src][key] = {};
+  state.sources[src][key][event] = (state.sources[src][key][event] || 0) + 1;
   scheduleSave();
 }
 
@@ -96,4 +131,30 @@ async function getSummary(days = 14) {
   });
 }
 
-module.exports = { track, getSummary, EVENTS };
+// إجمالي كل مصدر عبر آخر N يوم، مرتب تنازليًا حسب الحسابات المكتملة (أهم مؤشر تحويل حقيقي
+// لا مجرد مشاهدات) — يفيد يقارن أداء رابط تيك توك/حملة مقابل غيرها بسرعة.
+async function getSourceSummary(days = 14) {
+  const keys = dayKeys(days);
+  const sumDays = (dayMap) => {
+    const totals = Object.fromEntries(EVENTS.map((e) => [e, 0]));
+    for (const key of keys) {
+      const day = dayMap[key];
+      if (!day) continue;
+      for (const e of EVENTS) totals[e] += day[e] || 0;
+    }
+    return totals;
+  };
+  let rows;
+  if (useMongo()) {
+    const docs = await getSourceModel().find({}).lean();
+    rows = docs.map((d) => Object.assign({ source: d._id }, sumDays(d)));
+  } else {
+    const sources = state.sources || {};
+    rows = Object.keys(sources).map((src) => Object.assign({ source: src }, sumDays(sources[src])));
+  }
+  return rows
+    .filter((r) => EVENTS.some((e) => r[e] > 0))
+    .sort((a, b) => b.signup_completed - a.signup_completed || b.page_view - a.page_view);
+}
+
+module.exports = { track, getSummary, getSourceSummary, EVENTS };

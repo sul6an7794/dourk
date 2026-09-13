@@ -89,7 +89,7 @@ router.post('/otp/request', otpRequestLimit, async (req, res) => {
   }
   try {
     await authentica.sendOtp(phone);
-    analytics.track('otp_requested');
+    analytics.track('otp_requested', req.headers['x-dourk-src']);
     // لا نكشف هل الرقم مسجّل من قبل أو لا (يمنع تعداد الحسابات) — نفس الرد دائمًا.
     res.json({ ok: true });
   } catch (e) {
@@ -135,7 +135,7 @@ router.post('/otp/verify', otpVerifyLimit, async (req, res) => {
       });
       user = result.user;
       isNew = result.created;
-      if (isNew) analytics.track('signup_completed');
+      if (isNew) analytics.track('signup_completed', req.headers['x-dourk-src']);
     }
     const token = signToken(user);
     setAuthCookie(req, res, token);

@@ -68,6 +68,16 @@
   </section>
 
   <section>
+    <h2>المصادر التسويقية (?utm_source=...) <button class="refresh" onclick="loadSources()">تحديث</button></h2>
+    <div class="twrap">
+      <table id="sourcesTable">
+        <thead><tr><th>المصدر</th><th>زيارة</th><th>طلب رمز</th><th>حساب جديد</th><th>غرفة</th><th>لعبة بدأت</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
     <h2>آخر الأخطاء <button class="refresh" onclick="loadErrors()">تحديث</button></h2>
     <div class="twrap">
       <table id="errorsTable">
@@ -118,6 +128,13 @@ async function loadAnalytics() {
   `).join('');
 }
 
+async function loadSources() {
+  const { sources } = await api('/api/admin/analytics/sources?days=14');
+  document.querySelector('#sourcesTable tbody').innerHTML = sources.map((s) => `
+    <tr><td>${s.source}</td><td>${s.page_view}</td><td>${s.otp_requested}</td><td>${s.signup_completed}</td><td>${s.room_created}</td><td>${s.game_started}</td></tr>
+  `).join('') || '<tr><td colspan="6" class="muted">ما فيه زيارات من روابط UTM بعد</td></tr>';
+}
+
 async function loadErrors() {
   const { log } = await api('/api/admin/errors?');
   document.querySelector('#errorsTable tbody').innerHTML = log.slice(0, 30).map((e) => `
@@ -134,7 +151,7 @@ async function loadHealth() {
 (async function init() {
   try {
     await loadHealth();
-    await Promise.all([loadVisitors(), loadAnalytics(), loadErrors()]);
+    await Promise.all([loadVisitors(), loadAnalytics(), loadSources(), loadErrors()]);
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
   } catch (e) {

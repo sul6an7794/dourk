@@ -1106,10 +1106,22 @@ class Component extends DCLogic {
     });
   }
 
+  // نفس الأصل (dourk.sa) مع المنصة، فـlocalStorage مشترك — نقرأ المصدر التسويقي اللي app.js
+  // خزّنه بأول زيارة (لو موجود) بدل ما نطلب من المستخدم أي شي إضافي.
+  _utmSource() {
+    try {
+      const raw = localStorage.getItem('dourk_utm');
+      if (!raw) return null;
+      const { v, t } = JSON.parse(raw);
+      if (!v || Date.now() - t > 30 * 24 * 60 * 60 * 1000) return null;
+      return v;
+    } catch (e) { return null; }
+  }
+
   connectSocket() {
     if (this._socket || typeof window === 'undefined' || !window.io) return this._socket;
     const base = this.apiBase();
-    const s = window.io(base, { auth: { deviceId: this.state.deviceId || this._deviceId() }, withCredentials: true, timeout: 4000, reconnection: true });
+    const s = window.io(base, { auth: { deviceId: this.state.deviceId || this._deviceId(), utm: this._utmSource() }, withCredentials: true, timeout: 4000, reconnection: true });
     this._socket = s;
     s.on('connect', () => { this.setState({ connected: true, statusMsg: '' }); this._tryResume(); });
     s.on('disconnect', () => this.setState({ connected: false, statusMsg: this.state.myTeamIndex != null ? 'انقطع الاتصال مؤقتًا — نحاول نرجعك لفريقك تلقائيًا' : '' }));
