@@ -33,6 +33,14 @@
   #gate a{text-decoration:underline;}
   .refresh{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;}
   #app{display:none;}
+  .genRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .genRow select,.genRow input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;}
+  .genRow input[type=text]{flex:1;min-width:140px;}
+  .genOut{margin-top:10px;display:flex;gap:8px;}
+  .genOut input{flex:1;font-family:monospace;direction:ltr;text-align:left;}
+  .genBtn{background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;}
+  .copiedMsg{color:var(--success);font-size:12px;margin-inline-start:6px;opacity:0;transition:opacity .2s;}
+  .copiedMsg.show{opacity:1;}
 </style>
 </head>
 <body>
@@ -45,6 +53,26 @@
 </div>
 
 <div id="app">
+  <section>
+    <h2>مولّد روابط الحملات</h2>
+    <div class="genRow">
+      <select id="genSource">
+        <option value="tiktok">تيك توك</option>
+        <option value="instagram">إنستقرام</option>
+        <option value="snapchat">سناب شات</option>
+        <option value="x">إكس (تويتر)</option>
+        <option value="other">مصدر آخر</option>
+      </select>
+      <input type="text" id="genCampaign" placeholder="اسم الحملة أو صانع المحتوى (اختياري) — مثال: creator1">
+      <button class="genBtn" onclick="generateLink()">أنشئ الرابط</button>
+    </div>
+    <div class="genOut">
+      <input type="text" id="genResult" readonly value="">
+      <button class="refresh" onclick="copyGenLink()">نسخ</button>
+      <span class="copiedMsg" id="copiedMsg">انتسخ ✓</span>
+    </div>
+  </section>
+
   <div class="grid" id="kpis"></div>
 
   <section>
@@ -103,6 +131,24 @@ async function api(path) {
   return res.json();
 }
 
+function generateLink() {
+  const source = document.getElementById('genSource').value;
+  const campaign = document.getElementById('genCampaign').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  let url = `${location.origin}/?utm_source=${encodeURIComponent(source)}`;
+  if (campaign) url += `&utm_campaign=${encodeURIComponent(campaign)}`;
+  document.getElementById('genResult').value = url;
+  return url;
+}
+async function copyGenLink() {
+  const url = document.getElementById('genResult').value || generateLink();
+  try {
+    await navigator.clipboard.writeText(url);
+    const msg = document.getElementById('copiedMsg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 1500);
+  } catch (e) { /* المتصفح رفض صلاحية الحافظة — الرابط ظاهر بالحقل أصلاً، ينسخه يدويًا */ }
+}
+
 async function loadVisitors() {
   const { visitors } = await api('/api/admin/visitors?limit=100');
   document.querySelector('#visitorsTable tbody').innerHTML = visitors.map((v) => `
@@ -150,6 +196,7 @@ async function loadHealth() {
 
 (async function init() {
   try {
+    generateLink();
     await loadHealth();
     await Promise.all([loadVisitors(), loadAnalytics(), loadSources(), loadErrors()]);
     document.getElementById('loading').style.display = 'none';

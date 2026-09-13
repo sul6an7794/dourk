@@ -70,6 +70,9 @@
       '</div>' +
       '<div class="waa-sub">آخر 14 يوم — أرقام مجمّعة فقط، بدون أي ربط بهوية زائر</div>' +
       '<div id="waa-body">جارِ التحميل…</div>' +
+      '<a href="/platform-admin" target="_blank" rel="noopener" ' +
+        'style="display:block;text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);' +
+        'color:#7fe7ff;font-size:12.5px;font-weight:700;text-decoration:none">اللوحة الموسّعة (الزوار، الدول، المصادر التسويقية) ↗</a>' +
     '</div>';
   document.body.appendChild(ov);
 
