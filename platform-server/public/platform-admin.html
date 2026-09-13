@@ -15,8 +15,8 @@
   .kpi{background:var(--surface1);border:1px solid var(--border1);border-radius:14px;padding:14px 16px;}
   .kpi .n{font-family:'Thmanyah Serif Display',serif;font-weight:900;font-size:26px;font-variant-numeric:tabular-nums;}
   .kpi .l{color:var(--faint);font-size:12px;margin-top:2px;}
-  section{background:var(--surface1);border:1px solid var(--border1);border-radius:16px;padding:16px;margin-bottom:18px;}
-  section h2{font-family:'Thmanyah Sans',sans-serif;font-size:15px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;justify-content:space-between;}
+  section{background:var(--surface1);border:1px solid var(--border1);border-radius:20px;padding:20px;margin-bottom:18px;}
+  section h2{font-family:'Thmanyah Sans',sans-serif;font-size:15px;font-weight:700;margin:0 0 16px;display:flex;align-items:center;justify-content:space-between;}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   .twrap{overflow-x:auto;}
   th{color:var(--faint);text-align:right;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border1);white-space:nowrap;}
@@ -31,15 +31,19 @@
   .muted{color:var(--faint);}
   #gate,#loading{padding:40px 16px;text-align:center;color:var(--subtext);}
   #gate a{text-decoration:underline;}
-  .refresh{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:999px;padding:4px 12px;font-size:12px;}
+  .refresh{background:var(--surface2);border:1px solid var(--border2);color:var(--muted);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;font-family:inherit;}
   #app{display:none;}
-  .genRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-  .genRow select,.genRow input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;}
-  .genRow input[type=text]{flex:1;min-width:140px;}
-  .genOut{margin-top:10px;display:flex;gap:8px;}
-  .genOut input{flex:1;font-family:monospace;direction:ltr;text-align:left;}
-  .genBtn{background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:700;}
-  .copiedMsg{color:var(--success);font-size:12px;margin-inline-start:6px;opacity:0;transition:opacity .2s;}
+  /* حقول المولّد ومربّع البحث تستخدم نفس .field/.field-label من style.css (نموذج تسجيل
+     الدخول والملف الشخصي) حتى تتطابق بصريًا مع باقي الموقع بدل تصميم منفصل خاص باللوحة. */
+  .genRow{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .genCol{flex:1;min-width:150px;}
+  .genCol.wide{flex:2;min-width:220px;}
+  select.field{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;color-scheme:dark;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A9A8BD' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:left 14px center;padding-left:34px;}
+  .genOut{display:flex;gap:8px;align-items:center;}
+  .genOut input.field{flex:1;font-family:monospace;direction:ltr;text-align:left;font-size:13px;}
+  .copiedMsg{color:var(--success);font-size:12px;font-weight:700;opacity:0;transition:opacity .2s;white-space:nowrap;}
   .copiedMsg.show{opacity:1;}
 </style>
 </head>
@@ -56,18 +60,24 @@
   <section>
     <h2>مولّد روابط الحملات</h2>
     <div class="genRow">
-      <select id="genSource">
-        <option value="tiktok">تيك توك</option>
-        <option value="instagram">إنستقرام</option>
-        <option value="snapchat">سناب شات</option>
-        <option value="x">إكس (تويتر)</option>
-        <option value="other">مصدر آخر</option>
-      </select>
-      <input type="text" id="genCampaign" placeholder="اسم الحملة أو صانع المحتوى (اختياري) — مثال: creator1">
-      <button class="genBtn" onclick="generateLink()">أنشئ الرابط</button>
+      <div class="genCol">
+        <div class="field-label">المصدر</div>
+        <select id="genSource" class="field" onchange="generateLink()">
+          <option value="tiktok">تيك توك</option>
+          <option value="instagram">إنستقرام</option>
+          <option value="snapchat">سناب شات</option>
+          <option value="x">إكس (تويتر)</option>
+          <option value="other">مصدر آخر</option>
+        </select>
+      </div>
+      <div class="genCol wide">
+        <div class="field-label">اسم الحملة أو صانع المحتوى (اختياري)</div>
+        <input type="text" id="genCampaign" class="field" placeholder="مثال: creator1" oninput="generateLink()">
+      </div>
     </div>
+    <div class="field-label">الرابط الجاهز</div>
     <div class="genOut">
-      <input type="text" id="genResult" readonly value="">
+      <input type="text" id="genResult" class="field" readonly value="">
       <button class="refresh" onclick="copyGenLink()">نسخ</button>
       <span class="copiedMsg" id="copiedMsg">انتسخ ✓</span>
     </div>
@@ -76,7 +86,9 @@
   <section>
     <h2>بحث عن مستخدم + سجل الرصيد</h2>
     <div class="genRow">
-      <input type="text" id="userSearch" placeholder="ابحث بالاسم أو رقم الجوال أو رقم الحساب" oninput="searchUsers()">
+      <div class="genCol wide">
+        <input type="text" id="userSearch" class="field" placeholder="ابحث بالاسم أو رقم الجوال أو رقم الحساب" oninput="searchUsers()">
+      </div>
     </div>
     <div class="twrap">
       <table id="userSearchTable">
