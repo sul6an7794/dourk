@@ -73,6 +73,28 @@
     </div>
   </section>
 
+  <section>
+    <h2>بحث عن مستخدم + سجل الرصيد</h2>
+    <div class="genRow">
+      <input type="text" id="userSearch" placeholder="ابحث بالاسم أو رقم الجوال أو رقم الحساب" oninput="searchUsers()">
+    </div>
+    <div class="twrap">
+      <table id="userSearchTable">
+        <thead><tr><th>#</th><th>الاسم</th><th>الجوال</th><th>الرصيد</th><th>مشرف</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="creditLogWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border1);">
+      <div class="sub" id="creditLogTitle" style="margin-bottom:8px;"></div>
+      <div class="twrap">
+        <table id="creditLogTable">
+          <thead><tr><th>الوقت</th><th>التغيير</th><th>الرصيد بعده</th><th>السبب</th><th>بواسطة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
   <div class="grid" id="kpis"></div>
 
   <section>
@@ -147,6 +169,40 @@ async function copyGenLink() {
     msg.classList.add('show');
     setTimeout(() => msg.classList.remove('show'), 1500);
   } catch (e) { /* المتصفح رفض صلاحية الحافظة — الرابط ظاهر بالحقل أصلاً، ينسخه يدويًا */ }
+}
+
+let allUsersCache = null;
+async function ensureUsersLoaded() {
+  if (!allUsersCache) allUsersCache = await api('/api/admin/users');
+  return allUsersCache;
+}
+function searchUsers() {
+  const q = document.getElementById('userSearch').value.trim().toLowerCase();
+  const tbody = document.querySelector('#userSearchTable tbody');
+  if (!q) { tbody.innerHTML = ''; return; }
+  ensureUsersLoaded().then((users) => {
+    const matches = users.filter((u) =>
+      String(u.id) === q ||
+      (u.username || '').toLowerCase().includes(q) ||
+      (u.phone || '').includes(q)
+    ).slice(0, 20);
+    tbody.innerHTML = matches.map((u) => `
+      <tr style="cursor:pointer" onclick="viewCreditLog(${u.id}, '${(u.username || '').replace(/'/g, '')}')">
+        <td class="muted">${u.id}</td><td>${u.username}</td><td class="muted" style="direction:ltr">${u.phone || '—'}</td>
+        <td>${u.credits}</td><td>${u.isAdmin ? '✓' : ''}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="muted">ما فيه نتائج</td></tr>';
+  }).catch(() => { tbody.innerHTML = '<tr><td colspan="5" class="muted">تعذّر التحميل</td></tr>'; });
+}
+async function viewCreditLog(id, username) {
+  const users = await ensureUsersLoaded();
+  const { log } = await api('/api/admin/users/' + id + '/credits-log');
+  document.getElementById('creditLogTitle').textContent = `سجل رصيد: ${username} (#${id})`;
+  document.querySelector('#creditLogTable tbody').innerHTML = log.map((e) => {
+    const admin = e.adminId ? (users.find((u) => u.id === e.adminId) || {}).username || ('#' + e.adminId) : 'تلقائي';
+    const sign = e.delta > 0 ? '+' : '';
+    return `<tr><td>${fmtTime(e.at)}</td><td style="color:${e.delta > 0 ? 'var(--success)' : 'var(--error-text)'}">${sign}${e.delta}</td><td>${e.balanceAfter}</td><td class="muted">${e.reason || ''}</td><td class="muted">${admin}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="muted">ما فيه حركات مسجّلة</td></tr>';
+  document.getElementById('creditLogWrap').style.display = 'block';
 }
 
 async function loadVisitors() {
