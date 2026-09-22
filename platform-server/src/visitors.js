@@ -100,8 +100,15 @@ function countryOf(ip) {
 // لغرض العرض/تصنيف استدلالي غير أمني (لا حظر تلقائي مبني عليها) — لو حد قدر يوصل
 // للسيرفر مباشرة متجاوزًا Cloudflare لقدر يزوّرها، لكن هذا لا يؤثر إلا على دقة لوحة
 // التحكم لا على أي قرار أمني فعلي (rateLimit.js يبقى يعتمد فقط على req.ip الموثوق).
+// عناوين IP داخلية (شبكة Render نفسها بتفحص "هل السيرفر حي؟" بمسارات ما نعرفها/نتحكم فيها،
+// أو أي بنية تحتية أخرى) — مو زوار حقيقيين أبدًا، وتصنيفها "حقيقي" بجدول الزوار مضلِّل.
+// دفاع إضافي بعد استثناء /health و/api/health صراحة بـserver.js، لأي مسار داخلي مستقبلي
+// ما فكرنا فيه.
+const PRIVATE_IP_RE = /^(::ffff:)?(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.)|^::1$/;
+
 function recordVisit(req, reqPath) {
   const ip = req.headers['cf-connecting-ip'] || req.ip || req.socket.remoteAddress || 'unknown';
+  if (PRIVATE_IP_RE.test(ip)) return;
   const userAgent = req.headers['user-agent'] || '';
   const rapid = isRapid(ip);
   const { label, reason } = classify({ ip, userAgent, path: reqPath, rapid });

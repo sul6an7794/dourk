@@ -141,7 +141,7 @@ async function start(port = PORT) {
   // (استخدام المشرف نفسه للوحة التحكم — فتح /platform-admin وحده يسوي ٥-٦ طلبات API دفعة
   // وحدة، فكان يظهر IP المشرف نفسه مكرر بالجدول بدل ما يعكس زوار حقيقيين).
   const STATIC_ASSET_RE = /\.(css|js|png|jpe?g|webp|ico|svg|woff2?|ttf|map)$/i;
-  const SKIP_VISIT_RE = /^\/api\/health$|^\/api\/admin(\/|$)/;
+  const SKIP_VISIT_RE = /^\/api\/health$|^\/health$|^\/api\/admin(\/|$)/;
   app.use((req, res, next) => {
     if (!STATIC_ASSET_RE.test(req.path) && !SKIP_VISIT_RE.test(req.path)) visitors.recordVisit(req, req.path);
     next();
