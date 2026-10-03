@@ -41,6 +41,7 @@ function loadHtml2Canvas() {
     deadlineTs: null,
     revealTeamOnExpel: false,
     voteMs: null,
+    classicCards: false,
     skipNextDayFlash: false,
     error: null,
     role: null,
@@ -603,6 +604,11 @@ function loadHtml2Canvas() {
       state.error = res.error || null;
       render();
     },
+    async setClassicCards(enabled) {
+      const res = await emitAck('setClassicCards', { enabled });
+      state.error = res.error || null;
+      render();
+    },
     async setVoteDuration(seconds) {
       const res = await emitAck('setVoteDuration', { seconds });
       state.error = res.error || null;
@@ -778,6 +784,7 @@ function loadHtml2Canvas() {
     state.deadlineTs = payload.deadlineTs;
     state.revealTeamOnExpel = payload.revealTeamOnExpel;
     state.voteMs = payload.voteMs;
+    state.classicCards = payload.classicCards;
     state.phase = payload.phase === 'lobby' && !state.roomCode ? 'home' : payload.phase;
     const me = myPlayer();
     state.alive = me ? me.alive : true;

@@ -86,6 +86,8 @@ function createRoom(hostId, hostName, platformUid) {
     revealTeamOnExpel: false,
     // مدة التصويت بالمللي ثانية — يحددها القائد باللوبي قبل بدء اللعبة (null = افتراضي الخادم).
     voteMs: null,
+    // بطاقات كلاسيكية فقط (مافيا/طبيب/شيخ، بلا أي دور إضافي) — يحددها القائد باللوبي قبل البدء.
+    classicCards: false,
     hostGraceTimer: null,
   }, freshGameState());
   room.players.set(hostId, makePlayer(hostId, hostName, platformUid));
@@ -220,6 +222,7 @@ function serializeRoom(room, defaultVoteMs) {
     deadlineTs: room.deadlineTs,
     revealTeamOnExpel: room.revealTeamOnExpel,
     voteMs: room.voteMs || defaultVoteMs || null,
+    classicCards: !!room.classicCards,
     players: [...room.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
@@ -241,6 +244,7 @@ function snapshotLobbies() {
       createdAt: room.createdAt,
       revealTeamOnExpel: room.revealTeamOnExpel,
       voteMs: room.voteMs,
+      classicCards: !!room.classicCards,
       players: [...room.players.values()].map((player) => ({
         id: player.id,
         name: player.name,
@@ -264,6 +268,7 @@ function restoreLobbies(snapshot) {
       lastActivityAt: Date.now(),
       revealTeamOnExpel: !!raw.revealTeamOnExpel,
       voteMs: raw.voteMs || null,
+      classicCards: !!raw.classicCards,
     }, freshGameState());
     for (const source of raw.players || []) {
       if (!source || !source.id) continue;

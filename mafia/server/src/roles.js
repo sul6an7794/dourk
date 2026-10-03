@@ -61,10 +61,21 @@ function evilCountFor(playerCount) {
   return 1;
 }
 
-function buildRoleList(playerCount, randomFn = Math.random) {
+// وضع "بطاقات كلاسيكية": مافيا + طبيب + شيخ فقط (بلا وريثة/زعيم/أي دور إضافي من BONUS_POOL)،
+// وباقي اللاعبين قرويين عاديين. نفس تدرّج عدد الأشرار حسب عدد اللاعبين (evilCountFor)، لكن
+// كلها بطاقة "مافيا" بدل تنويعها بوريثة/زعيم — هذا بالضبط معنى "كلاسيكي" هنا.
+function buildClassicRoleList(playerCount) {
+  const evilCount = evilCountFor(playerCount);
+  const roles = [...Array(evilCount).fill('mafia'), 'doctor', 'sheikh'];
+  while (roles.length < playerCount) roles.push('villager');
+  return roles;
+}
+
+function buildRoleList(playerCount, randomFn = Math.random, opts = {}) {
   if (playerCount < MIN_PLAYERS || playerCount > MAX_PLAYERS) {
     throw new Error(`عدد اللاعبين يجب أن يكون بين ${MIN_PLAYERS} و${MAX_PLAYERS}`);
   }
+  if (opts.classic) return buildClassicRoleList(playerCount);
   const evilCount = evilCountFor(playerCount);
   const evilExtras = shuffleWith(LATE_EVIL_POOL, randomFn).slice(0, evilCount - 1);
   const evilRoles = ['mafia', ...evilExtras];
@@ -83,8 +94,8 @@ function buildRoleList(playerCount, randomFn = Math.random) {
   return roles;
 }
 
-function assignRoles(playerIds, randomFn = Math.random) {
-  const roleIds = shuffleWith(buildRoleList(playerIds.length, randomFn), randomFn);
+function assignRoles(playerIds, randomFn = Math.random, opts = {}) {
+  const roleIds = shuffleWith(buildRoleList(playerIds.length, randomFn, opts), randomFn);
   const assignment = new Map();
   playerIds.forEach((playerId, i) => assignment.set(playerId, roleIds[i]));
   return assignment;
@@ -123,6 +134,7 @@ module.exports = {
   shuffle,
   evilCountFor,
   buildRoleList,
+  buildClassicRoleList,
   assignRoles,
   assignFlavors,
   cardFor,

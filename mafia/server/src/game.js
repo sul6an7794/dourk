@@ -16,7 +16,7 @@ function startGame(room) {
   if (room.phase !== 'lobby') throw new Error('الجولة بدأت بالفعل');
   if (room.players.size < MIN_PLAYERS) throw new Error(`تحتاج ${MIN_PLAYERS} لاعبين على الأقل`);
   const ids = [...room.players.keys()];
-  const assignment = assignRoles(ids);
+  const assignment = assignRoles(ids, Math.random, { classic: !!room.classicCards });
   for (const [playerId, roleId] of assignment) {
     room.players.get(playerId).roleId = roleId;
   }

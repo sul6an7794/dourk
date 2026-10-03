@@ -738,6 +738,16 @@ function attachSocketHandlers(io) {
       cb && cb({ ok: true });
     }));
 
+    // بطاقات كلاسيكية فقط (مافيا/طبيب/شيخ، بلا وريثة/زعيم/أي دور إضافي) — القائد فقط يغيّرها
+    // وقبل بدء اللعبة فقط (نفس قيود setExpelReveal بالضبط).
+    socket.on('setClassicCards', inRoom((room, payload, cb) => {
+      if (room.hostId !== socket.data.playerId) throw new Error('القائد فقط يغيّر هذا الخيار');
+      if (room.phase !== 'lobby') throw new Error('لا يمكن تغيير هذا الخيار بعد بدء اللعبة');
+      room.classicCards = !!payload.enabled;
+      broadcastRoomUpdate(io, room);
+      cb && cb({ ok: true });
+    }));
+
     // مدة التصويت (بالثواني) — يحددها القائد باللوبي. حد أدنى/أقصى معقول يمنع قيمة
     // عبثية (صفر، أو ساعات) تكسر إيقاع اللعبة.
     socket.on('setVoteDuration', inRoom((room, payload, cb) => {

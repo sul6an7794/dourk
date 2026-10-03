@@ -98,6 +98,16 @@ test('خيار الإعلان عن الفريق عند الإقصاء يُعطّ
   assert.strictEqual(room.revealTeamOnExpel, true);
 });
 
+test('خيار البطاقات الكلاسيكية يُعطّل افتراضيًا ويبقى اختياره بعد لعبة جديدة', () => {
+  const room = rooms.createRoom('h', 'القائد');
+  assert.strictEqual(room.classicCards, false);
+  assert.strictEqual(rooms.serializeRoom(room).classicCards, false);
+
+  room.classicCards = true;
+  rooms.resetRoomForNewGame(room);
+  assert.strictEqual(room.classicCards, true);
+});
+
 test('إضافة وحذف البوتات يظهر في serializeRoom بحقل isBot', () => {
   const room = rooms.createRoom('h', 'القائد');
   const added = rooms.addBotPlayers(room, 3);

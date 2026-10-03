@@ -132,6 +132,14 @@ function renderWaitingRoom(state, actions, showEntrance) {
     settingsPanel.appendChild(settingsRow);
     settingsPanel.appendChild(el('div', 'muted-note', 'ملاحظة: القتل ليلًا يبقى مجهول الهوية دائمًا حتى النهاية — هذا الخيار يخص الإقصاء بالتصويت فقط.'));
 
+    const classicRow = el('div', 'phase-row');
+    classicRow.appendChild(el('span', '', 'بطاقات كلاسيكية فقط (مافيا، طبيب، شيخ)'));
+    const classicBtn = el('button', `small-btn ${state.classicCards ? 'on' : ''}`, state.classicCards ? 'مفعّل' : 'معطّل');
+    classicBtn.addEventListener('click', () => actions.setClassicCards(!state.classicCards));
+    classicRow.appendChild(classicBtn);
+    settingsPanel.appendChild(classicRow);
+    settingsPanel.appendChild(el('div', 'muted-note', 'بدون أي دور إضافي (لا وريثة، لا زعيم، لا مصارع...) — الباقي كلهم قرويين.'));
+
     settingsPanel.appendChild(el('div', '', 'مدة التصويت'));
     const voteRow = el('div', 'phase-row vote-duration-row');
     const currentSec = Math.round((state.voteMs || 60000) / 1000);

@@ -87,6 +87,31 @@ test('buildRoleList يرفض الأعداد خارج ٦-١٥', () => {
   assert.throws(() => buildRoleList(16));
 });
 
+test('وضع البطاقات الكلاسيكية: مافيا/طبيب/شيخ فقط، بلا أي دور إضافي، والباقي قرويين', () => {
+  for (let n = 6; n <= 15; n++) {
+    const counts = countBy(buildRoleList(n, Math.random, { classic: true }));
+    assert.strictEqual(counts.doctor, 1);
+    assert.strictEqual(counts.sheikh, 1);
+    assert.strictEqual(counts.mafia, evilCountFor(n));
+    assert.strictEqual(counts.heiress, undefined);
+    assert.strictEqual(counts.zaeem, undefined);
+    for (const r of ['thief', 'mayor', 'shapeshifter', 'fighter', 'princess', 'joker']) {
+      assert.strictEqual(counts[r], undefined, `${r} ما يفترض يظهر بالوضع الكلاسيكي`);
+    }
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    assert.strictEqual(total, n);
+  }
+});
+
+test('assignRoles بوضع كلاسيكي يمرّر الخيار فعليًا لـbuildRoleList', () => {
+  const playerIds = Array.from({ length: 10 }, (_, i) => `p${i}`);
+  const assignment = assignRoles(playerIds, Math.random, { classic: true });
+  const roleIds = [...assignment.values()];
+  assert.ok(!roleIds.includes('heiress'));
+  assert.ok(!roleIds.includes('zaeem'));
+  assert.strictEqual(roleIds.filter((r) => r === 'mafia').length, evilCountFor(10));
+});
+
 test('القروي فقط يحصل على بطاقة القروي كنكهة، والأميرة صارت دوراً مستقلاً', () => {
   const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
   const assignment = new Map([
